@@ -12,9 +12,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [isLogin, setIsLogin] = useState(true);
 
   if (!isOpen) return null;
-  {
-    console.log("1");
-  }
   return (
     // Main container blurring the background (Z-index high to appear above navbar)
     <div className="fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-6 select-none">
@@ -32,7 +29,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             // The path to your bracelet image inside public/images/
             // Ensure the file is named bracelet.png and located correctly.
 
-            src="/bracelet.png"
+            src="/necklace.png"
             alt="Premium Collection"
             fill
             priority={true} // Priority loading for above-the-fold content when modal opens
