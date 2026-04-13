@@ -29,7 +29,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           <Image
             // The path to your bracelet image inside public/images/
             // Ensure the file is named bracelet.png and located correctly.
-            src="/public/bracelet.png"
+            src="/bracelet.png"
             alt="Premium Collection"
             fill
             priority={true} // Priority loading for above-the-fold content when modal opens
