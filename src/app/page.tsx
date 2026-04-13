@@ -2,6 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import AuthModal from "@/components/AuthModal";
 
 interface ApiProduct {
   id: number;
@@ -22,6 +23,8 @@ export default function Home() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isCartLoaded, setIsCartLoaded] = useState(false);
 
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
       .then((res) => res.json())
@@ -34,7 +37,7 @@ export default function Home() {
         setIsLoading(false);
       })
       .catch((err) => {
-        console.error("Veri çekme hatası:", err);
+        console.error("Data fetching error:", err);
         setIsLoading(false);
       });
   }, []);
@@ -129,7 +132,7 @@ export default function Home() {
       {isSearchFocused && (
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-all duration-300"
-          onClick={() => setIsSearchFocused(false)} // Boşluğa tıklayınca aramadan çık
+          onClick={() => setIsSearchFocused(false)}
         />
       )}
       <nav className="shrink-0 z-50 bg-neutral-50 w-full shadow-sm border-b border-neutral-200">
@@ -309,7 +312,10 @@ export default function Home() {
               >
                 Current Orders
               </a>
-              <button className="p-2 hover:bg-neutral-100 rounded-xl transition-colors focus:outline-none">
+              <button
+                className="p-2 hover:bg-neutral-100 rounded-xl transition-colors focus:outline-none"
+                onClick={() => setIsAuthOpen(true)}
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -365,11 +371,9 @@ export default function Home() {
                   </div>
 
                   <div className="flex flex-col items-center flex-1 mt-1">
-                    {/* Madde 3: category-blue eklendi ve daha okunur yapıldı */}
                     <p className="text-[10px] text-category-blue font-bold uppercase tracking-widest mb-1.5 text-center">
                       {product.category}
                     </p>
-                    {/* Madde 4: text-sm yerine text-base (1 +=) yapıldı */}
                     <h3 className="text-base font-bold text-spc-grey mb-3 text-center leading-tight">
                       {product.name}
                     </h3>
@@ -378,8 +382,6 @@ export default function Home() {
                       <p className="text-lg font-black text-spc-grey mb-4 text-center">
                         ${product.price.toFixed(2)}
                       </p>
-
-                      {/* Madde 2: Modernize edilmiş minimalist QTY Kutusu */}
                       <div className="relative w-full mb-3 group/qty">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[11px] font-bold text-neutral-400 uppercase tracking-widest pointer-events-none">
                           Qty
@@ -600,6 +602,7 @@ export default function Home() {
           {toastMessage}
         </div>
       )}
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </main>
   );
 }
