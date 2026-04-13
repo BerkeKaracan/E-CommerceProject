@@ -10,7 +10,7 @@
   --neutral-200: #e5e7eb;
   --neutral-400: #9ca3af;
   --warning-400: #fbbf24;
-  --btn-green: #2fef69;
+  --btn-green: #10b981;
   --spc-grey: #2b2828;
   --destructive-600: #dc2626;
 }
@@ -21,7 +21,7 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  --category-blue: var(--category-blue);
+  --color-category-blue: var(--category-blue);
   --color-neutral-50: var(--neutral-50);
   --color-gray-700: var(--gray-700);
   --color-neutral-200: var(--neutral-200);
