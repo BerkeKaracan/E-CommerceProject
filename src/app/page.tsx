@@ -3,6 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import AuthModal from "@/components/AuthModal";
+import { useContext } from "react";
+import { AuthContext } from "@/context/AuthContext";
 
 interface ApiProduct {
   id: number;
@@ -16,6 +18,9 @@ interface Product extends ApiProduct {
 }
 
 export default function Home() {
+  const authContext = useContext(AuthContext);
+  const user = authContext?.user;
+  const logout = authContext?.logout;
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -312,25 +317,47 @@ export default function Home() {
               >
                 Current Orders
               </a>
-              <button
-                className="p-2 hover:bg-neutral-100 rounded-xl transition-colors focus:outline-none"
-                onClick={() => setIsAuthOpen(true)}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="w-8 h-8 text-spc-grey"
+
+              {user ? (
+                <div className="flex items-center gap-3 bg-neutral-100 px-3 py-1.5 rounded-xl">
+                  <Link
+                    href="/profile"
+                    className="cursor-pointer hover:text-btn-green transition-colors"
+                  >
+                    Hi, {user.name}
+                  </Link>
+                  <div className="w-px h-4 bg-neutral-300 mx-1"></div>
+                  <button
+                    onClick={() => {
+                      if (logout) logout();
+                      alert("Logged out successfully! ");
+                    }}
+                    className="text-xs font-black text-red-500 hover:text-red-600 transition-colors uppercase tracking-wider"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className="p-2 hover:bg-neutral-100 rounded-xl transition-colors focus:outline-none"
+                  onClick={() => setIsAuthOpen(true)}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="w-8 h-8 text-spc-grey"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                </button>
+              )}
 
               <button className="flex items-end p-2 hover:bg-neutral-200 rounded-lg transition-colors focus:outline-none group">
                 <div className="relative shrink-0">

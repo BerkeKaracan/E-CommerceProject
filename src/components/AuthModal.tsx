@@ -1,6 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import React, { useState, useContext } from "react";
 import Image from "next/image";
+import { AuthContext } from "@/context/AuthContext";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -9,7 +11,8 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [isLogin, setIsLogin] = useState(true);
-
+  const router = useRouter();
+  const authContext = useContext(AuthContext);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +23,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     e.preventDefault();
     setError(null);
 
-    // Temel Doğrulamalar (Validation)
     if (!isLogin && !name.trim()) {
       setError("Please enter your full name.");
       return;
@@ -35,7 +37,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
 
     if (!isLogin) {
-      // --- KAYIT OL (REGISTER) AKIŞI ---
       try {
         const response = await fetch("http://localhost:8000/api/register", {
           method: "POST",
@@ -51,19 +52,17 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         }
 
         alert("Account created successfully! Now you can sign in. 🚀");
-        setIsLogin(true); // Başarılı kayıttan sonra kullanıcıyı Giriş ekranına at
-        setPassword(""); // Şifre kutusunu temizle
+        setIsLogin(true);
+        setPassword("");
       } catch (err) {
         console.error("Server Connection Error:", err);
         setError("Cannot connect to the server. Is backend running?");
       }
     } else {
-      // --- GİRİŞ YAP (LOGIN) AKIŞI ---
       try {
         const response = await fetch("http://localhost:8000/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          // Giriş yaparken sadece email ve şifre yolluyoruz
           body: JSON.stringify({ email, password }),
         });
 
@@ -74,17 +73,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           return;
         }
 
-        // BAŞARILI GİRİŞ!
-        // 1. VIP Kartı (Token) ve Kullanıcı bilgilerini tarayıcının hafızasına yaz
-        localStorage.setItem("token", data.access_token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-
-        // 2. Kutlamayı yap ve kapıları aç
-        alert(`Welcome back, ${data.user.name}! 🦅`);
-
-        onClose(); // Modalı kapat
+        if (authContext) {
+          authContext.login(data.access_token, data.user);
+        }
+        onClose();
         setEmail("");
         setPassword("");
+
+        router.push("/profile");
       } catch (err) {
         console.error("Server Connection Error:", err);
         setError("Cannot connect to the server. Is backend running?");
