@@ -4,12 +4,102 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AuthContext } from "@/context/AuthContext";
 
+// BACKEND TİPLERİ
+interface UserStats {
+  id: number;
+  email: string;
+  name: string;
+  order_count: number;
+  joined_at: string;
+}
+
+interface ApiOrder {
+  id: number;
+  total_amount: number;
+  status: string;
+  created_at: string;
+}
+
+// YAPAY ZEKA SOHBET TİPLERİ
+interface ChatMessage {
+  id: number;
+  sender: "user" | "ai";
+  text: string;
+}
+
 export default function ProfilePage() {
   const authContext = useContext(AuthContext);
   const user = authContext?.user;
+  const token = authContext?.token;
+  const logout = authContext?.logout;
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("Orders");
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+
+  const [stats, setStats] = useState<UserStats | null>(null);
+  const [orders, setOrders] = useState<ApiOrder[]>([]);
+
+  // MUHABBETÇİ AI STATELERİ
+  const [isAiOpen, setIsAiOpen] = useState(false);
+  const [aiInput, setAiInput] = useState("");
+  const [isAiTyping, setIsAiTyping] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
+    {
+      id: 1,
+      sender: "ai",
+      text: "Selam! Ben senin kişisel asistanınım. Hediye seçimine yardım edebilirim, ayarları bulmanı sağlayabilirim veya sadece laflayabiliriz. Nasıl yardımcı olayım?",
+    },
+  ]);
+
+  const startEditing = () => {
+    if (user) {
+      setEditName(user.name);
+      setEditEmail(user.email);
+      setIsEditing(true);
+      setUpdateError(null);
+    }
+  };
+
+  const handleUpdateProfile = async () => {
+    if (!editName.trim() || !editEmail.trim()) return;
+    setIsUpdating(true);
+    setUpdateError(null);
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/profile`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authContext?.token}`,
+          },
+          body: JSON.stringify({ name: editName, email: editEmail }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setUpdateError(data.detail || "Update failed.");
+        setIsUpdating(false);
+        return;
+      }
+      authContext?.updateUser(data);
+      setIsEditing(false);
+    } catch (err) {
+      setUpdateError("Server error.");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const [activeTab, setActiveTab] = useState("Orders");
   const [isAllOpen, setIsAllOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -35,6 +125,83 @@ export default function ProfilePage() {
     return () => clearTimeout(timer);
   }, [user, router]);
 
+  useEffect(() => {
+    if (!token) return;
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (res.status === 401) throw new Error("Unauthorized");
+        return res.json();
+      })
+      .then((data: UserStats) => setStats(data))
+      .catch((err) => {
+        if (err.message === "Unauthorized") {
+          authContext?.logout();
+          router.push("/");
+        }
+      });
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) setOrders(data);
+      })
+      .catch(console.error);
+  }, [token, authContext, router]);
+
+  // AI SOHBET OTOMATİK KAYDIRMA
+  useEffect(() => {
+    if (isAiOpen) {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chatHistory, isAiOpen]);
+
+  // AI CEVAP MANTIĞI (Muhabbetçi Persona)
+  const handleSendAiMessage = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!aiInput.trim()) return;
+
+    const userMessage = aiInput.trim();
+    const newUserMsg: ChatMessage = {
+      id: Date.now(),
+      sender: "user",
+      text: userMessage,
+    };
+
+    setChatHistory((prev) => [...prev, newUserMsg]);
+    setAiInput("");
+    setIsAiTyping(true);
+
+    setTimeout(() => {
+      let replyText =
+        "Hmm, bu konuda çok emin değilim. Ama sana dükkandaki en yeni ürünleri gösterebilirim istersen?";
+      const lowerMsg = userMessage.toLowerCase();
+
+      if (lowerMsg.includes("hediye")) {
+        replyText =
+          "Hediye seçimi en sevdiğim konu! Kime hediye alıyoruz? Teknolojik ürünler seven biri mi, yoksa şık bir kıyafet mi arıyorsun?";
+      } else if (lowerMsg.includes("ayar") || lowerMsg.includes("şifre")) {
+        replyText =
+          "Ayarlar menüsüne veya şifre işlemlerine ulaşmak için üstteki 'All' sekmesine tıklayıp 'Security Settings' bölümüne gidebilirsin. Veya isminin yanındaki kalem ikonundan hızlıca profilini güncelleyebilirsin!";
+      } else if (lowerMsg.includes("naber") || lowerMsg.includes("nasılsın")) {
+        replyText =
+          "Harikayım, kodlarım tıkır tıkır çalışıyor! Marketin raflarını düzenliyordum. Sen nasılsın, keyifler nasıl?";
+      }
+
+      const newAiMsg: ChatMessage = {
+        id: Date.now() + 1,
+        sender: "ai",
+        text: replyText,
+      };
+      setChatHistory((prev) => [...prev, newAiMsg]);
+      setIsAiTyping(false);
+    }, 1200);
+  };
+
   if (!user) {
     return (
       <div className="h-screen flex items-center justify-center bg-white">
@@ -43,59 +210,141 @@ export default function ProfilePage() {
     );
   }
 
-  const allOptions = [
+  const profileMenuOptions = [
     {
-      category: "Sort By",
-      items: ["Recent", "Oldest", "Price: High", "Price: Low"],
+      category: "My Account",
+      items: [
+        "Personal Information",
+        "Addresses",
+        "Payment Methods",
+        "Security Settings",
+      ],
     },
     {
-      category: "Categories",
-      items: ["Electronics", "Fashion", "Home", "Sports", "Books"],
+      category: "My Shopping",
+      items: [
+        "All Orders",
+        "Returns & Cancellations",
+        "My Reviews",
+        "Wishlists",
+      ],
     },
-    { category: "Status", items: ["Completed", "Pending", "Canceled"] },
+    {
+      category: "Preferences",
+      items: ["Notifications", "App Settings", "Help Center"],
+    },
   ];
 
   return (
-    <div className="h-screen bg-white p-4 md:p-8 font-sans select-none text-spc-grey overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-white p-4 md:p-8 font-sans select-none text-spc-grey overflow-hidden flex flex-col">
       <div className="max-w-[1200px] mx-auto w-full h-full flex flex-col relative">
-        {/* Return Button */}
-        <Link
-          href="/"
-          className="flex items-center gap-2 mb-3 md:mb-4 w-fit text-neutral-400 hover:text-spc-grey transition-colors group shrink-0"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="3"
-            stroke="currentColor"
-            className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform"
+        {/* Üst Kısım: Geri Dönüş ve Çıkış Butonu */}
+        <div className="flex items-center justify-between mb-3 md:mb-4 shrink-0">
+          <Link
+            href="/"
+            className="flex items-center gap-2 w-fit text-neutral-400 hover:text-spc-grey transition-colors group"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
-            />
-          </svg>
-          <span className="text-[10px] font-black uppercase tracking-widest">
-            Return Main Page
-          </span>
-        </Link>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="3"
+              stroke="currentColor"
+              className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
+              />
+            </svg>
+            <span className="text-[10px] font-black uppercase tracking-widest">
+              Return Main Page
+            </span>
+          </Link>
 
-        {/* Header Section - Responsive Sizes */}
+          <button
+            onClick={logout}
+            className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-700 transition-colors"
+          >
+            Sign Out
+          </button>
+        </div>
+
+        {/* Header Section */}
         <div className="flex items-center justify-between mb-4 md:mb-5 shrink-0">
           <div className="flex items-center gap-4 md:gap-6">
             <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border border-neutral-100 bg-neutral-50 flex items-center justify-center text-2xl md:text-3xl font-black text-neutral-300 shadow-sm shrink-0">
               {user.name.charAt(0).toUpperCase()}
             </div>
-            <div className="space-y-0.5 overflow-hidden">
-              <h1 className="text-xl md:text-2xl font-black tracking-tighter leading-tight truncate">
-                {user.name}
-              </h1>
-              <p className="text-[10px] md:text-xs font-medium text-neutral-400 truncate">
-                {user.email}
-              </p>
-            </div>
+
+            {isEditing ? (
+              <div className="flex flex-col gap-2 animate-in fade-in zoom-in-95 duration-200">
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="text-lg md:text-xl font-black bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-1 outline-none focus:border-btn-green transition-colors"
+                />
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="text-[10px] md:text-xs font-medium text-spc-grey bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-1 outline-none focus:border-btn-green transition-colors"
+                />
+                {updateError && (
+                  <p className="text-[9px] text-red-500 font-bold">
+                    {updateError}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 mt-1">
+                  <button
+                    onClick={handleUpdateProfile}
+                    disabled={isUpdating}
+                    className="text-[9px] md:text-[10px] bg-btn-green hover:bg-green-600 text-white px-4 py-1.5 rounded-md font-black uppercase tracking-widest transition-colors disabled:opacity-50"
+                  >
+                    {isUpdating ? "Saving..." : "Save"}
+                  </button>
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    className="text-[9px] md:text-[10px] bg-neutral-200 hover:bg-neutral-300 text-spc-grey px-4 py-1.5 rounded-md font-black uppercase tracking-widest transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-0.5 overflow-hidden group relative pr-8">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-xl md:text-2xl font-black tracking-tighter leading-tight truncate">
+                    {user.name}
+                  </h1>
+                  <button
+                    onClick={startEditing}
+                    className="text-neutral-300 hover:text-btn-green transition-all hover:scale-110 shrink-0"
+                    title="Edit Profile"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="2.5"
+                      stroke="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <p className="text-[10px] md:text-xs font-medium text-neutral-400 truncate">
+                  {user.email}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="text-right flex items-center gap-4 md:gap-8 shrink-0">
@@ -103,7 +352,9 @@ export default function ProfilePage() {
               <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-neutral-300">
                 Orders
               </p>
-              <p className="text-lg md:text-xl font-black">0</p>
+              <p className="text-lg md:text-xl font-black">
+                {orders.length > 0 ? orders.length : stats?.order_count || 0}
+              </p>
             </div>
             <div className="flex flex-col items-end">
               <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-neutral-300">
@@ -117,14 +368,13 @@ export default function ProfilePage() {
         {/* Separator Line */}
         <div className="w-full h-px bg-red-500/10 mb-4 md:mb-5 shrink-0" />
 
-        {/* The Segmented Bar - Swipeable on Mobile */}
-        {/* overflow-x-auto eklendi, mobilde ezilmesin diye min-w değerleri girildi */}
-        <div className="w-full flex items-stretch border-2 border-neutral-100 rounded-xl shadow-sm h-12 md:h-14 mb-4 md:mb-5 bg-white shrink-0 relative overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+        {/* The Segmented Bar (HAP KUTUSU) */}
+        <div className="w-full flex items-stretch border-2 border-neutral-100 rounded-xl shadow-sm h-12 md:h-14 mb-4 md:mb-5 bg-white shrink-0 relative overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-0.5 md:pb-0 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-neutral-200 [&::-webkit-scrollbar-thumb]:rounded-full">
           {["Orders", "Comments"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 min-w-[90px] md:min-w-0 snap-start px-3 flex items-center justify-center border-r-2 border-neutral-100 font-black text-[9px] md:text-[10px] uppercase tracking-wider transition-all ${activeTab === tab ? "bg-neutral-50 text-btn-green" : "hover:bg-neutral-50/50"}`}
+              className={`flex-1 min-w-[90px] md:min-w-0 snap-start px-3 flex items-center justify-center border-r-2 border-neutral-100 font-black text-[9px] md:text-[10px] uppercase tracking-wider transition-all ${tab === "Orders" ? "rounded-l-[9px]" : ""} ${activeTab === tab ? "bg-neutral-50 text-btn-green" : "hover:bg-neutral-50/50"}`}
             >
               {tab}
             </button>
@@ -162,14 +412,14 @@ export default function ProfilePage() {
             </button>
           ))}
 
-          {/* ALL Selector */}
+          {/* ALL Selector (E-ticaret Profil Menüsü) */}
           <div
             className="flex-1 min-w-[90px] md:min-w-0 snap-start relative"
             ref={dropdownRef}
           >
             <button
               onClick={() => setIsAllOpen(!isAllOpen)}
-              className={`w-full h-full px-4 md:px-5 flex items-center justify-center gap-2 bg-neutral-50 hover:bg-neutral-100 font-black text-[9px] md:text-[10px] uppercase tracking-wider transition-all ${isAllOpen ? "text-btn-green" : ""}`}
+              className={`w-full h-full px-4 md:px-5 flex items-center justify-center gap-2 rounded-r-[9px] bg-neutral-50 hover:bg-neutral-100 font-black text-[9px] md:text-[10px] uppercase tracking-wider transition-all ${isAllOpen ? "text-btn-green" : ""}`}
             >
               All
               <svg
@@ -188,10 +438,9 @@ export default function ProfilePage() {
               </svg>
             </button>
 
-            {/* Dropdown Menu - Desktop (Absolute) */}
             {isAllOpen && (
               <div className="hidden md:block absolute top-[calc(100%+10px)] right-0 w-64 bg-white border border-neutral-100 rounded-2xl shadow-[0_20px_50px_-15px_rgba(0,0,0,0.15)] overflow-hidden z-[110] animate-in fade-in slide-in-from-top-2 duration-200">
-                {allOptions.map((group, idx) => (
+                {profileMenuOptions.map((group, idx) => (
                   <div
                     key={idx}
                     className="p-4 border-b border-neutral-50 last:border-0"
@@ -219,19 +468,252 @@ export default function ProfilePage() {
         </div>
 
         {/* Maximized Context Area */}
-        <div className="flex-1 flex flex-col items-center justify-center border-2 border-neutral-50 rounded-[24px] md:rounded-[32px] p-4 md:p-6 bg-neutral-50/10 overflow-hidden relative mb-2 md:mb-5">
+        <div className="flex-1 flex flex-col items-center border-2 border-neutral-50 rounded-[24px] md:rounded-[32px] p-4 md:p-6 bg-neutral-50/10 overflow-hidden relative mb-2 md:mb-5">
           <div className="w-12 md:w-16 h-1 bg-neutral-100 mb-4 md:mb-6 rounded-full shrink-0" />
 
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] text-neutral-200 text-center">
-              {activeTab} Content Area
-            </p>
-          </div>
+          {/* AI CHAT EKRANI AÇIKSA */}
+          {isAiOpen ? (
+            <div className="absolute inset-0 z-20 bg-white m-4 rounded-2xl md:rounded-3xl shadow-lg border border-neutral-100 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+              {/* Chat Header */}
+              <div className="bg-neutral-50 border-b border-neutral-100 p-4 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center font-black text-[10px]">
+                    AI
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black uppercase tracking-widest">
+                      Market Assistant
+                    </h3>
+                    <p className="text-[9px] font-bold text-btn-green">
+                      Online
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsAiOpen(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-200 text-neutral-400 hover:text-spc-grey transition-colors"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="3"
+                    stroke="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18 18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
 
-          {/* AI Button - Responsive */}
-          <button className="absolute bottom-4 right-4 md:bottom-6 md:right-6 z-[10] bg-black hover:bg-neutral-800 text-white px-8 py-3.5 md:px-12 md:py-4.5 rounded-full font-black text-[10px] md:text-xs uppercase tracking-widest shadow-[0_15px_60px_-10px_rgba(0,0,0,0.6)] transition-all hover:-translate-y-1 active:scale-95 active:shadow-[0_10px_40px_-10px_rgba(34,197,94,0.4)]">
-            AI
-          </button>
+              {/* Chat Messages */}
+              <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4 bg-neutral-50/30">
+                {chatHistory.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`flex w-full ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[80%] md:max-w-[70%] p-3 md:p-4 rounded-2xl text-sm font-medium ${msg.sender === "user" ? "bg-btn-green text-white rounded-tr-sm" : "bg-white border border-neutral-200 text-spc-grey rounded-tl-sm shadow-sm"}`}
+                    >
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+                {isAiTyping && (
+                  <div className="flex w-full justify-start">
+                    <div className="bg-white border border-neutral-200 p-4 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 bg-neutral-300 rounded-full animate-bounce" />
+                      <div className="w-1.5 h-1.5 bg-neutral-300 rounded-full animate-bounce [animation-delay:0.2s]" />
+                      <div className="w-1.5 h-1.5 bg-neutral-300 rounded-full animate-bounce [animation-delay:0.4s]" />
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Chat Input */}
+              <form
+                onSubmit={handleSendAiMessage}
+                className="p-3 md:p-4 bg-white border-t border-neutral-100 flex items-center gap-2 shrink-0"
+              >
+                <input
+                  type="text"
+                  value={aiInput}
+                  onChange={(e) => setAiInput(e.target.value)}
+                  placeholder="Need help? Ask me anything..."
+                  className="flex-1 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-xs md:text-sm outline-none focus:border-btn-green transition-colors"
+                />
+                <button
+                  type="submit"
+                  disabled={!aiInput.trim() || isAiTyping}
+                  className="bg-black hover:bg-neutral-800 disabled:bg-neutral-300 text-white w-12 h-12 flex items-center justify-center rounded-xl transition-colors shrink-0"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2.5"
+                    stroke="currentColor"
+                    className="w-5 h-5 ml-0.5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"
+                    />
+                  </svg>
+                </button>
+              </form>
+            </div>
+          ) : (
+            <div className="flex-1 w-full flex flex-col items-center overflow-y-auto relative">
+              {activeTab === "Orders" ? (
+                <div className="w-full max-w-3xl flex flex-col w-full">
+                  {/* FILTER & SORT BAR */}
+                  <div className="w-full flex justify-between items-center mb-4 mt-1 px-2 border-b border-neutral-100 pb-4">
+                    <h2 className="text-[10px] md:text-xs font-black uppercase tracking-widest text-neutral-400">
+                      Your Orders
+                    </h2>
+
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <div className="relative group/filter z-50">
+                        <button className="flex items-center gap-1.5 md:gap-2 bg-white border border-neutral-100 px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-wider text-spc-grey shadow-sm hover:border-btn-green transition-all">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="2.5"
+                            stroke="currentColor"
+                            className="w-3 h-3 md:w-3.5 md:h-3.5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"
+                            />
+                          </svg>
+                          Filter
+                        </button>
+                        <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-neutral-100 rounded-xl shadow-xl opacity-0 invisible group-hover/filter:opacity-100 group-hover/filter:visible transition-all p-2 flex flex-col gap-1">
+                          <p className="text-[8px] font-black text-neutral-400 uppercase tracking-widest px-2 mb-1">
+                            Status
+                          </p>
+                          <button className="text-left px-2 py-1.5 text-[10px] font-bold text-spc-grey hover:bg-neutral-50 rounded-md transition-colors">
+                            Completed
+                          </button>
+                          <button className="text-left px-2 py-1.5 text-[10px] font-bold text-spc-grey hover:bg-neutral-50 rounded-md transition-colors">
+                            Pending
+                          </button>
+                          <button className="text-left px-2 py-1.5 text-[10px] font-bold text-spc-grey hover:bg-neutral-50 rounded-md transition-colors">
+                            Canceled
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="relative group/sort z-40">
+                        <button className="flex items-center gap-1.5 md:gap-2 bg-white border border-neutral-100 px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-wider text-spc-grey shadow-sm hover:border-btn-green transition-all">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="2.5"
+                            stroke="currentColor"
+                            className="w-3 h-3 md:w-3.5 md:h-3.5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5"
+                            />
+                          </svg>
+                          Sort: Recent
+                        </button>
+                        <div className="absolute right-0 top-full mt-2 w-44 bg-white border border-neutral-100 rounded-xl shadow-xl opacity-0 invisible group-hover/sort:opacity-100 group-hover/sort:visible transition-all p-2 flex flex-col gap-1">
+                          <button className="text-left px-2 py-1.5 text-[10px] font-bold text-btn-green hover:bg-neutral-50 rounded-md transition-colors">
+                            Newest First
+                          </button>
+                          <button className="text-left px-2 py-1.5 text-[10px] font-bold text-spc-grey hover:bg-neutral-50 rounded-md transition-colors">
+                            Oldest First
+                          </button>
+                          <button className="text-left px-2 py-1.5 text-[10px] font-bold text-spc-grey hover:bg-neutral-50 rounded-md transition-colors">
+                            Price: High to Low
+                          </button>
+                          <button className="text-left px-2 py-1.5 text-[10px] font-bold text-spc-grey hover:bg-neutral-50 rounded-md transition-colors">
+                            Price: Low to High
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SİPARİŞ LİSTESİ */}
+                  {orders.length > 0 ? (
+                    <div className="flex flex-col gap-3 pb-20 px-2">
+                      {orders.map((order) => (
+                        <div
+                          key={order.id}
+                          className="flex items-center justify-between bg-white p-4 md:p-5 rounded-2xl border border-neutral-100 shadow-sm hover:border-btn-green transition-all group w-full"
+                        >
+                          <div className="flex items-center gap-4 md:gap-6">
+                            <div className="w-12 h-12 md:w-14 md:h-14 bg-neutral-50 rounded-xl flex items-center justify-center text-lg md:text-xl font-black text-neutral-300 group-hover:text-btn-green transition-colors">
+                              #{order.id}
+                            </div>
+                            <div className="text-left">
+                              <p className="text-[9px] md:text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-0.5">
+                                {new Date(order.created_at).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                  },
+                                )}
+                              </p>
+                              <p className="text-xs md:text-sm font-black text-spc-grey">
+                                {order.status}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-base md:text-lg font-black text-btn-green">
+                              ${order.total_amount.toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex-1 flex items-center justify-center mt-10">
+                      <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] text-neutral-300 text-center">
+                        No Orders Found
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex-1 flex items-center justify-center">
+                  <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] text-neutral-200 text-center">
+                    {activeTab} Content Area
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* AI Butonu - Tıklandığında Chat'i açar */}
+          {!isAiOpen && (
+            <button
+              onClick={() => setIsAiOpen(true)}
+              className="absolute bottom-4 right-4 md:bottom-6 md:right-6 z-10 bg-black hover:bg-neutral-800 text-white px-8 py-3.5 md:px-12 md:py-4.5 rounded-full font-black text-[10px] md:text-xs uppercase tracking-widest shadow-[0_15px_60px_-10px_rgba(0,0,0,0.6)] transition-all hover:-translate-y-1 active:scale-95 active:shadow-[0_10px_40px_-10px_rgba(34,197,94,0.4)]"
+            >
+              AI
+            </button>
+          )}
         </div>
       </div>
 
@@ -245,7 +727,7 @@ export default function ProfilePage() {
           <div className="relative bg-white w-full rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-full duration-300 pb-8">
             <div className="w-12 h-1.5 bg-neutral-200 rounded-full mx-auto mb-6" />
             <div className="max-h-[60vh] overflow-y-auto">
-              {allOptions.map((group, idx) => (
+              {profileMenuOptions.map((group, idx) => (
                 <div key={idx} className="mb-6 last:mb-0">
                   <p className="text-[10px] font-black text-neutral-400 uppercase tracking-[0.2em] mb-4">
                     {group.category}

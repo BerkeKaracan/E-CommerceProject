@@ -1,9 +1,8 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import AuthModal from "@/components/AuthModal";
-import { useContext } from "react";
 import { AuthContext } from "@/context/AuthContext";
 
 interface ApiProduct {
@@ -13,21 +12,29 @@ interface ApiProduct {
   price: number;
   image: string;
 }
+
 interface Product extends ApiProduct {
   quantity: number;
+}
+
+interface CartItemResponse {
+  id: number;
+  product_id: number;
+  quantity: number;
+  product: ApiProduct;
 }
 
 export default function Home() {
   const authContext = useContext(AuthContext);
   const user = authContext?.user;
+  const token = authContext?.token;
   const logout = authContext?.logout;
+
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [cart, setCart] = useState<Product[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [isCartLoaded, setIsCartLoaded] = useState(false);
-
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   useEffect(() => {
@@ -46,26 +53,41 @@ export default function Home() {
         setIsLoading(false);
       });
   }, []);
-  useEffect(() => {
-    const savedCart = localStorage.getItem("my_cart");
-    if (savedCart) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCart(JSON.parse(savedCart) as Product[]);
-    }
-    setIsCartLoaded(true);
-  }, []);
 
   useEffect(() => {
-    if (isCartLoaded) {
-      localStorage.setItem("my_cart", JSON.stringify(cart));
-    }
-  }, [cart, isCartLoaded]);
+    const fetchCart = () => {
+      if (token) {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        })
+          .then((res) => res.json())
+          .then((data: CartItemResponse[]) => {
+            const formattedCart = data.map((item) => ({
+              ...item.product,
+              quantity: item.quantity,
+            }));
+            setCart(formattedCart);
+          })
+          .catch((err) => console.error("Cart fetching error:", err));
+      } else {
+        setCart([]);
+      }
+    };
+
+    fetchCart();
+    window.addEventListener("focus", fetchCart);
+    return () => window.removeEventListener("focus", fetchCart);
+  }, [token]);
   const [shopSelections, setShopSelections] = useState<Record<number, number>>(
     {},
   );
   const [cartSelections, setCartSelections] = useState<Record<number, number>>(
     {},
   );
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   const handleShopSelect = (productId: number, val: number) => {
     setShopSelections({ ...shopSelections, [productId]: val });
@@ -75,28 +97,70 @@ export default function Home() {
     setCartSelections({ ...cartSelections, [productId]: val });
   };
 
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const addToCart = (product: Product, amount: number = 1) => {
-    const existingItem = cart.find((item) => item.id === product.id);
-    if (existingItem) {
-      setCart(
-        cart.map((item) =>
-          item.id === product.id
-            ? {
-                ...item,
-                quantity: item.quantity + amount,
-              }
-            : item,
-        ),
-      );
-    } else {
-      setCart([...cart, { ...product, quantity: amount }]);
+  const addToCart = async (product: Product, amount: number = 1) => {
+    if (!token) {
+      setIsAuthOpen(true);
+      return;
     }
-    setToastMessage(`Added ${amount}x ${product.name} to cart!`);
-    setTimeout(() => setToastMessage(null), 2200);
+
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ product_id: product.id, quantity: amount }),
+      });
+
+      const existingItem = cart.find((item) => item.id === product.id);
+      if (existingItem) {
+        setCart(
+          cart.map((item) =>
+            item.id === product.id
+              ? { ...item, quantity: item.quantity + amount }
+              : item,
+          ),
+        );
+      } else {
+        setCart([...cart, { ...product, quantity: amount }]);
+      }
+      setToastMessage(`Added ${amount}x ${product.name} to cart!`);
+      setTimeout(() => setToastMessage(null), 2200);
+    } catch (error) {
+      console.error("Add to cart error:", error);
+    }
   };
+
+  const removeFromCart = async (productId: number, amount: number = 1) => {
+    if (!token) return;
+
+    try {
+      await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/cart/${productId}?quantity=${amount}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      const existingItem = cart.find((item) => item.id === productId);
+      if (existingItem && existingItem.quantity > amount) {
+        setCart(
+          cart.map((item) =>
+            item.id === productId
+              ? { ...item, quantity: item.quantity - amount }
+              : item,
+          ),
+        );
+      } else {
+        setCart(cart.filter((item) => item.id !== productId));
+      }
+    } catch (error) {
+      console.error("Remove from cart error:", error);
+    }
+  };
+
   const productsCosts = cart.reduce(
     (total, item) => total + item.price * item.quantity,
     0,
@@ -104,20 +168,7 @@ export default function Home() {
   const shippingCost = cart.length > 0 ? 1.0 : 0;
   const totalCost = productsCosts + shippingCost;
   const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
-  const removeFromCart = (productId: number, amount: number = 1) => {
-    const existingItem = cart.find((item) => item.id === productId);
-    if (existingItem && existingItem?.quantity > amount) {
-      setCart(
-        cart.map((item) =>
-          item.id === productId
-            ? { ...item, quantity: item.quantity - amount }
-            : item,
-        ),
-      );
-    } else {
-      setCart(cart.filter((item) => item.id !== productId));
-    }
-  };
+
   const filteredProducts = products.filter((p) => {
     const matchesSearch = p.name
       .toLowerCase()
@@ -127,11 +178,13 @@ export default function Home() {
     return matchesSearch && matchesCategory;
   });
   const previewResults = filteredProducts.slice(0, 3);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       setIsSearchFocused(false);
     }
   };
+
   return (
     <main className="h-screen bg-neutral-50 flex flex-col overflow-hidden select-none">
       {isSearchFocused && (
@@ -319,22 +372,23 @@ export default function Home() {
               </a>
 
               {user ? (
-                <div className="flex items-center gap-3 bg-neutral-100 px-3 py-1.5 rounded-xl">
+                <div className="flex items-center gap-2 sm:gap-3 bg-neutral-100 px-2 sm:px-3 py-1.5 rounded-xl max-w-[130px] sm:max-w-none shrink-0">
                   <Link
                     href="/profile"
-                    className="cursor-pointer hover:text-btn-green transition-colors"
+                    className="cursor-pointer hover:text-btn-green transition-colors truncate text-xs sm:text-sm font-bold text-spc-grey block w-full"
                   >
                     Hi, {user.name}
                   </Link>
-                  <div className="w-px h-4 bg-neutral-300 mx-1"></div>
+                  <div className="w-px h-4 bg-neutral-300 shrink-0"></div>
                   <button
                     onClick={() => {
                       if (logout) logout();
-                      alert("Logged out successfully! ");
+                      alert("Logged out successfully!");
                     }}
-                    className="text-xs font-black text-red-500 hover:text-red-600 transition-colors uppercase tracking-wider"
+                    className="text-[10px] sm:text-xs font-black text-red-500 hover:text-red-600 transition-colors uppercase tracking-wider shrink-0"
                   >
-                    Sign Out
+                    <span className="hidden sm:inline">Sign Out</span>
+                    <span className="sm:hidden">Out</span>
                   </button>
                 </div>
               ) : (
@@ -359,7 +413,10 @@ export default function Home() {
                 </button>
               )}
 
-              <button className="flex items-end p-2 hover:bg-neutral-200 rounded-lg transition-colors focus:outline-none group">
+              <Link
+                href="/checkout"
+                className="flex items-end p-2 hover:bg-neutral-200 rounded-lg transition-colors focus:outline-none group"
+              >
                 <div className="relative shrink-0">
                   <Image
                     src="/cart.svg"
@@ -372,7 +429,7 @@ export default function Home() {
                 <span className="font-bold text-spc-grey group-hover:bg-neutral-200 bg-neutral-50 px-1 -ml-3.5 z-10 text-xs sm:text-sm leading-none">
                   My Cart {totalItems}
                 </span>
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -381,7 +438,7 @@ export default function Home() {
       <div className="flex-1 max-w-[1440px] mx-auto w-full px-4 sm:px-4 lg:px-4 py-6 flex flex-col lg:flex-row gap-6 lg:gap-8 overflow-hidden">
         <div className="flex-1 h-full overflow-y-auto pr-2 pb-20 lg:pb-4 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-neutral-300 [&::-webkit-scrollbar-thumb]:rounded-full">
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredProducts.map((product) => {
+            {filteredProducts.map((product, index) => {
               const currentStep = shopSelections[product.id] || 1;
               return (
                 <div
@@ -392,6 +449,7 @@ export default function Home() {
                     <Image
                       src={product.image}
                       alt={product.name}
+                      priority={index < 8}
                       fill
                       className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
                     />
@@ -602,9 +660,12 @@ export default function Home() {
               </div>
             </div>
 
-            <button className="w-full bg-[#FFC107] text-spc-grey py-3.5 rounded-lg font-black hover:opacity-90 transition-transform active:scale-95 shadow-sm text-sm uppercase tracking-wide">
-              Go to Cart
-            </button>
+            <Link
+              href="/checkout"
+              className="w-full bg-[#FFC107] text-spc-grey py-3.5 rounded-lg font-black hover:opacity-90 transition-transform active:scale-95 shadow-sm text-sm uppercase tracking-wide flex justify-center"
+            >
+              Go to Checkout
+            </Link>
           </div>
         </div>
       </div>
