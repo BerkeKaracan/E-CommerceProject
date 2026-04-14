@@ -45,7 +45,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 select-none">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-6 select-none">
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
         onClick={onClose}
@@ -55,13 +55,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         {/* Left Side Showcase */}
         <div className="hidden md:block md:w-1/2 relative bg-neutral-100 group">
           <Image
-            src="/bracelet.png"
+            src="/necklace.png"
             alt="Premium Collection"
             fill
             priority={true}
             className="object-cover transition-transform duration-700 group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-spc-grey/90 via-spc-grey/20 to-transparent flex flex-col justify-end p-10 text-white">
+          <div className="absolute inset-0 bg-linear-to-t from-spc-grey/90 via-spc-grey/20 to-transparent flex flex-col justify-end p-10 text-white">
             <h2 className="text-3xl font-black mb-2 tracking-tight">
               Premium Quality.
             </h2>
