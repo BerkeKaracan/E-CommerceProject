@@ -16,10 +16,11 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
+    // Temel Doğrulamalar (Validation)
     if (!isLogin && !name.trim()) {
       setError("Please enter your full name.");
       return;
@@ -33,13 +34,62 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       return;
     }
 
-    console.log("Auth Payload:", { isLogin, name, email, password });
-    alert(isLogin ? "Sign In successful! (Test)" : "Account created! (Test)");
+    if (!isLogin) {
+      // --- KAYIT OL (REGISTER) AKIŞI ---
+      try {
+        const response = await fetch("http://localhost:8000/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password }),
+        });
 
-    onClose();
-    setName("");
-    setEmail("");
-    setPassword("");
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.detail || "Registration failed. Please try again.");
+          return;
+        }
+
+        alert("Account created successfully! Now you can sign in. 🚀");
+        setIsLogin(true); // Başarılı kayıttan sonra kullanıcıyı Giriş ekranına at
+        setPassword(""); // Şifre kutusunu temizle
+      } catch (err) {
+        console.error("Server Connection Error:", err);
+        setError("Cannot connect to the server. Is backend running?");
+      }
+    } else {
+      // --- GİRİŞ YAP (LOGIN) AKIŞI ---
+      try {
+        const response = await fetch("http://localhost:8000/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          // Giriş yaparken sadece email ve şifre yolluyoruz
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.detail || "Invalid email or password.");
+          return;
+        }
+
+        // BAŞARILI GİRİŞ!
+        // 1. VIP Kartı (Token) ve Kullanıcı bilgilerini tarayıcının hafızasına yaz
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        // 2. Kutlamayı yap ve kapıları aç
+        alert(`Welcome back, ${data.user.name}! 🦅`);
+
+        onClose(); // Modalı kapat
+        setEmail("");
+        setPassword("");
+      } catch (err) {
+        console.error("Server Connection Error:", err);
+        setError("Cannot connect to the server. Is backend running?");
+      }
+    }
   };
 
   if (!isOpen) return null;
