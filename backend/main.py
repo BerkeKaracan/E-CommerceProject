@@ -12,6 +12,8 @@ from sqlalchemy.sql import func
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from passlib.context import CryptContext
+from google import genai
+from google.genai import types
 
 load_dotenv(dotenv_path="../.env")
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -118,6 +120,16 @@ class CartItemResponse(BaseModel):
     from_attributes = True
 
 app = FastAPI(title="Market Backend API")
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+class ChatMessage(BaseModel):
+    sender: str
+    text: str
+
+class ChatRequest(BaseModel):
+    message: str
+    history: list[ChatMessage] = []
 
 app.add_middleware(
   CORSMiddleware,
@@ -308,3 +320,73 @@ def process_checkout(db: Session = Depends(get_db), current_user: DBUser = Depen
 def get_user_orders(db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
     orders = db.query(DBOrder).filter(DBOrder.user_id == current_user.id).order_by(DBOrder.created_at.desc()).all()
     return orders
+
+@app.post("/api/ai/chat")
+async def chat_with_ai(request: ChatRequest, db: Session = Depends(get_db)):
+    if not GEMINI_API_KEY:
+        raise HTTPException(status_code=500, detail="AI API key not configured.")
+    
+    # Motoru içeride başlattığımız için kilitlenme (port 8000 dönme) sorunu bitti.
+    ai_client = genai.Client(api_key=GEMINI_API_KEY)
+    
+    try:
+        products = db.query(DBProduct).all()
+        product_list_str = "\n".join([f"- {p.name} ({p.price} TL)" for p in products])
+
+        # --- ZIRHLI HAFIZA ALGORİTMASI ---
+        contents = []
+        last_role = None
+        
+        for msg in request.history:
+            # 1. Filtre: İlk sahte "Hello" mesajını atla
+            if not contents and msg.sender == "ai":
+                continue
+            
+            # 2. Filtre: Eski hata mesajlarını (I cannot connect) Google'a atma, aklı karışmasın
+            if "I cannot connect" in msg.text:
+                continue
+
+            role = "user" if msg.sender == "user" else "model"
+            
+            # 3. KESİN ÇÖZÜM: Google ardışık aynı rollere izin vermez.
+            # Eğer peş peşe "user->user" gelirse, öncekini silip zinciri koruyoruz.
+            if role == last_role:
+                contents.pop()
+            
+            contents.append(
+                types.Content(role=role, parts=[types.Part.from_text(text=msg.text)])
+            )
+            last_role = role
+
+        # Şimdi YENİ mesajı "user" olarak ekliyoruz. 
+        # Eğer son mesaj zaten user ise (zincir kopmasın diye) onu eziyoruz.
+        if last_role == "user":
+            contents.pop()
+            
+        contents.append(
+            types.Content(role="user", parts=[types.Part.from_text(text=request.message)])
+        )
+
+        system_instruction = f"""
+        You are a smart, high-end, and concise virtual assistant for an e-commerce website.
+        RULES:
+        1. Answer ONLY based on the inventory below.
+        2. Inventory: {product_list_str}
+        3. ALWAYS and ONLY reply in ENGLISH.
+        4. Keep it very brief (max 2 sentences).
+        """
+
+        # 'chats' OTURUMU YOK! Direkt 'generate_content' ile temiz diziyi gönderiyoruz.
+        # Bu sayede 500 hatası sıfıra iniyor.
+        response = await ai_client.aio.models.generate_content(
+            model='gemini-2.5-flash', 
+            contents=contents,
+            config=types.GenerateContentConfig(system_instruction=system_instruction)
+        )
+        
+        return {"response": response.text}
+        
+    except Exception as e:
+        print(f"AI Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="The AI encountered a tactical error.")
+

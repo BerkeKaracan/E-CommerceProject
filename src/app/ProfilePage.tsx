@@ -43,7 +43,6 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [orders, setOrders] = useState<ApiOrder[]>([]);
 
-  // MUHABBETÇİ AI STATELERİ
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [aiInput, setAiInput] = useState("");
   const [isAiTyping, setIsAiTyping] = useState(false);
@@ -52,7 +51,7 @@ export default function ProfilePage() {
     {
       id: 1,
       sender: "ai",
-      text: "Selam! Ben senin kişisel asistanınım. Hediye seçimine yardım edebilirim, ayarları bulmanı sağlayabilirim veya sadece laflayabiliriz. Nasıl yardımcı olayım?",
+      text: "Hello! I am your personal virtual assistant. I can help you choose a gift, navigate the store, or just chat. How can I help you today?",
     },
   ]);
 
@@ -153,15 +152,13 @@ export default function ProfilePage() {
       .catch(console.error);
   }, [token, authContext, router]);
 
-  // AI SOHBET OTOMATİK KAYDIRMA
   useEffect(() => {
     if (isAiOpen) {
       chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [chatHistory, isAiOpen]);
 
-  // AI CEVAP MANTIĞI (Muhabbetçi Persona)
-  const handleSendAiMessage = (e?: React.FormEvent) => {
+  const handleSendAiMessage = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!aiInput.trim()) return;
 
@@ -176,30 +173,47 @@ export default function ProfilePage() {
     setAiInput("");
     setIsAiTyping(true);
 
-    setTimeout(() => {
-      let replyText =
-        "Hmm, bu konuda çok emin değilim. Ama sana dükkandaki en yeni ürünleri gösterebilirim istersen?";
-      const lowerMsg = userMessage.toLowerCase();
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/ai/chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: userMessage,
+            history: chatHistory.map((m) => ({
+              sender: m.sender,
+              text: m.text,
+            })),
+          }),
+        },
+      );
 
-      if (lowerMsg.includes("hediye")) {
-        replyText =
-          "Hediye seçimi en sevdiğim konu! Kime hediye alıyoruz? Teknolojik ürünler seven biri mi, yoksa şık bir kıyafet mi arıyorsun?";
-      } else if (lowerMsg.includes("ayar") || lowerMsg.includes("şifre")) {
-        replyText =
-          "Ayarlar menüsüne veya şifre işlemlerine ulaşmak için üstteki 'All' sekmesine tıklayıp 'Security Settings' bölümüne gidebilirsin. Veya isminin yanındaki kalem ikonundan hızlıca profilini güncelleyebilirsin!";
-      } else if (lowerMsg.includes("naber") || lowerMsg.includes("nasılsın")) {
-        replyText =
-          "Harikayım, kodlarım tıkır tıkır çalışıyor! Marketin raflarını düzenliyordum. Sen nasılsın, keyifler nasıl?";
+      if (!response.ok) {
+        throw new Error("Zeka ile bağlantı koptu.");
       }
+
+      const data = await response.json();
 
       const newAiMsg: ChatMessage = {
         id: Date.now() + 1,
         sender: "ai",
-        text: replyText,
+        text: data.response,
       };
       setChatHistory((prev) => [...prev, newAiMsg]);
+    } catch (error) {
+      console.error("AI Error:", error);
+      const errorMsg: ChatMessage = {
+        id: Date.now() + 1,
+        sender: "ai",
+        text: "I cannot connect to the server right now, Commander. Please try again later.",
+      };
+      setChatHistory((prev) => [...prev, errorMsg]);
+    } finally {
       setIsAiTyping(false);
-    }, 1200);
+    }
   };
 
   if (!user) {
@@ -471,7 +485,6 @@ export default function ProfilePage() {
         <div className="flex-1 flex flex-col items-center border-2 border-neutral-50 rounded-[24px] md:rounded-[32px] p-4 md:p-6 bg-neutral-50/10 overflow-hidden relative mb-2 md:mb-5">
           <div className="w-12 md:w-16 h-1 bg-neutral-100 mb-4 md:mb-6 rounded-full shrink-0" />
 
-          {/* AI CHAT EKRANI AÇIKSA */}
           {isAiOpen ? (
             <div className="absolute inset-0 z-20 bg-white m-4 rounded-2xl md:rounded-3xl shadow-lg border border-neutral-100 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
               {/* Chat Header */}
@@ -573,7 +586,7 @@ export default function ProfilePage() {
           ) : (
             <div className="flex-1 w-full flex flex-col items-center overflow-y-auto relative">
               {activeTab === "Orders" ? (
-                <div className="w-full max-w-3xl flex flex-col w-full">
+                <div className="w-full max-w-3xl flex flex-col">
                   {/* FILTER & SORT BAR */}
                   <div className="w-full flex justify-between items-center mb-4 mt-1 px-2 border-b border-neutral-100 pb-4">
                     <h2 className="text-[10px] md:text-xs font-black uppercase tracking-widest text-neutral-400">
@@ -651,7 +664,6 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  {/* SİPARİŞ LİSTESİ */}
                   {orders.length > 0 ? (
                     <div className="flex flex-col gap-3 pb-20 px-2">
                       {orders.map((order) => (
@@ -704,8 +716,6 @@ export default function ProfilePage() {
               )}
             </div>
           )}
-
-          {/* AI Butonu - Tıklandığında Chat'i açar */}
           {!isAiOpen && (
             <button
               onClick={() => setIsAiOpen(true)}
@@ -719,7 +729,7 @@ export default function ProfilePage() {
 
       {/* Dropdown Menu - Mobile Bottom Sheet */}
       {isAllOpen && (
-        <div className="md:hidden fixed inset-0 z-[120] flex flex-col justify-end">
+        <div className="md:hidden fixed inset-0 z-120 flex flex-col justify-end">
           <div
             className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-in fade-in duration-200"
             onClick={() => setIsAllOpen(false)}
