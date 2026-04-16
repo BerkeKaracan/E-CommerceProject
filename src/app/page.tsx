@@ -219,12 +219,12 @@ export default function Home() {
               >
                 market
               </Link>
-              <a
-                href="#"
+              <Link
+                href="/trends"
                 className="hidden md:block text-sm font-bold text-spc-grey hover:text-btn-green px-2 py-2 transition-colors duration-200 ml-4 select-none"
               >
                 Trends
-              </a>
+              </Link>
             </div>
 
             <div
@@ -445,24 +445,30 @@ export default function Home() {
                   key={product.id}
                   className="bg-white border border-neutral-100/60 rounded-2xl p-4 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group"
                 >
-                  <div className="aspect-3/4 w-full bg-neutral-50/80 rounded-xl mb-4 shrink-0 flex items-center justify-center overflow-hidden relative group-hover:bg-neutral-100 transition-colors">
-                    <Image
-                      src={product.image}
-                      alt={product.name}
-                      priority={index < 8}
-                      fill
-                      className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                    />
-                  </div>
-
-                  <div className="flex flex-col items-center flex-1 mt-1">
+                  {/* RESİM VE BAŞLIK KISMI TIKLANABİLİR LİNK OLDU */}
+                  <Link
+                    href={`/product/${product.id}`}
+                    className="w-full flex flex-col items-center flex-1 cursor-pointer group/link"
+                  >
+                    <div className="aspect-3/4 w-full bg-neutral-50/80 rounded-xl mb-4 shrink-0 flex items-center justify-center overflow-hidden relative group-hover:bg-neutral-100 transition-colors">
+                      <Image
+                        src={product.image}
+                        alt={product.name}
+                        priority={index < 8}
+                        fill
+                        className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
                     <p className="text-[10px] text-category-blue font-bold uppercase tracking-widest mb-1.5 text-center">
                       {product.category}
                     </p>
-                    <h3 className="text-base font-bold text-spc-grey mb-3 text-center leading-tight">
+                    <h3 className="text-base font-bold text-spc-grey mb-3 text-center leading-tight group-hover/link:text-btn-green transition-colors">
                       {product.name}
                     </h3>
+                  </Link>
 
+                  {/* FİYAT VE SEPETE EKLE KISMI AYNLEN KALIYOR */}
+                  <div className="mt-auto w-full">
                     <div className="mt-auto w-full">
                       <p className="text-lg font-black text-spc-grey mb-4 text-center">
                         ${product.price.toFixed(2)}

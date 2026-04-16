@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 from passlib.context import CryptContext
 from google import genai
 from google.genai import types
+from sqlalchemy import text
 
 load_dotenv(dotenv_path="../.env")
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -41,6 +42,9 @@ class DBProduct(Base):
   category = Column(String)
   price = Column(Float)
   image = Column(String)
+  sales_count = Column(Integer, default=0)
+  view_count = Column(Integer, default=0)
+  description = Column(String, default="Premium quality product from our exclusive collection. Guaranteed to elevate your style.")
 
 class DBUser(Base):
   __tablename__ = "User"
@@ -74,6 +78,7 @@ class ProductSchema(BaseModel):
   category: str
   price: float
   image: str
+  description: Optional[str] = None
   class Config:
     from_attributes = True
 
@@ -184,6 +189,14 @@ def health_check():
 def get_products(db: Session = Depends(get_db)):
   products = db.query(DBProduct).all()
   return products
+
+@app.get("/api/products/{product_id}", response_model=ProductSchema)
+def get_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
+
 
 @app.post("/api/register", response_model=UserResponse)
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
@@ -301,18 +314,19 @@ def process_checkout(db: Session = Depends(get_db), current_user: DBUser = Depen
   cart_items = db.query(DBCartItem).filter(DBCartItem.user_id == current_user.id).all()
   if not cart_items:
     raise HTTPException(status_code=400, detail="Cart is empty")
+  
   total = 0
   for item in cart_items:
     product = db.query(DBProduct).filter(DBProduct.id == item.product_id).first()
     if product:
       total += product.price * item.quantity
-  total += 1.0
+      product.sales_count = (product.sales_count or 0) + item.quantity
 
+  total += 1.0 
   new_order = DBOrder(user_id=current_user.id, total_amount=total)
   db.add(new_order)
 
   db.query(DBCartItem).filter(DBCartItem.user_id == current_user.id).delete()
-  
   db.commit()
   return {"message": "Order completed successfully", "order_id": new_order.id}
 
@@ -326,30 +340,29 @@ async def chat_with_ai(request: ChatRequest, db: Session = Depends(get_db)):
     if not GEMINI_API_KEY:
         raise HTTPException(status_code=500, detail="AI API key not configured.")
     
-    # Motoru içeride başlattığımız için kilitlenme (port 8000 dönme) sorunu bitti.
     ai_client = genai.Client(api_key=GEMINI_API_KEY)
     
     try:
         products = db.query(DBProduct).all()
-        product_list_str = "\n".join([f"- {p.name} ({p.price} TL)" for p in products])
+        product_list_str = "\n".join([f"- {p.name} (${p.price})" for p in products])
 
-        # --- ZIRHLI HAFIZA ALGORİTMASI ---
+        top_sellers = db.query(DBProduct).order_by(DBProduct.sales_count.desc()).limit(3).all()
+        top_sellers_str = ", ".join([p.name for p in top_sellers if p.sales_count and p.sales_count > 0])
+
+        if not top_sellers_str:
+            top_sellers_str = "No trending items yet (all items are newly stocked)."
+
         contents = []
         last_role = None
         
         for msg in request.history:
-            # 1. Filtre: İlk sahte "Hello" mesajını atla
             if not contents and msg.sender == "ai":
                 continue
-            
-            # 2. Filtre: Eski hata mesajlarını (I cannot connect) Google'a atma, aklı karışmasın
             if "I cannot connect" in msg.text:
                 continue
 
             role = "user" if msg.sender == "user" else "model"
             
-            # 3. KESİN ÇÖZÜM: Google ardışık aynı rollere izin vermez.
-            # Eğer peş peşe "user->user" gelirse, öncekini silip zinciri koruyoruz.
             if role == last_role:
                 contents.pop()
             
@@ -358,8 +371,6 @@ async def chat_with_ai(request: ChatRequest, db: Session = Depends(get_db)):
             )
             last_role = role
 
-        # Şimdi YENİ mesajı "user" olarak ekliyoruz. 
-        # Eğer son mesaj zaten user ise (zincir kopmasın diye) onu eziyoruz.
         if last_role == "user":
             contents.pop()
             
@@ -372,12 +383,12 @@ async def chat_with_ai(request: ChatRequest, db: Session = Depends(get_db)):
         RULES:
         1. Answer ONLY based on the inventory below.
         2. Inventory: {product_list_str}
-        3. ALWAYS and ONLY reply in ENGLISH.
-        4. Keep it very brief (max 2 sentences).
+        3. REAL-TIME TRENDS: Our current best-selling items are: {top_sellers_str}. If the user asks for recommendations, popular items, or trends, ONLY recommend these items.
+        4. STOCK POLICY: We have infinite stock (made-to-order). NEVER say an item is out of stock. If a user asks about stock or availability, assure them it is always in stock and ready to order.
+        5. ALWAYS and ONLY reply in ENGLISH.
+        6. Keep it very brief (max 2 sentences).
         """
 
-        # 'chats' OTURUMU YOK! Direkt 'generate_content' ile temiz diziyi gönderiyoruz.
-        # Bu sayede 500 hatası sıfıra iniyor.
         response = await ai_client.aio.models.generate_content(
             model='gemini-2.5-flash', 
             contents=contents,
@@ -390,3 +401,20 @@ async def chat_with_ai(request: ChatRequest, db: Session = Depends(get_db)):
         print(f"AI Error: {str(e)}")
         raise HTTPException(status_code=500, detail="The AI encountered a tactical error.")
 
+@app.get("/api/analytics/trending")
+def get_trending_products(db: Session = Depends(get_db)):
+    top_sellers = db.query(DBProduct).order_by(DBProduct.sales_count.desc()).limit(4).all()
+    return {
+        "best_sellers": top_sellers,
+        "message": "These are the most popular items based on our internal AI logic."
+    }
+
+@app.get("/api/fix-db")
+def fix_database(db: Session = Depends(get_db)):
+    try:
+        # Yeni description sütununu ekliyoruz
+        db.execute(text('ALTER TABLE "Product" ADD COLUMN description VARCHAR DEFAULT \'Experience premium quality with this exclusive product. Made to order with infinite stock.\';'))
+        db.commit()
+        return {"message": "Operasyon basarili! Description (Aciklama) sutunu veritabanina eklendi."}
+    except Exception as e:
+        return {"error": "Zaten eklenmis olabilir veya hata: " + str(e)}
