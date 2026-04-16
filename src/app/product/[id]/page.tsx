@@ -28,6 +28,12 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const [comments, setComments] = useState<
+    { id: number; user_name: string; text: string; created_at: string }[]
+  >([]);
+  const [newComment, setNewComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     if (!id) return;
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}`)
@@ -41,9 +47,44 @@ export default function ProductDetailPage() {
       })
       .catch((err) => {
         console.error(err);
-        router.push("/"); // Bulunamazsa ana sayfaya şutla
+        router.push("/");
       });
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}/comments`)
+      .then((res) => res.json())
+      .then((data) => setComments(data))
+      .catch((err) => console.error("Comments error:", err));
   }, [id, router]);
+
+  const submitComment = async () => {
+    if (!token) return alert("Sign in to comment!");
+    if (newComment.length < 3) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/comments`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ product_id: product?.id, text: newComment }),
+        },
+      );
+      if (response.ok) {
+        setNewComment("");
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}/comments`,
+        );
+        setComments(await res.json());
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const addToCart = async () => {
     if (!token) {
@@ -167,6 +208,61 @@ export default function ProductDetailPage() {
               <div className="mt-4 flex items-center gap-2 text-xs font-bold text-orange-500 uppercase tracking-widest bg-orange-50 w-fit px-4 py-2 rounded-lg">
                 🔥 Highly Popular: Purchased {product.sales_count} times
               </div>
+            )}
+          </div>
+        </div>
+        <div className="mt-16 border-t border-neutral-100 pt-16">
+          <h2 className="text-2xl font-black text-spc-grey mb-8 tracking-tighter">
+            Customer Reviews ({comments.length})
+          </h2>
+
+          {/* Yorum Yapma Formu */}
+          {token ? (
+            <div className="mb-12 bg-white p-6 rounded-2xl border border-neutral-100 shadow-sm">
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Share your experience with this product..."
+                className="w-full text-black bg-neutral-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-btn-green/20 transition-all resize-none min-h-[100px]"
+              />
+              <button
+                onClick={submitComment}
+                disabled={isSubmitting || newComment.length < 3}
+                className="mt-4 bg-spc-grey text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-btn-green transition-all disabled:opacity-50"
+              >
+                {isSubmitting ? "Posting..." : "Post Comment"}
+              </button>
+            </div>
+          ) : (
+            <p className="text-sm font-bold text-neutral-400 mb-10 italic">
+              Please sign in to leave a comment.
+            </p>
+          )}
+
+          {/* Yorum Listesi */}
+          <div className="flex flex-col gap-6">
+            {comments.map((c) => (
+              <div
+                key={c.id}
+                className="bg-white p-6 rounded-2xl border border-neutral-50 shadow-sm"
+              >
+                <div className="flex justify-between items-center mb-3">
+                  <span className="font-black text-sm text-spc-grey">
+                    {c.user_name}
+                  </span>
+                  <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+                    {new Date(c.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="text-sm text-neutral-500 leading-relaxed">
+                  {c.text}
+                </p>
+              </div>
+            ))}
+            {comments.length === 0 && (
+              <p className="text-neutral-400 text-sm font-medium">
+                No reviews yet. Be the first!
+              </p>
             )}
           </div>
         </div>

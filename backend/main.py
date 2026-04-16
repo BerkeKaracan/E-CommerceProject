@@ -71,6 +71,14 @@ class DBOrder(Base):
 
 #Base.metadata.create_all(bind=engine)
 
+class DBComment(Base):
+  __tablename__ = "Comment"
+  id = Column(Integer, primary_key=True, index=True)
+  product_id = Column(Integer, ForeignKey("Product.id"))
+  user_id = Column(Integer, ForeignKey("User.id"))
+  text = Column(String)
+  created_at = Column(DateTime(timezone=True), server_default=func.now())
+
 # --- PYDANTIC SCHEMAS ---
 class ProductSchema(BaseModel):
   id: int
@@ -81,6 +89,10 @@ class ProductSchema(BaseModel):
   description: Optional[str] = None
   class Config:
     from_attributes = True
+
+class CommentAdd(BaseModel):
+    product_id: int
+    text: str
 
 class UserCreate(BaseModel):
   name: str
@@ -401,6 +413,21 @@ async def chat_with_ai(request: ChatRequest, db: Session = Depends(get_db)):
         print(f"AI Error: {str(e)}")
         raise HTTPException(status_code=500, detail="The AI encountered a tactical error.")
 
+@app.get("/api/track/{order_id}")
+def track_order(order_id: int, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    order = db.query(DBOrder).filter(DBOrder.id == order_id).first()
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found in our records.")
+    if order.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Top Secret: You are not authorized to view this order.")
+    
+    return {
+        "id": order.id,
+        "status": order.status,
+        "total_amount": order.total_amount,
+        "created_at": order.order_date if hasattr(order, 'order_date') else order.created_at 
+    }
 @app.get("/api/analytics/trending")
 def get_trending_products(db: Session = Depends(get_db)):
     top_sellers = db.query(DBProduct).order_by(DBProduct.sales_count.desc()).limit(4).all()
@@ -412,9 +439,49 @@ def get_trending_products(db: Session = Depends(get_db)):
 @app.get("/api/fix-db")
 def fix_database(db: Session = Depends(get_db)):
     try:
-        # Yeni description sütununu ekliyoruz
-        db.execute(text('ALTER TABLE "Product" ADD COLUMN description VARCHAR DEFAULT \'Experience premium quality with this exclusive product. Made to order with infinite stock.\';'))
+        # Comment tablosunu oluşturma emri
+        db.execute(text("""
+            CREATE TABLE IF NOT EXISTS "Comment" (
+                id SERIAL PRIMARY KEY,
+                product_id INTEGER NOT NULL REFERENCES "Product"(id) ON DELETE CASCADE,
+                user_id INTEGER NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
+                text TEXT NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        """))
+        
+        # Daha önce eklemediysek Product tablosuna description eklemeyi de deneyelim
+        try:
+            db.execute(text('ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS description VARCHAR DEFAULT \'Premium quality product.\';'))
+        except:
+            pass # Sütun zaten varsa hata vermesin
+            
         db.commit()
-        return {"message": "Operasyon basarili! Description (Aciklama) sutunu veritabanina eklendi."}
+        return {"status": "success", "message": "Comment table created and database schema updated."}
     except Exception as e:
-        return {"error": "Zaten eklenmis olabilir veya hata: " + str(e)}
+        db.rollback()
+        return {"status": "error", "message": str(e)}
+
+
+@app.get("/api/products/{product_id}/comments")
+def get_comments(product_id: int, db: Session = Depends(get_db)):
+    comments = db.query(DBComment).filter(DBComment.product_id == product_id).order_by(DBComment.created_at.desc()).all()
+    result = []
+    for c in comments:
+        user = db.query(DBUser).filter(DBUser.id == c.user_id).first()
+        result.append({
+            "id": c.id,
+            "user_name": user.name if user else "Anonymous",
+            "text": c.text,
+            "created_at": c.created_at
+        })
+    return result
+
+@app.post("/api/comments")
+def add_comment(comment: CommentAdd, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    if len(comment.text.strip()) < 3:
+        raise HTTPException(status_code=400, detail="Comment is too short.")
+    new_comment = DBComment(product_id=comment.product_id, user_id=current_user.id, text=comment.text)
+    db.add(new_comment)
+    db.commit()
+    return {"message": "Comment added successfully"}

@@ -364,12 +364,12 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-              <a
-                href="#"
+              <Link
+                href="/tracking"
                 className="hidden lg:block text-sm font-bold text-spc-grey hover:text-btn-green px-2 py-2 transition-colors duration-200 whitespace-nowrap mr-2 select-none"
               >
-                Current Orders
-              </a>
+                Track Order
+              </Link>
 
               {user ? (
                 <div className="flex items-center gap-2 sm:gap-3 bg-neutral-100 px-2 sm:px-3 py-1.5 rounded-xl max-w-[130px] sm:max-w-none shrink-0">
