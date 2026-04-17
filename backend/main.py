@@ -19,7 +19,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-load_dotenv(dotenv_path="../.env")
+load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
   DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -569,6 +569,10 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
         SMTP_USERNAME = os.getenv("SMTP_USERNAME")
         SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
         SENDER_EMAIL = os.getenv("SENDER_EMAIL", "support@market.com")
+
+        if not SMTP_USERNAME or not SMTP_PASSWORD:
+            print("CRITICAL ERROR: SMTP credentials are missing in .env file!")
+            return {"message": "If an account exists, a reset link has been sent."}
 
         # Debug: Check if variables are loaded (Don't print password!)
         print(f"DEBUG: Attempting to send via {SMTP_SERVER}:{SMTP_PORT} using user {SMTP_USERNAME}")
