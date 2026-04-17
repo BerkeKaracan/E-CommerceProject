@@ -1,16 +1,34 @@
 "use client";
 import { useContext, useEffect, useState, useRef } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AuthContext } from "@/context/AuthContext";
 
-// BACKEND TİPLERİ
 interface UserStats {
   id: number;
   email: string;
   name: string;
   order_count: number;
   joined_at: string;
+}
+
+interface SavedItem {
+  id: number;
+  product_id: number;
+  product_name: string;
+  product_image: string;
+  product_price: number;
+  saved_at: string;
+}
+
+interface UserComment {
+  id: number;
+  product_id: number;
+  product_name: string;
+  product_image: string;
+  text: string;
+  created_at: string;
 }
 
 interface ApiOrder {
@@ -20,7 +38,6 @@ interface ApiOrder {
   created_at: string;
 }
 
-// YAPAY ZEKA SOHBET TİPLERİ
 interface ChatMessage {
   id: number;
   sender: "user" | "ai";
@@ -54,6 +71,12 @@ export default function ProfilePage() {
       text: "Hello! I am your personal virtual assistant. I can help you choose a gift, navigate the store, or just chat. How can I help you today?",
     },
   ]);
+
+  const [myComments, setMyComments] = useState<UserComment[]>([]);
+  const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
+
+  const [orderFilter, setOrderFilter] = useState("All");
+  const [orderSort, setOrderSort] = useState("Newest First");
 
   const startEditing = () => {
     if (user) {
@@ -115,6 +138,23 @@ export default function ProfilePage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const processedOrders = [...orders]
+    .filter((o) => orderFilter === "All" || o.status === orderFilter)
+    .sort((a, b) => {
+      if (orderSort === "Newest First")
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      if (orderSort === "Oldest First")
+        return (
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+      if (orderSort === "Price: High to Low")
+        return b.total_amount - a.total_amount;
+      if (orderSort === "Price: Low to High")
+        return a.total_amount - b.total_amount;
+      return 0;
+    });
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!user) {
@@ -150,7 +190,27 @@ export default function ProfilePage() {
         if (Array.isArray(data)) setOrders(data);
       })
       .catch(console.error);
-  }, [token, authContext, router]);
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/me/comments`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) setMyComments(data);
+      })
+      .catch(console.error);
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/me/saved`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) setSavedItems(data);
+      })
+      .catch(console.error);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, router]);
 
   useEffect(() => {
     if (isAiOpen) {
@@ -192,7 +252,7 @@ export default function ProfilePage() {
       );
 
       if (!response.ok) {
-        throw new Error("Zeka ile bağlantı koptu.");
+        throw new Error("Connection with AI lost.");
       }
 
       const data = await response.json();
@@ -252,7 +312,7 @@ export default function ProfilePage() {
   return (
     <div className="fixed inset-0 bg-white p-4 md:p-8 font-sans select-none text-spc-grey overflow-hidden flex flex-col">
       <div className="max-w-[1200px] mx-auto w-full h-full flex flex-col relative">
-        {/* Üst Kısım: Geri Dönüş ve Çıkış Butonu */}
+        {/* Top Section: Return and Sign Out */}
         <div className="flex items-center justify-between mb-3 md:mb-4 shrink-0">
           <Link
             href="/"
@@ -382,7 +442,7 @@ export default function ProfilePage() {
         {/* Separator Line */}
         <div className="w-full h-px bg-red-500/10 mb-4 md:mb-5 shrink-0" />
 
-        {/* The Segmented Bar (HAP KUTUSU) */}
+        {/* The Segmented Bar */}
         <div className="w-full flex items-stretch border-2 border-neutral-100 rounded-xl shadow-sm h-12 md:h-14 mb-4 md:mb-5 bg-white shrink-0 relative overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-0.5 md:pb-0 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-neutral-200 [&::-webkit-scrollbar-thumb]:rounded-full">
           {["Orders", "Comments"].map((tab) => (
             <button
@@ -426,7 +486,7 @@ export default function ProfilePage() {
             </button>
           ))}
 
-          {/* ALL Selector (E-ticaret Profil Menüsü) */}
+          {/* ALL Selector */}
           <div
             className="flex-1 min-w-[90px] md:min-w-0 snap-start relative"
             ref={dropdownRef}
@@ -453,7 +513,7 @@ export default function ProfilePage() {
             </button>
 
             {isAllOpen && (
-              <div className="hidden md:block absolute top-[calc(100%+10px)] right-0 w-64 bg-white border border-neutral-100 rounded-2xl shadow-[0_20px_50px_-15px_rgba(0,0,0,0.15)] overflow-hidden z-[110] animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="hidden md:block absolute top-[calc(100%+10px)] right-0 w-64 bg-white border border-neutral-100 rounded-2xl shadow-[0_20px_50px_-15px_rgba(0,0,0,0.15)] overflow-hidden z-110 animate-in fade-in slide-in-from-top-2 duration-200">
                 {profileMenuOptions.map((group, idx) => (
                   <div
                     key={idx}
@@ -548,8 +608,6 @@ export default function ProfilePage() {
                 )}
                 <div ref={chatEndRef} />
               </div>
-
-              {/* Chat Input */}
               <form
                 onSubmit={handleSendAiMessage}
                 className="p-3 md:p-4 bg-white border-t border-neutral-100 flex items-center gap-2 shrink-0"
@@ -587,7 +645,6 @@ export default function ProfilePage() {
             <div className="flex-1 w-full flex flex-col items-center overflow-y-auto relative">
               {activeTab === "Orders" ? (
                 <div className="w-full max-w-3xl flex flex-col">
-                  {/* FILTER & SORT BAR */}
                   <div className="w-full flex justify-between items-center mb-4 mt-1 px-2 border-b border-neutral-100 pb-4">
                     <h2 className="text-[10px] md:text-xs font-black uppercase tracking-widest text-neutral-400">
                       Your Orders
@@ -596,84 +653,58 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-2 md:gap-3">
                       <div className="relative group/filter z-50">
                         <button className="flex items-center gap-1.5 md:gap-2 bg-white border border-neutral-100 px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-wider text-spc-grey shadow-sm hover:border-btn-green transition-all">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="2.5"
-                            stroke="currentColor"
-                            className="w-3 h-3 md:w-3.5 md:h-3.5"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"
-                            />
-                          </svg>
-                          Filter
+                          <span>Filter: {orderFilter}</span>
                         </button>
                         <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-neutral-100 rounded-xl shadow-xl opacity-0 invisible group-hover/filter:opacity-100 group-hover/filter:visible transition-all p-2 flex flex-col gap-1">
                           <p className="text-[8px] font-black text-neutral-400 uppercase tracking-widest px-2 mb-1">
                             Status
                           </p>
-                          <button className="text-left px-2 py-1.5 text-[10px] font-bold text-spc-grey hover:bg-neutral-50 rounded-md transition-colors">
-                            Completed
-                          </button>
-                          <button className="text-left px-2 py-1.5 text-[10px] font-bold text-spc-grey hover:bg-neutral-50 rounded-md transition-colors">
-                            Pending
-                          </button>
-                          <button className="text-left px-2 py-1.5 text-[10px] font-bold text-spc-grey hover:bg-neutral-50 rounded-md transition-colors">
-                            Canceled
-                          </button>
+                          {["All", "Completed", "Pending", "Canceled"].map(
+                            (status) => (
+                              <button
+                                key={status}
+                                onClick={() => setOrderFilter(status)}
+                                className={`text-left px-2 py-1.5 text-[10px] font-bold rounded-md transition-colors ${orderFilter === status ? "bg-btn-green/10 text-btn-green" : "text-spc-grey hover:bg-neutral-50"}`}
+                              >
+                                {status}
+                              </button>
+                            ),
+                          )}
                         </div>
                       </div>
-
                       <div className="relative group/sort z-40">
                         <button className="flex items-center gap-1.5 md:gap-2 bg-white border border-neutral-100 px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-wider text-spc-grey shadow-sm hover:border-btn-green transition-all">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="2.5"
-                            stroke="currentColor"
-                            className="w-3 h-3 md:w-3.5 md:h-3.5"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5"
-                            />
-                          </svg>
-                          Sort: Recent
+                          Sort
                         </button>
                         <div className="absolute right-0 top-full mt-2 w-44 bg-white border border-neutral-100 rounded-xl shadow-xl opacity-0 invisible group-hover/sort:opacity-100 group-hover/sort:visible transition-all p-2 flex flex-col gap-1">
-                          <button className="text-left px-2 py-1.5 text-[10px] font-bold text-btn-green hover:bg-neutral-50 rounded-md transition-colors">
-                            Newest First
-                          </button>
-                          <button className="text-left px-2 py-1.5 text-[10px] font-bold text-spc-grey hover:bg-neutral-50 rounded-md transition-colors">
-                            Oldest First
-                          </button>
-                          <button className="text-left px-2 py-1.5 text-[10px] font-bold text-spc-grey hover:bg-neutral-50 rounded-md transition-colors">
-                            Price: High to Low
-                          </button>
-                          <button className="text-left px-2 py-1.5 text-[10px] font-bold text-spc-grey hover:bg-neutral-50 rounded-md transition-colors">
-                            Price: Low to High
-                          </button>
+                          {[
+                            "Newest First",
+                            "Oldest First",
+                            "Price: High to Low",
+                            "Price: Low to High",
+                          ].map((sortOp) => (
+                            <button
+                              key={sortOp}
+                              onClick={() => setOrderSort(sortOp)}
+                              className={`text-left px-2 py-1.5 text-[10px] font-bold rounded-md transition-colors ${orderSort === sortOp ? "bg-btn-green/10 text-btn-green" : "text-spc-grey hover:bg-neutral-50"}`}
+                            >
+                              {sortOp}
+                            </button>
+                          ))}
                         </div>
                       </div>
                     </div>
                   </div>
-
-                  {orders.length > 0 ? (
+                  {processedOrders.length > 0 ? (
                     <div className="flex flex-col gap-3 pb-20 px-2">
-                      {orders.map((order) => (
+                      {processedOrders.map((order) => (
                         <div
                           key={order.id}
                           className="flex items-center justify-between bg-white p-4 md:p-5 rounded-2xl border border-neutral-100 shadow-sm hover:border-btn-green transition-all group w-full"
                         >
                           <div className="flex items-center gap-4 md:gap-6">
-                            <div className="w-12 h-12 md:w-14 md:h-14 bg-neutral-50 rounded-xl flex items-center justify-center text-lg md:text-xl font-black text-neutral-300 group-hover:text-btn-green transition-colors">
-                              #{order.id}
+                            <div className="px-3 md:px-4 h-12 md:h-14 bg-neutral-50 rounded-xl flex items-center justify-center text-sm md:text-base font-black text-neutral-400 group-hover:text-btn-green transition-colors whitespace-nowrap">
+                              Order ID: #{order.id}
                             </div>
                             <div className="text-left">
                               <p className="text-[9px] md:text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-0.5">
@@ -703,6 +734,99 @@ export default function ProfilePage() {
                     <div className="flex-1 flex items-center justify-center mt-10">
                       <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] text-neutral-300 text-center">
                         No Orders Found
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === "Comments" ? (
+                <div className="w-full max-w-3xl flex flex-col">
+                  <div className="w-full flex justify-between items-center mb-4 mt-1 px-2 border-b border-neutral-100 pb-4">
+                    <h2 className="text-[10px] md:text-xs font-black uppercase tracking-widest text-neutral-400">
+                      Your Reviews
+                    </h2>
+                  </div>
+
+                  {myComments.length > 0 ? (
+                    <div className="flex flex-col gap-3 pb-20 px-2">
+                      {myComments.map((comment) => (
+                        <div
+                          key={comment.id}
+                          className="flex flex-col md:flex-row gap-4 bg-white p-4 md:p-5 rounded-2xl border border-neutral-100 shadow-sm hover:border-btn-green transition-all group w-full"
+                        >
+                          <Link
+                            href={`/product/${comment.product_id}`}
+                            className="w-16 h-16 bg-neutral-50 rounded-xl relative overflow-hidden shrink-0 border border-neutral-100"
+                          >
+                            <Image
+                              src={comment.product_image}
+                              alt={comment.product_name}
+                              fill
+                              className="object-cover"
+                            />
+                          </Link>
+                          <div className="flex-1 text-left">
+                            <Link
+                              href={`/product/${comment.product_id}`}
+                              className="text-xs md:text-sm font-black text-spc-grey hover:text-btn-green transition-colors leading-tight"
+                            >
+                              {comment.product_name}
+                            </Link>
+                            <p className="text-[9px] md:text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2 mt-0.5">
+                              {new Date(
+                                comment.created_at,
+                              ).toLocaleDateString()}
+                            </p>
+                            <p className="text-xs md:text-sm font-medium text-neutral-500 leading-relaxed italic">
+                              {comment.text}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex-1 flex items-center justify-center mt-10">
+                      <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] text-neutral-300 text-center">
+                        No Reviews Yet
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === "Saved" ? (
+                <div className="w-full max-w-3xl flex flex-col">
+                  <div className="w-full flex justify-between items-center mb-4 mt-1 px-2 border-b border-neutral-100 pb-4">
+                    <h2 className="text-[10px] md:text-xs font-black uppercase tracking-widest text-neutral-400">
+                      Saved Items
+                    </h2>
+                  </div>
+                  {savedItems.length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pb-20 px-2">
+                      {savedItems.map((item) => (
+                        <Link
+                          href={`/product/${item.product_id}`}
+                          key={item.id}
+                          className="bg-white p-3 rounded-2xl border border-neutral-100 shadow-sm hover:border-red-400 transition-all group flex flex-col"
+                        >
+                          <div className="aspect-square w-full bg-neutral-50 rounded-xl relative overflow-hidden mb-3">
+                            <Image
+                              src={item.product_image}
+                              alt={item.product_name}
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform"
+                            />
+                          </div>
+                          <h3 className="text-xs font-black text-spc-grey truncate">
+                            {item.product_name}
+                          </h3>
+                          <p className="text-sm font-black text-btn-green mt-1">
+                            ${item.product_price.toFixed(2)}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex-1 flex items-center justify-center mt-10">
+                      <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] text-neutral-300 text-center">
+                        No Saved Items
                       </p>
                     </div>
                   )}

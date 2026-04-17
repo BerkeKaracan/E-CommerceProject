@@ -32,6 +32,7 @@ export default function CheckoutPage() {
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     if (authContext === undefined) return;
     if (!token) {
@@ -52,7 +53,7 @@ export default function CheckoutPage() {
           router.push("/");
           return;
         }
-        throw new Error("Sunucu hatası");
+        throw new Error("Server error");
       }
       const data: CartItemResponse[] = await res.json();
 
@@ -68,6 +69,57 @@ export default function CheckoutPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const increaseQty = async (product: CartItem) => {
+    if (!token) return;
+    setCart(
+      cart.map((item) =>
+        item.id === product.id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item,
+      ),
+    );
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ product_id: product.id, quantity: 1 }),
+    });
+  };
+
+  const decreaseQty = async (product: CartItem) => {
+    if (!token) return;
+    if (product.quantity <= 1) return removeItem(product.id, product.quantity);
+
+    setCart(
+      cart.map((item) =>
+        item.id === product.id
+          ? { ...item, quantity: item.quantity - 1 }
+          : item,
+      ),
+    );
+    await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/cart/${product.id}?quantity=1`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+  };
+
+  const removeItem = async (productId: number, quantity: number) => {
+    if (!token) return;
+    setCart(cart.filter((item) => item.id !== productId));
+    await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/cart/${productId}?quantity=${quantity}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
   };
 
   const productsCosts = cart.reduce(
@@ -174,9 +226,46 @@ export default function CheckoutPage() {
                       <h3 className="text-sm font-bold text-spc-grey leading-tight">
                         {item.name}
                       </h3>
-                      <p className="text-xs text-neutral-400 mt-1">
-                        Qty: {item.quantity}
-                      </p>
+                      <div className="flex items-center gap-4 mt-3">
+                        <div className="flex items-center bg-neutral-100 rounded-lg p-0.5 border border-neutral-200">
+                          <button
+                            onClick={() => decreaseQty(item)}
+                            className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white hover:shadow-sm transition-all text-spc-grey font-black text-sm"
+                          >
+                            -
+                          </button>
+                          <span className="w-8 text-center text-xs font-black text-spc-grey select-none">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => increaseQty(item)}
+                            className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white hover:shadow-sm transition-all text-spc-grey font-black text-sm"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <button
+                          onClick={() => removeItem(item.id, item.quantity)}
+                          className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-neutral-400 hover:text-red-500 transition-colors group"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="2.5"
+                            stroke="currentColor"
+                            className="w-3.5 h-3.5 group-hover:scale-110 transition-transform"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                            />
+                          </svg>
+                          Remove
+                        </button>
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-black">

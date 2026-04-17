@@ -34,6 +34,40 @@ export default function ProductDetailPage() {
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    if (token && product) {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/me/saved`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (
+            data.some(
+              (item: { product_id: number }) => item.product_id === product.id,
+            )
+          )
+            setIsSaved(true);
+        });
+    }
+  }, [token, product]);
+
+  const toggleSave = async () => {
+    if (!token) return;
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/saved/${product?.id}`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    if (res.ok) {
+      const data = await res.json();
+      setIsSaved(data.is_saved);
+    }
+  };
+
   useEffect(() => {
     if (!id) return;
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}`)
@@ -122,7 +156,6 @@ export default function ProductDetailPage() {
 
   return (
     <main className="min-h-screen bg-neutral-50 flex flex-col select-none">
-      {/* Navbar (Geri Dönüş) */}
       <nav className="shrink-0 z-50 w-full shadow-sm border-b border-neutral-200 bg-white">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-8 flex items-center h-20">
           <button
@@ -159,7 +192,7 @@ export default function ProductDetailPage() {
             />
           </div>
 
-          {/* Sağ Taraf: Detaylar ve Satın Alma */}
+          {/* Right Side: Details and Purchase */}
           <div className="w-full lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center">
             <p className="text-xs font-black text-category-blue uppercase tracking-[0.2em] mb-3">
               {product.category}
@@ -202,6 +235,25 @@ export default function ProductDetailPage() {
               >
                 Add to Cart
               </button>
+              <button
+                onClick={toggleSave}
+                className={`w-14 h-14 shrink-0 flex items-center justify-center rounded-2xl border-2 transition-all duration-300 ${isSaved ? "border-red-500 bg-red-50 text-red-500" : "border-neutral-200 bg-white text-neutral-400 hover:border-red-500 hover:text-red-500"}`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill={isSaved ? "currentColor" : "none"}
+                  stroke="currentColor"
+                  strokeWidth={isSaved ? "0" : "2"}
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+                  />
+                </svg>
+              </button>
             </div>
 
             {product.sales_count && product.sales_count > 0 && (
@@ -216,7 +268,7 @@ export default function ProductDetailPage() {
             Customer Reviews ({comments.length})
           </h2>
 
-          {/* Yorum Yapma Formu */}
+          {/* Comment Form */}
           {token ? (
             <div className="mb-12 bg-white p-6 rounded-2xl border border-neutral-100 shadow-sm">
               <textarea
@@ -239,7 +291,7 @@ export default function ProductDetailPage() {
             </p>
           )}
 
-          {/* Yorum Listesi */}
+          {/* Comments List */}
           <div className="flex flex-col gap-6">
             {comments.map((c) => (
               <div
@@ -268,7 +320,7 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      {/* Toast Mesajı */}
+      {/* Toast Message */}
       {toastMessage && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-btn-green text-white px-6 py-4 rounded-xl shadow-2xl font-bold text-sm animate-in fade-in slide-in-from-bottom-8">
           {toastMessage}

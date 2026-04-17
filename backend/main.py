@@ -15,6 +15,9 @@ from passlib.context import CryptContext
 from google import genai
 from google.genai import types
 from sqlalchemy import text
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 load_dotenv(dotenv_path="../.env")
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -30,7 +33,7 @@ Base = declarative_base()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # --- JWT SETTINGS ---
-SECRET_KEY = "market-cok-gizli-anahtar" 
+SECRET_KEY = "market-super-secret-key" 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 
 
@@ -69,14 +72,19 @@ class DBOrder(Base):
   status = Column(String, default="Completed")
   created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-#Base.metadata.create_all(bind=engine)
-
 class DBComment(Base):
   __tablename__ = "Comment"
   id = Column(Integer, primary_key=True, index=True)
   product_id = Column(Integer, ForeignKey("Product.id"))
   user_id = Column(Integer, ForeignKey("User.id"))
   text = Column(String)
+  created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class DBSavedItem(Base):
+  __tablename__ = "SavedItem"
+  id = Column(Integer, primary_key=True, index=True)
+  user_id = Column(Integer, ForeignKey("User.id"))
+  product_id = Column(Integer, ForeignKey("Product.id"))
   created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 # --- PYDANTIC SCHEMAS ---
@@ -118,6 +126,13 @@ class UserStatsResponse(BaseModel):
 class UserLogin(BaseModel):
   email: str
   password: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
 
 class UserUpdate(BaseModel):
   name: Optional[str] = None
@@ -208,7 +223,6 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return product
-
 
 @app.post("/api/register", response_model=UserResponse)
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
@@ -428,6 +442,7 @@ def track_order(order_id: int, db: Session = Depends(get_db), current_user: DBUs
         "total_amount": order.total_amount,
         "created_at": order.order_date if hasattr(order, 'order_date') else order.created_at 
     }
+    
 @app.get("/api/analytics/trending")
 def get_trending_products(db: Session = Depends(get_db)):
     top_sellers = db.query(DBProduct).order_by(DBProduct.sales_count.desc()).limit(4).all()
@@ -439,7 +454,6 @@ def get_trending_products(db: Session = Depends(get_db)):
 @app.get("/api/fix-db")
 def fix_database(db: Session = Depends(get_db)):
     try:
-        # Comment tablosunu oluşturma emri
         db.execute(text("""
             CREATE TABLE IF NOT EXISTS "Comment" (
                 id SERIAL PRIMARY KEY,
@@ -449,19 +463,25 @@ def fix_database(db: Session = Depends(get_db)):
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         """))
-        
-        # Daha önce eklemediysek Product tablosuna description eklemeyi de deneyelim
+        db.execute(text("""
+            CREATE TABLE IF NOT EXISTS "SavedItem" (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
+                product_id INTEGER NOT NULL REFERENCES "Product"(id) ON DELETE CASCADE,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        """))
+
         try:
             db.execute(text('ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS description VARCHAR DEFAULT \'Premium quality product.\';'))
         except:
-            pass # Sütun zaten varsa hata vermesin
+            pass 
             
         db.commit()
-        return {"status": "success", "message": "Comment table created and database schema updated."}
+        return {"status": "success", "message": "Database schema updated successfully."}
     except Exception as e:
         db.rollback()
         return {"status": "error", "message": str(e)}
-
 
 @app.get("/api/products/{product_id}/comments")
 def get_comments(product_id: int, db: Session = Depends(get_db)):
@@ -485,3 +505,109 @@ def add_comment(comment: CommentAdd, db: Session = Depends(get_db), current_user
     db.add(new_comment)
     db.commit()
     return {"message": "Comment added successfully"}
+
+@app.get("/api/me/comments")
+def get_my_comments(db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    comments = db.query(DBComment).filter(DBComment.user_id == current_user.id).order_by(DBComment.created_at.desc()).all()
+    
+    result = []
+    for c in comments:
+        product = db.query(DBProduct).filter(DBProduct.id == c.product_id).first()
+        if product:
+            result.append({
+                "id": c.id,
+                "product_id": product.id,
+                "product_name": product.name,
+                "product_image": product.image,
+                "text": c.text,
+                "created_at": c.created_at
+            })
+    return result
+
+@app.get("/api/me/saved")
+def get_saved_items(db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    saved = db.query(DBSavedItem).filter(DBSavedItem.user_id == current_user.id).order_by(DBSavedItem.created_at.desc()).all()
+    result = []
+    for s in saved:
+        product = db.query(DBProduct).filter(DBProduct.id == s.product_id).first()
+        if product:
+            result.append({
+                "id": s.id,
+                "product_id": product.id,
+                "product_name": product.name,
+                "product_image": product.image,
+                "product_price": product.price,
+                "saved_at": s.created_at
+            })
+    return result
+
+@app.post("/api/saved/{product_id}")
+def toggle_saved_item(product_id: int, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    existing = db.query(DBSavedItem).filter(DBSavedItem.user_id == current_user.id, DBSavedItem.product_id == product_id).first()
+    if existing:
+        db.delete(existing)
+        db.commit()
+        return {"message": "Removed from saved", "is_saved": False}
+    else:
+        new_saved = DBSavedItem(user_id=current_user.id, product_id=product_id)
+        db.add(new_saved)
+        db.commit()
+        return {"message": "Added to saved", "is_saved": True}
+        
+@app.post("/api/forgot-password")
+def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(DBUser).filter(DBUser.email == request.email).first()
+    
+    if user:
+        # Get dynamic URLs
+        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+        reset_link = f"{frontend_url}/reset-password?token=secret_reset_token_{user.id}"
+        
+        # SANDBOX SMTP CONFIGURATION
+        SMTP_SERVER = os.getenv("SMTP_SERVER", "sandbox.smtp.mailtrap.io")
+        SMTP_PORT = int(os.getenv("SMTP_PORT", 2525)) # Sandbox is usually 2525 or 587
+        SMTP_USERNAME = os.getenv("SMTP_USERNAME")
+        SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+        SENDER_EMAIL = os.getenv("SENDER_EMAIL", "support@market.com")
+
+        # Debug: Check if variables are loaded (Don't print password!)
+        print(f"DEBUG: Attempting to send via {SMTP_SERVER}:{SMTP_PORT} using user {SMTP_USERNAME}")
+
+        try:
+            msg = MIMEMultipart()
+            msg['From'] = f"Market Support <{SENDER_EMAIL}>"
+            msg['To'] = user.email
+            msg['Subject'] = "Reset Your Password - Market"
+            
+            body = f"Hello {user.name},\n\nUse this link to reset your password:\n{reset_link}"
+            msg.attach(MIMEText(body, 'plain'))
+
+            # Connection logic
+            server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+            server.starttls() 
+            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.send_message(msg)
+            server.quit()
+            
+            print(f"SUCCESS: Reset email sent to {user.email}")
+        except Exception as e:
+            print(f"CRITICAL SMTP ERROR: {str(e)}")
+            
+    return {"message": "If an account exists, a reset link has been sent."}
+
+@app.post("/api/reset-password")
+def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
+    try:
+        user_id = int(request.token.split("_")[-1])
+    except:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token.")
+
+    user = db.query(DBUser).filter(DBUser.id == user_id).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    user.hashed_password = pwd_context.hash(request.new_password)
+    db.commit()
+    
+    return {"message": "Your password has been successfully reset. You can now sign in."}

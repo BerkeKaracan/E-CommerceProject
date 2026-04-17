@@ -37,6 +37,11 @@ export default function Home() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const [sortOption, setSortOption] = useState("Recommended");
+  const [priceFilter, setPriceFilter] = useState("All Prices");
+
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
       .then((res) => res.json())
@@ -61,13 +66,17 @@ export default function Home() {
           headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",
         })
-          .then((res) => res.json())
-          .then((data: CartItemResponse[]) => {
-            const formattedCart = data.map((item) => ({
-              ...item.product,
-              quantity: item.quantity,
-            }));
-            setCart(formattedCart);
+          .then((res) => (res.ok ? res.json() : []))
+          .then((data) => {
+            if (Array.isArray(data)) {
+              const formattedCart = data.map((item: CartItemResponse) => ({
+                ...item.product,
+                quantity: item.quantity,
+              }));
+              setCart(formattedCart);
+            } else {
+              setCart([]);
+            }
           })
           .catch((err) => console.error("Cart fetching error:", err));
       } else {
@@ -169,14 +178,43 @@ export default function Home() {
   const totalCost = productsCosts + shippingCost;
   const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
 
-  const filteredProducts = products.filter((p) => {
-    const matchesSearch = p.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "All" || p.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredProducts = products
+    .filter((p) => {
+      const query = searchQuery.toLowerCase().trim();
+      const productName = p.name.toLowerCase();
+      const productCategory = p.category.toLowerCase();
+
+      const smartKeywords =
+        (query.includes("summer") || query.includes("top wear")) &&
+        productCategory.includes("clothing")
+          ? true
+          : (query.includes("tech") || query.includes("gadget")) &&
+              productCategory.includes("electronics")
+            ? true
+            : query.includes("gift") && productCategory.includes("jewelery")
+              ? true
+              : false;
+
+      const matchesSearch =
+        productName.includes(query) ||
+        productCategory.includes(query) ||
+        smartKeywords;
+      const matchesCategory =
+        selectedCategory === "All" || p.category === selectedCategory;
+
+      let matchesPrice = true;
+      if (priceFilter === "Under $20") matchesPrice = p.price < 20;
+      else if (priceFilter === "$20 - $50")
+        matchesPrice = p.price >= 20 && p.price <= 50;
+      else if (priceFilter === "Over $50") matchesPrice = p.price > 50;
+
+      return matchesSearch && matchesCategory && matchesPrice;
+    })
+    .sort((a, b) => {
+      if (sortOption === "Price: Low to High") return a.price - b.price;
+      if (sortOption === "Price: High to Low") return b.price - a.price;
+      return 0;
+    });
   const previewResults = filteredProducts.slice(0, 3);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -197,7 +235,10 @@ export default function Home() {
         <div className="max-w-[1440px] mx-auto px-4 sm:px-4 lg:px-4">
           <div className="flex items-center justify-between h-20 gap-6 lg:gap-10">
             <div className="flex items-center gap-4 sm:gap-6 shrink-0">
-              <button className="p-2 -ml-2 hover:bg-neutral-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-300">
+              <button
+                onClick={() => setIsMenuOpen(true)}
+                className="p-2 -ml-2 hover:bg-neutral-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-300"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -215,7 +256,11 @@ export default function Home() {
               </button>
               <Link
                 href="/"
-                className="text-2xl font-black tracking-tighter text-btn-green cursor-pointer select-none hover:opacity-80 transition-opacity block"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedCategory("All");
+                }}
+                className="text-2xl font-black tracking-tighter text-btn-green"
               >
                 market
               </Link>
@@ -257,7 +302,10 @@ export default function Home() {
                   onKeyDown={handleKeyDown}
                   className="w-full h-full pl-2 pr-12 bg-transparent text-base text-neutral-800 placeholder:text-neutral-400 focus:outline-none select-text cursor-text"
                 />
-                <button className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-btn-green transition-colors">
+                <button
+                  onClick={() => setIsSearchFocused(false)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-btn-green transition-colors"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -383,7 +431,8 @@ export default function Home() {
                   <button
                     onClick={() => {
                       if (logout) logout();
-                      alert("Logged out successfully!");
+                      setToastMessage("Logged out successfully!");
+                      setTimeout(() => setToastMessage(null), 2200);
                     }}
                     className="text-[10px] sm:text-xs font-black text-red-500 hover:text-red-600 transition-colors uppercase tracking-wider shrink-0"
                   >
@@ -437,6 +486,110 @@ export default function Home() {
 
       <div className="flex-1 max-w-[1440px] mx-auto w-full px-4 sm:px-4 lg:px-4 py-6 flex flex-col lg:flex-row gap-6 lg:gap-8 overflow-hidden">
         <div className="flex-1 h-full overflow-y-auto pr-2 pb-20 lg:pb-4 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-neutral-300 [&::-webkit-scrollbar-thumb]:rounded-full">
+          <div className="flex justify-end mb-6 mt-2">
+            <div className="flex flex-col md:flex-row items-end md:items-center gap-3 w-full md:w-auto">
+              <div className="w-full md:hidden relative group">
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-white border border-neutral-200 focus:border-btn-green rounded-xl px-4 py-2.5 text-xs font-bold text-spc-grey outline-none transition-all shadow-sm"
+                />
+                <button
+                  onClick={() => setIsSearchFocused(false)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-btn-green transition-colors"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2.5"
+                    stroke="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="relative group/filter z-40">
+                  <button className="flex items-center gap-1.5 bg-white border border-neutral-200 hover:border-btn-green px-4 py-2 rounded-xl text-[10px] md:text-xs font-black text-spc-grey uppercase tracking-widest transition-all shadow-sm active:scale-95">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="2.5"
+                      stroke="currentColor"
+                      className="w-4 h-4"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"
+                      />
+                    </svg>
+                    <span>
+                      Filter:{" "}
+                      {priceFilter === "All Prices" ? "All" : priceFilter}
+                    </span>
+                  </button>
+                  <div className="absolute right-0 top-full mt-2 w-44 bg-white border border-neutral-100 rounded-xl shadow-xl opacity-0 invisible group-hover/filter:opacity-100 group-hover/filter:visible transition-all p-2 flex flex-col gap-1">
+                    {["All Prices", "Under $20", "$20 - $50", "Over $50"].map(
+                      (pf) => (
+                        <button
+                          key={pf}
+                          onClick={() => setPriceFilter(pf)}
+                          className={`text-left px-3 py-2 text-[10px] font-bold rounded-md transition-colors ${priceFilter === pf ? "bg-btn-green/10 text-btn-green" : "text-spc-grey hover:bg-neutral-50"}`}
+                        >
+                          {pf}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                </div>
+                <div className="relative group/sort z-40">
+                  <button className="flex items-center gap-1.5 bg-white border border-neutral-200 hover:border-btn-green px-4 py-2 rounded-xl text-[10px] md:text-xs font-black text-spc-grey uppercase tracking-widest transition-all shadow-sm active:scale-95">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="2.5"
+                      stroke="currentColor"
+                      className="w-4 h-4"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5"
+                      />
+                    </svg>
+                    Sort
+                  </button>
+                  <div className="absolute right-0 top-full mt-2 w-44 bg-white border border-neutral-100 rounded-xl shadow-xl opacity-0 invisible group-hover/sort:opacity-100 group-hover/sort:visible transition-all p-2 flex flex-col gap-1">
+                    {[
+                      "Recommended",
+                      "Price: Low to High",
+                      "Price: High to Low",
+                    ].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setSortOption(opt)}
+                        className={`text-left px-3 py-2 text-[10px] font-bold rounded-md transition-colors ${sortOption === opt ? "bg-btn-green/10 text-btn-green" : "text-spc-grey hover:bg-neutral-50"}`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredProducts.map((product, index) => {
               const currentStep = shopSelections[product.id] || 1;
@@ -445,7 +598,6 @@ export default function Home() {
                   key={product.id}
                   className="bg-white border border-neutral-100/60 rounded-2xl p-4 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group"
                 >
-                  {/* RESİM VE BAŞLIK KISMI TIKLANABİLİR LİNK OLDU */}
                   <Link
                     href={`/product/${product.id}`}
                     className="w-full flex flex-col items-center flex-1 cursor-pointer group/link"
@@ -467,7 +619,6 @@ export default function Home() {
                     </h3>
                   </Link>
 
-                  {/* FİYAT VE SEPETE EKLE KISMI AYNLEN KALIYOR */}
                   <div className="mt-auto w-full">
                     <div className="mt-auto w-full">
                       <p className="text-lg font-black text-spc-grey mb-4 text-center">
@@ -697,6 +848,163 @@ export default function Home() {
         </div>
       )}
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      {/* HAMBURGER MENU OVERLAY */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-100 flex">
+          {/* Dark Background Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity animate-in fade-in duration-300"
+            onClick={() => setIsMenuOpen(false)}
+          />
+
+          {/* Sliding Side Panel */}
+          <div className="relative w-[85%] max-w-[320px] bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-left duration-300 z-101">
+            {/* Menu Header and Close Button */}
+            <div className="flex items-center justify-between p-5 border-b border-neutral-100">
+              <span className="text-2xl font-black tracking-tighter text-btn-green">
+                market
+              </span>
+              <button
+                onClick={() => setIsMenuOpen(false)}
+                className="p-2 bg-neutral-100 hover:bg-neutral-200 rounded-full text-spc-grey transition-colors"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2.5"
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Scrollable Menu Content */}
+            <div className="flex-1 overflow-y-auto py-5 px-5 flex flex-col gap-8">
+              {/* User Auth Status */}
+              {!user ? (
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setIsAuthOpen(true);
+                  }}
+                  className="w-full bg-black text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-md hover:bg-neutral-800 transition-colors"
+                >
+                  Sign In / Register
+                </button>
+              ) : (
+                <Link
+                  href="/profile"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="bg-neutral-50 p-4 rounded-xl border border-neutral-100 block group hover:border-btn-green transition-colors"
+                >
+                  <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-1">
+                    Welcome back
+                  </p>
+                  <p className="text-base font-black text-spc-grey group-hover:text-btn-green transition-colors">
+                    {user.name}
+                  </p>
+                </Link>
+              )}
+
+              {/* Desktop Main Links */}
+              <div className="flex flex-col gap-2">
+                <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2 px-1">
+                  Main Menu
+                </p>
+                <Link
+                  href="/"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="px-3 py-2.5 text-sm font-bold text-spc-grey hover:bg-neutral-50 rounded-lg transition-colors"
+                >
+                  Home
+                </Link>
+                <Link
+                  href="/trends"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="px-3 py-2.5 text-sm font-bold text-spc-grey hover:bg-neutral-50 rounded-lg transition-colors flex items-center justify-between"
+                >
+                  Trending Now
+                  <span className="bg-orange-100 text-orange-600 text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider font-black">
+                    Hot
+                  </span>
+                </Link>
+                <Link
+                  href="/tracking"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="px-3 py-2.5 text-sm font-bold text-spc-grey hover:bg-neutral-50 rounded-lg transition-colors"
+                >
+                  Track Order
+                </Link>
+              </div>
+
+              {/* Dynamic Categories */}
+              <div className="flex flex-col gap-2">
+                <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2 px-1">
+                  Categories
+                </p>
+                <button
+                  onClick={() => {
+                    setSelectedCategory("All");
+                    setIsMenuOpen(false);
+                  }}
+                  className={`text-left px-3 py-2.5 text-sm font-bold rounded-lg transition-colors capitalize ${selectedCategory === "All" ? "bg-btn-green/10 text-btn-green" : "text-spc-grey hover:bg-neutral-50"}`}
+                >
+                  All Products
+                </button>
+                {Array.from(new Set(products.map((p) => p.category))).map(
+                  (cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => {
+                        setSelectedCategory(cat);
+                        setIsMenuOpen(false);
+                      }}
+                      className={`text-left px-3 py-2.5 text-sm font-bold rounded-lg transition-colors capitalize ${selectedCategory === cat ? "bg-btn-green/10 text-btn-green" : "text-spc-grey hover:bg-neutral-50"}`}
+                    >
+                      {cat}
+                    </button>
+                  ),
+                )}
+              </div>
+
+              {/* Standard Support Menu */}
+              <div className="flex flex-col gap-2 border-t border-neutral-100 pt-6 mb-6">
+                <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2 px-1">
+                  Support
+                </p>
+                <Link
+                  href="#"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="px-3 py-2 text-xs font-bold text-neutral-500 hover:text-spc-grey transition-colors"
+                >
+                  Help Center
+                </Link>
+                <Link
+                  href="#"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="px-3 py-2 text-xs font-bold text-neutral-500 hover:text-spc-grey transition-colors"
+                >
+                  Returns & Refunds
+                </Link>
+                <Link
+                  href="#"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="px-3 py-2 text-xs font-bold text-neutral-500 hover:text-spc-grey transition-colors"
+                >
+                  Contact Us
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

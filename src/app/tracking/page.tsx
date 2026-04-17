@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useContext } from "react";
-import { AuthContext } from "@/context/AuthContext"; // BUNU EKLE
+import { AuthContext } from "@/context/AuthContext";
 
 interface TrackedOrder {
   id: number;
@@ -106,7 +106,7 @@ export default function TrackingPage() {
           </p>
         </div>
 
-        {/* Arama Kutusu */}
+        {/* Search Box */}
         <form
           onSubmit={handleTrack}
           className="flex items-center w-full bg-white border-2 border-neutral-100 rounded-2xl overflow-hidden shadow-sm hover:border-btn-green/50 focus-within:border-btn-green transition-all mb-8 p-1"
@@ -143,14 +143,14 @@ export default function TrackingPage() {
           </button>
         </form>
 
-        {/* Hata Mesajı */}
+        {/* Error Message */}
         {error && (
           <div className="bg-red-50 text-red-500 border border-red-100 p-6 rounded-2xl text-center font-bold animate-in zoom-in-95">
             {error}
           </div>
         )}
 
-        {/* Sipariş Sonucu (Lojistik Zaman Çizelgesi) */}
+        {/* Order Result (Logistics Timeline) */}
         {order && (
           <div className="bg-white border border-neutral-100 rounded-3xl p-6 md:p-10 shadow-lg animate-in fade-in slide-in-from-bottom-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 pb-6 border-b border-neutral-100 gap-4">
@@ -178,7 +178,7 @@ export default function TrackingPage() {
 
             {/* Simulated Timeline */}
             <div className="relative flex flex-col gap-8 ml-4 md:ml-8">
-              {/* Çizgi */}
+              {/* Timeline Line */}
               <div className="absolute top-2 bottom-2 left-[11px] w-1 bg-neutral-100 rounded-full -z-10"></div>
 
               {/* Step 1 */}
@@ -205,7 +205,7 @@ export default function TrackingPage() {
                 </div>
               </div>
 
-              {/* Step 2 (Aktif olan adım) */}
+              {/* Step 2 (Active Step) */}
               <div className="flex gap-6 items-start">
                 <div className="w-6 h-6 rounded-full bg-btn-green flex items-center justify-center shrink-0 border-4 border-white shadow-[0_0_0_4px_rgba(34,197,94,0.2)]">
                   <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>

@@ -3,7 +3,7 @@ import random
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
-# main.py içindeki modelleri ve Base'i içe aktarıyoruz
+# Import models and Base from main.py
 from main import Base, DBProduct, DBUser, DATABASE_URL
 
 load_dotenv(dotenv_path="../.env")
@@ -28,28 +28,28 @@ def generate_mock_products():
     return products
 
 def seed_data():
-    print("--- NÜKLEER OPERASYON BAŞLADI: Tam Veritabanı Sıfırlama ---")
+    print("--- NUCLEAR OPERATION INITIATED: Full Database Reset ---")
     
-    # 1. HER ŞEYİ SİL (Tablo yapılarını sıfırlamak için şart)
-    print("Eski tablolar imha ediliyor...")
+    # 1. DELETE EVERYTHING (Required to reset table structures)
+    print("Destroying old tables...")
     Base.metadata.drop_all(bind=engine)
     
-    # 2. YENİ YAPILARLA TEKRAR OLUŞTUR
-    print("Yeni tablolar (Tarih sütunlarıyla) inşa ediliyor...")
+    # 2. RECREATE WITH NEW STRUCTURES
+    print("Building new tables (with Date columns)...")
     Base.metadata.create_all(bind=engine)
     
     db = SessionLocal()
     try:
-        # 3. ÜRÜNLERİ BAS
-        print("100 yeni ürün enjekte ediliyor...")
+        # 3. SEED PRODUCTS
+        print("Injecting 100 new products...")
         products = generate_mock_products()
         for p in products:
             db.add(DBProduct(**p))
         
         db.commit()
-        print(f"--- BAŞARI: Dükkan sıfırlandı ve 100 ürün eklendi! ---")
+        print(f"--- SUCCESS: Store reset and 100 products added! ---")
     except Exception as e:
-        print(f"KRİTİK HATA: {e}")
+        print(f"CRITICAL ERROR: {e}")
         db.rollback()
     finally:
         db.close()

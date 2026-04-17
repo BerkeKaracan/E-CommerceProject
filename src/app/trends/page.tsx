@@ -10,7 +10,7 @@ interface ApiProduct {
   category: string;
   price: number;
   image: string;
-  sales_count?: number; // Backend'den gelen satış sayısı
+  sales_count?: number; // Sales count from backend
 }
 
 export default function TrendsPage() {
@@ -36,7 +36,7 @@ export default function TrendsPage() {
 
   return (
     <main className="min-h-screen bg-neutral-50 flex flex-col select-none">
-      {/* Basit Navbar - Geri Dönüş İçin */}
+      {/* Simple Navbar - Return */}
       <nav className="shrink-0 z-50 bg-neutral-50 w-full shadow-sm border-b border-neutral-200">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
           <div className="flex items-center justify-between h-20">
@@ -80,7 +80,7 @@ export default function TrendsPage() {
       </nav>
 
       <div className="flex-1 max-w-[1440px] mx-auto w-full px-4 lg:px-8 py-10 flex flex-col">
-        {/* Başlık Bölümü */}
+        {/* Header Section */}
         <div className="flex flex-col items-center justify-center mb-12 animate-in slide-in-from-bottom-4 duration-500">
           <div className="bg-orange-100 text-orange-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 flex items-center gap-2">
             <span className="relative flex h-2 w-2">
@@ -98,7 +98,7 @@ export default function TrendsPage() {
           </p>
         </div>
 
-        {/* Liderlik Tablosu (Ürünler) */}
+        {/* Leaderboard (Products) */}
         {isLoading ? (
           <div className="flex-1 flex justify-center items-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-btn-green"></div>
@@ -110,34 +110,39 @@ export default function TrendsPage() {
                 key={product.id}
                 className="relative bg-white border border-neutral-100 rounded-3xl p-5 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 flex flex-col group overflow-hidden"
               >
-                {/* Sıralama Rozeti (1, 2, 3...) */}
                 <div
                   className={`absolute top-4 left-4 w-10 h-10 rounded-full flex items-center justify-center text-lg font-black z-10 shadow-md ${index === 0 ? "bg-yellow-400 text-white" : index === 1 ? "bg-neutral-300 text-white" : index === 2 ? "bg-orange-300 text-white" : "bg-neutral-100 text-neutral-400"}`}
                 >
                   #{index + 1}
                 </div>
+                <Link
+                  href={`/product/${product.id}`}
+                  className="flex flex-col items-center flex-1 cursor-pointer group/link w-full"
+                >
+                  <div className="aspect-square w-full bg-neutral-50 rounded-2xl mb-5 shrink-0 flex items-center justify-center overflow-hidden relative group-hover:bg-neutral-100 transition-colors">
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      fill
+                      className="object-cover object-center group-hover:scale-110 transition-transform duration-700"
+                    />
+                  </div>
 
-                <div className="aspect-square w-full bg-neutral-50 rounded-2xl mb-5 shrink-0 flex items-center justify-center overflow-hidden relative group-hover:bg-neutral-100 transition-colors">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    className="object-cover object-center group-hover:scale-110 transition-transform duration-700"
-                  />
-                </div>
-
+                  <div className="flex flex-col items-center flex-1">
+                    <p className="text-[10px] text-category-blue font-bold uppercase tracking-widest mb-1.5">
+                      {product.category}
+                    </p>
+                    <h3 className="text-lg font-black text-spc-grey mb-2 text-center leading-tight hover:text-green-400">
+                      {product.name}
+                    </h3>
+                  </div>
+                </Link>
                 <div className="flex flex-col items-center flex-1">
-                  <p className="text-[10px] text-category-blue font-bold uppercase tracking-widest mb-1.5">
-                    {product.category}
-                  </p>
-                  <h3 className="text-lg font-black text-spc-grey mb-2 text-center leading-tight">
-                    {product.name}
-                  </h3>
                   <p className="text-xl font-black text-btn-green mt-auto">
                     ${product.price.toFixed(2)}
                   </p>
-
-                  {/* Satış Sayacı */}
+                </div>
+                <div className="flex flex-col items-center flex-1">
                   <div className="mt-4 w-full bg-orange-50 rounded-xl py-2 flex items-center justify-center gap-2">
                     <span className="text-orange-500 text-xs">📈</span>
                     <span className="text-xs font-bold text-orange-600 uppercase tracking-wider">
