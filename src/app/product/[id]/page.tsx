@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "@/context/AuthContext";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface ApiProduct {
   id: number;
@@ -37,7 +38,7 @@ const StarIcon = ({
     fill={filled ? "currentColor" : "none"}
     stroke="currentColor"
     strokeWidth="2"
-    className={`w-5 h-5 cursor-pointer transition-all ${filled ? "text-[#FFC107] drop-shadow-sm" : "text-neutral-300"}`}
+    className={`w-5 h-5 cursor-pointer transition-all ${filled ? "text-[#FFC107] drop-shadow-sm" : "text-neutral-300 dark:text-neutral-700"}`}
   >
     <path
       strokeLinecap="round"
@@ -115,7 +116,6 @@ export default function ProductDetailPage() {
       );
       if (res.ok) {
         setEditingCommentId(null);
-        // Yorumları tekrar çekip listeyi yenile
         const refreshRes = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}/comments`,
         );
@@ -176,7 +176,6 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (!id) return;
 
-    // 1. Ürünü Çek
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Product not found");
@@ -186,13 +185,12 @@ export default function ProductDetailPage() {
         setProduct(data);
         setIsLoading(false);
 
-        // 2. Benzer Ürünleri Çek (Aynı kategoriden)
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
           .then((r) => r.json())
           .then((allProducts: ApiProduct[]) => {
             const related = allProducts
               .filter((p) => p.category === data.category && p.id !== data.id)
-              .slice(0, 4); // Sadece 4 tane al
+              .slice(0, 4);
             setRelatedProducts(
               related.length > 0 ? related : allProducts.slice(0, 4),
             );
@@ -203,7 +201,6 @@ export default function ProductDetailPage() {
         router.push("/");
       });
 
-    // 3. Yorumları Çek
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}/comments`)
       .then((res) => res.json())
       .then((data) => setComments(data))
@@ -271,7 +268,7 @@ export default function ProductDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-neutral-50">
+      <div className="h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950 transition-colors duration-300">
         <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-btn-green"></div>
       </div>
     );
@@ -280,12 +277,12 @@ export default function ProductDetailPage() {
   if (!product) return null;
 
   return (
-    <main className="min-h-screen bg-neutral-50 flex flex-col select-none pb-20">
-      <nav className="shrink-0 z-50 w-full shadow-sm border-b border-neutral-200 bg-white">
-        <div className="max-w-[1440px] mx-auto px-4 lg:px-8 flex items-center h-20">
+    <main className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col select-none pb-20 transition-colors duration-300">
+      <nav className="shrink-0 z-50 w-full shadow-sm border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 transition-colors duration-300">
+        <div className="max-w-[1440px] mx-auto px-4 lg:px-8 flex items-center justify-between h-20">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-neutral-400 hover:text-spc-grey transition-colors font-black uppercase text-[10px] tracking-widest"
+            className="flex items-center gap-2 text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-neutral-300 transition-colors font-black uppercase text-[10px] tracking-widest"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -303,12 +300,14 @@ export default function ProductDetailPage() {
             </svg>
             Go Back
           </button>
+
+          <ThemeToggle />
         </div>
       </nav>
 
       <div className="flex-1 max-w-[1200px] mx-auto w-full px-4 lg:px-8 py-8 lg:py-16">
-        <div className="bg-white rounded-4xl shadow-sm border border-neutral-100 overflow-hidden flex flex-col lg:flex-row">
-          <div className="w-full lg:w-1/2 bg-neutral-50 relative aspect-square lg:aspect-auto lg:min-h-[600px] flex items-center justify-center p-8 group">
+        <div className="bg-white dark:bg-neutral-900 rounded-4xl shadow-sm border border-neutral-100 dark:border-neutral-800 overflow-hidden flex flex-col lg:flex-row transition-colors duration-300">
+          <div className="w-full lg:w-1/2 bg-neutral-50 dark:bg-neutral-800/50 relative aspect-square lg:aspect-auto lg:min-h-[600px] flex items-center justify-center p-8 group transition-colors">
             <Image
               src={product.image}
               alt={product.name}
@@ -317,53 +316,70 @@ export default function ProductDetailPage() {
             />
           </div>
 
-          {/* Right Side: Details and Purchase */}
           <div className="w-full lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center">
-            <p className="text-xs font-black text-category-blue uppercase tracking-[0.2em] mb-3">
+            <p className="text-xs font-black text-category-blue dark:text-neutral-400 uppercase tracking-[0.2em] mb-3 transition-colors">
               {product.category}
             </p>
-            <h1 className="text-3xl lg:text-5xl font-black text-spc-grey tracking-tight mb-4">
+            <h1 className="text-3xl lg:text-5xl font-black text-spc-grey dark:text-white tracking-tight mb-4 transition-colors">
               {product.name}
             </h1>
 
-            {/* YENİ EKLENEN VİTRİN YILDIZLARI */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <StarIcon key={star} filled={true} />
-                ))}
-              </div>
-              <span className="text-xs font-bold text-neutral-400">
-                4.9 ({product.sales_count ? product.sales_count * 3 : 124}{" "}
-                Reviews)
-              </span>
-            </div>
+            {(() => {
+              let totalRating = 0;
+              comments.forEach((c) => {
+                const match = c.text.match(/^(\d)\|([\s\S]*)$/);
+                totalRating += match ? parseInt(match[1]) : 5;
+              });
+
+              const avgRating =
+                comments.length > 0 ? totalRating / comments.length : 0;
+              const displayRating = avgRating.toFixed(1);
+              const roundedRating = Math.round(avgRating);
+
+              return (
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <StarIcon
+                        key={star}
+                        filled={comments.length > 0 && star <= roundedRating}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs font-bold text-neutral-400 dark:text-neutral-500 transition-colors">
+                    {comments.length > 0
+                      ? `${displayRating} (${comments.length} Reviews)`
+                      : "No Reviews Yet"}
+                  </span>
+                </div>
+              );
+            })()}
 
             <p className="text-2xl lg:text-4xl font-black text-btn-green mb-6">
               ${product.price.toFixed(2)}
             </p>
 
-            <div className="w-full h-px bg-neutral-100 mb-6"></div>
+            <div className="w-full h-px bg-neutral-100 dark:bg-neutral-800 mb-6 transition-colors"></div>
 
-            <p className="text-sm text-neutral-500 font-medium mb-8 leading-relaxed">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 font-medium mb-8 leading-relaxed transition-colors">
               {product.description ||
                 `Experience premium quality with this exclusive ${product.category.toLowerCase()}. Made to order with infinite stock. Guaranteed to elevate your style.`}
             </p>
 
             <div className="flex items-center gap-4 mb-6">
-              <div className="bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 flex items-center gap-4">
+              <div className="bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 flex items-center gap-4 transition-colors">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="text-neutral-400 hover:text-spc-grey font-black text-xl"
+                  className="text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white font-black text-xl transition-colors"
                 >
                   -
                 </button>
-                <span className="text-sm font-black text-spc-grey w-4 text-center">
+                <span className="text-sm font-black text-spc-grey dark:text-white w-4 text-center transition-colors">
                   {quantity}
                 </span>
                 <button
                   onClick={() => setQuantity(quantity + 1)}
-                  className="text-neutral-400 hover:text-spc-grey font-black text-xl"
+                  className="text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white font-black text-xl transition-colors"
                 >
                   +
                 </button>
@@ -376,7 +392,7 @@ export default function ProductDetailPage() {
               </button>
               <button
                 onClick={toggleSave}
-                className={`w-14 h-14 shrink-0 flex items-center justify-center rounded-2xl border-2 transition-all duration-300 ${isSaved ? "border-red-500 bg-red-50 text-red-500" : "border-neutral-200 bg-white text-neutral-400 hover:border-red-500 hover:text-red-500"}`}
+                className={`w-14 h-14 shrink-0 flex items-center justify-center rounded-2xl border-2 transition-all duration-300 ${isSaved ? "border-red-500 bg-red-50 dark:bg-red-900/20 text-red-500" : "border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 hover:border-red-500 dark:hover:border-red-500 hover:text-red-500 dark:hover:text-red-500"}`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -396,7 +412,7 @@ export default function ProductDetailPage() {
             </div>
 
             {product.sales_count && product.sales_count > 0 ? (
-              <div className="mt-4 flex items-center gap-2 text-xs font-bold text-orange-500 uppercase tracking-widest bg-orange-50 w-fit px-4 py-2 rounded-lg">
+              <div className="mt-4 flex items-center gap-2 text-xs font-bold text-orange-500 dark:text-orange-400 uppercase tracking-widest bg-orange-50 dark:bg-orange-900/20 w-fit px-4 py-2 rounded-lg transition-colors border border-transparent dark:border-orange-500/10">
                 🔥 Highly Popular: Purchased {product.sales_count} times
               </div>
             ) : null}
@@ -404,22 +420,22 @@ export default function ProductDetailPage() {
         </div>
 
         {/* YORUMLAR (REVIEWS) BÖLÜMÜ */}
-        <div className="mt-16 border-t border-neutral-100 pt-16">
-          <h2 className="text-2xl font-black text-spc-grey mb-8 tracking-tighter">
+        <div className="mt-16 border-t border-neutral-100 dark:border-neutral-800 pt-16 transition-colors">
+          <h2 className="text-2xl font-black text-spc-grey dark:text-white mb-8 tracking-tighter transition-colors">
             Customer Reviews ({comments.length})
           </h2>
 
           {token ? (
             hasReviewed ? (
-              <div className="mb-12 bg-neutral-50 p-6 rounded-3xl border border-neutral-200 text-center">
+              <div className="mb-12 bg-neutral-50 dark:bg-neutral-800/50 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-700 text-center transition-colors">
                 <p className="text-sm font-bold text-btn-green uppercase tracking-widest">
                   ✓ You have already reviewed this product
                 </p>
               </div>
             ) : (
-              <div className="mb-12 bg-white p-6 md:p-8 rounded-3xl border border-neutral-100 shadow-sm flex flex-col gap-4">
+              <div className="mb-12 bg-white dark:bg-neutral-900 p-6 md:p-8 rounded-3xl border border-neutral-100 dark:border-neutral-800 shadow-sm flex flex-col gap-4 transition-colors">
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
+                  <span className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest transition-colors">
                     Rate this product
                   </span>
                   <div className="flex">
@@ -438,19 +454,19 @@ export default function ProductDetailPage() {
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Share your experience with this product..."
-                  className="w-full text-black bg-neutral-50 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-btn-green/20 transition-all resize-none min-h-[100px]"
+                  className="w-full text-black dark:text-white bg-neutral-50 dark:bg-neutral-800 border-none rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-btn-green/20 transition-all resize-none min-h-[100px] placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
                 />
                 <button
                   onClick={submitComment}
                   disabled={isSubmitting || newComment.length < 3}
-                  className="self-end bg-spc-grey text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-btn-green transition-all disabled:opacity-50"
+                  className="self-end bg-spc-grey dark:bg-neutral-700 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-btn-green dark:hover:bg-btn-green transition-all disabled:opacity-50"
                 >
                   {isSubmitting ? "Posting..." : "Post Review"}
                 </button>
               </div>
             )
           ) : (
-            <p className="text-sm font-bold text-neutral-400 mb-10 italic">
+            <p className="text-sm font-bold text-neutral-400 dark:text-neutral-500 mb-10 italic transition-colors">
               Please sign in to leave a review.
             </p>
           )}
@@ -466,16 +482,14 @@ export default function ProductDetailPage() {
                 commentText = match[2];
               }
 
-              // Müşteri bu yorumun sahibi mi?
               const isOwner = authContext?.user?.name === c.user_name;
               const isEditingThis = editingCommentId === c.id;
 
               return (
                 <div
                   key={c.id}
-                  className="bg-white p-6 rounded-3xl border border-neutral-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative group"
+                  className="bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-100 dark:border-neutral-800 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] dark:shadow-none relative group transition-colors"
                 >
-                  {/* Düzenle/Sil Butonları Sadece Sahibine Görünür */}
                   {isOwner && !isEditingThis && (
                     <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
@@ -484,7 +498,7 @@ export default function ProductDetailPage() {
                           setEditRating(commentRating);
                           setEditText(commentText);
                         }}
-                        className="text-neutral-400 hover:text-btn-green p-1 transition-colors"
+                        className="text-neutral-400 dark:text-neutral-500 hover:text-btn-green dark:hover:text-btn-green p-1 transition-colors"
                         title="Edit Review"
                       >
                         <svg
@@ -498,7 +512,7 @@ export default function ProductDetailPage() {
                       </button>
                       <button
                         onClick={() => handleDeleteComment(c.id)}
-                        className="text-neutral-400 hover:text-red-500 p-1 transition-colors"
+                        className="text-neutral-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-500 p-1 transition-colors"
                         title="Delete Review"
                       >
                         <svg
@@ -519,7 +533,7 @@ export default function ProductDetailPage() {
 
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <span className="font-black text-base text-spc-grey block mb-1">
+                      <span className="font-black text-base text-spc-grey dark:text-white block mb-1 transition-colors">
                         {c.user_name}
                       </span>
                       <div className="flex">
@@ -541,7 +555,7 @@ export default function ProductDetailPage() {
                             ))}
                       </div>
                     </div>
-                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest bg-neutral-50 px-3 py-1.5 rounded-lg mt-1">
+                    <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest bg-neutral-50 dark:bg-neutral-800 px-3 py-1.5 rounded-lg mt-1 transition-colors">
                       {new Date(c.created_at).toLocaleDateString()}
                     </span>
                   </div>
@@ -551,25 +565,25 @@ export default function ProductDetailPage() {
                       <textarea
                         value={editText}
                         onChange={(e) => setEditText(e.target.value)}
-                        className="w-full text-black bg-neutral-50 border border-neutral-200 rounded-lg p-3 text-sm outline-none focus:border-btn-green transition-all resize-none min-h-[80px]"
+                        className="w-full text-black dark:text-white bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg p-3 text-sm outline-none focus:border-btn-green dark:focus:border-btn-green transition-all resize-none min-h-[80px]"
                       />
                       <div className="flex gap-2 justify-end">
                         <button
                           onClick={() => setEditingCommentId(null)}
-                          className="text-[10px] font-bold text-neutral-400 hover:text-spc-grey uppercase px-3 py-1"
+                          className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white uppercase px-3 py-1 transition-colors"
                         >
                           Cancel
                         </button>
                         <button
                           onClick={() => handleSaveEdit(c.id)}
-                          className="text-[10px] font-bold text-white bg-btn-green hover:bg-green-600 rounded px-4 py-1.5 uppercase"
+                          className="text-[10px] font-bold text-white bg-btn-green hover:bg-green-600 rounded px-4 py-1.5 uppercase transition-colors"
                         >
                           Save
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <p className="text-sm text-neutral-500 leading-relaxed font-medium">
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed font-medium transition-colors">
                       {commentText}
                     </p>
                   )}
@@ -578,9 +592,9 @@ export default function ProductDetailPage() {
             })}
 
             {comments.length === 0 && (
-              <div className="col-span-full py-10 flex flex-col items-center justify-center bg-white rounded-3xl border border-neutral-100 border-dashed">
+              <div className="col-span-full py-10 flex flex-col items-center justify-center bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-100 dark:border-neutral-800 border-dashed transition-colors">
                 <StarIcon filled={false} />
-                <p className="text-neutral-400 text-sm font-bold mt-2 uppercase tracking-widest">
+                <p className="text-neutral-400 dark:text-neutral-500 text-sm font-bold mt-2 uppercase tracking-widest transition-colors">
                   No reviews yet. Be the first!
                 </p>
               </div>
@@ -589,8 +603,8 @@ export default function ProductDetailPage() {
         </div>
 
         {relatedProducts.length > 0 && (
-          <div className="mt-20 border-t border-neutral-100 pt-16">
-            <h2 className="text-2xl font-black text-spc-grey mb-8 tracking-tighter">
+          <div className="mt-20 border-t border-neutral-100 dark:border-neutral-800 pt-16 transition-colors">
+            <h2 className="text-2xl font-black text-spc-grey dark:text-white mb-8 tracking-tighter transition-colors">
               You Might Also Like
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -598,9 +612,9 @@ export default function ProductDetailPage() {
                 <Link
                   href={`/product/${relProduct.id}`}
                   key={relProduct.id}
-                  className="bg-white border border-neutral-100/60 rounded-2xl p-4 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col group"
+                  className="bg-white dark:bg-neutral-900 border border-neutral-100/60 dark:border-neutral-800/60 rounded-2xl p-4 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] dark:shadow-none hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col group"
                 >
-                  <div className="aspect-3/4 w-full bg-neutral-50/80 rounded-xl mb-4 relative overflow-hidden group-hover:bg-neutral-100 transition-colors">
+                  <div className="aspect-3/4 w-full bg-neutral-50/80 dark:bg-neutral-800 rounded-xl mb-4 relative overflow-hidden group-hover:bg-neutral-100 dark:group-hover:bg-neutral-700 transition-colors">
                     <Image
                       src={relProduct.image}
                       alt={relProduct.name}
@@ -608,10 +622,10 @@ export default function ProductDetailPage() {
                       className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>
-                  <p className="text-[10px] text-category-blue font-bold uppercase tracking-widest mb-1.5 text-center truncate">
+                  <p className="text-[10px] text-category-blue dark:text-neutral-400 font-bold uppercase tracking-widest mb-1.5 text-center truncate transition-colors">
                     {relProduct.category}
                   </p>
-                  <h3 className="text-sm font-bold text-spc-grey mb-2 text-center leading-tight group-hover:text-btn-green transition-colors truncate">
+                  <h3 className="text-sm font-bold text-spc-grey dark:text-neutral-200 mb-2 text-center leading-tight group-hover:text-btn-green dark:group-hover:text-btn-green transition-colors truncate">
                     {relProduct.name}
                   </h3>
                   <div className="flex justify-center mb-2">
@@ -621,7 +635,7 @@ export default function ProductDetailPage() {
                     <StarIcon filled={true} />
                     <StarIcon filled={true} />
                   </div>
-                  <p className="text-base font-black text-spc-grey text-center mt-auto">
+                  <p className="text-base font-black text-spc-grey dark:text-white text-center mt-auto transition-colors">
                     ${relProduct.price.toFixed(2)}
                   </p>
                 </Link>
