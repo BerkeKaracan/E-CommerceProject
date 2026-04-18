@@ -88,6 +88,9 @@ class DBSavedItem(Base):
   created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 # --- PYDANTIC SCHEMAS ---
+class CommentUpdate(BaseModel):
+    text: str
+
 class ProductSchema(BaseModel):
   id: int
   name: str
@@ -370,13 +373,10 @@ async def chat_with_ai(request: ChatRequest, db: Session = Depends(get_db)):
     
     try:
         products = db.query(DBProduct).all()
-        product_list_str = "\n".join([f"- {p.name} (${p.price})" for p in products])
+        product_list_str = "\n".join([f"- {p.name} (Category: {p.category}, Price: ${p.price})" for p in products])
 
         top_sellers = db.query(DBProduct).order_by(DBProduct.sales_count.desc()).limit(3).all()
         top_sellers_str = ", ".join([p.name for p in top_sellers if p.sales_count and p.sales_count > 0])
-
-        if not top_sellers_str:
-            top_sellers_str = "No trending items yet (all items are newly stocked)."
 
         contents = []
         last_role = None
@@ -388,31 +388,31 @@ async def chat_with_ai(request: ChatRequest, db: Session = Depends(get_db)):
                 continue
 
             role = "user" if msg.sender == "user" else "model"
-            
             if role == last_role:
                 contents.pop()
             
-            contents.append(
-                types.Content(role=role, parts=[types.Part.from_text(text=msg.text)])
-            )
+            contents.append(types.Content(role=role, parts=[types.Part.from_text(text=msg.text)]))
             last_role = role
 
         if last_role == "user":
             contents.pop()
             
-        contents.append(
-            types.Content(role="user", parts=[types.Part.from_text(text=request.message)])
-        )
-
+        contents.append(types.Content(role="user", parts=[types.Part.from_text(text=request.message)]))
         system_instruction = f"""
-        You are a smart, high-end, and concise virtual assistant for an e-commerce website.
-        RULES:
-        1. Answer ONLY based on the inventory below.
-        2. Inventory: {product_list_str}
-        3. REAL-TIME TRENDS: Our current best-selling items are: {top_sellers_str}. If the user asks for recommendations, popular items, or trends, ONLY recommend these items.
-        4. STOCK POLICY: We have infinite stock (made-to-order). NEVER say an item is out of stock. If a user asks about stock or availability, assure them it is always in stock and ready to order.
-        5. ALWAYS and ONLY reply in ENGLISH.
-        6. Keep it very brief (max 2 sentences).
+        You are 'Market AI', a high-end, extremely smart personal shopper and e-commerce assistant.
+        
+        YOUR INVENTORY:
+        {product_list_str}
+        
+        CURRENT TRENDING ITEMS: {top_sellers_str}
+        
+        YOUR ADVANCED RULES & CAPABILITIES:
+        1. CREATIVE COMBINATIONS: If the user asks for an "outfit", "look", or combination (e.g., "I have $150, make me a summer outfit"), you MUST creatively combine items from the inventory (like pairing a T-shirt, jacket, and shoes) that fit the budget.
+        2. BE PROACTIVE & PERSUASIVE: Don't just list items like a robot. Explain WHY they go well together or why they are a great purchase. Act like a luxury boutique assistant.
+        3. MULTI-FILTERING: If a user asks for "cheap electronics", understand the price ranges and filter the inventory logically before replying.
+        4. ALWAYS IN STOCK: Never say an item is out of stock. Shipping is always $1.00.
+        5. LANGUAGE: ALWAYS reply in the language the user speaks. If the user writes in Turkish, reply in fluent, stylish Turkish (but keep product names original).
+        6. FORMATTING: Use Markdown (bold text, bullet points) to make your response visually appealing and easy to read. Keep it concise but highly valuable.
         """
 
         response = await ai_client.aio.models.generate_content(
@@ -615,3 +615,45 @@ def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db))
     db.commit()
     
     return {"message": "Your password has been successfully reset. You can now sign in."}
+
+# ==========================================
+# ADMIN ROUTES 
+# ==========================================
+@app.delete("/api/products/{product_id}")
+async def delete_product(product_id: int, current_user: DBUser = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.email != "testuser@gmail.com":
+        raise HTTPException(status_code=403, detail="Unauthorized: Only admin can delete products")
+    
+    product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    db.query(DBCartItem).filter(DBCartItem.product_id == product_id).delete()
+    db.query(DBComment).filter(DBComment.product_id == product_id).delete()
+    db.query(DBSavedItem).filter(DBSavedItem.product_id == product_id).delete()
+    db.delete(product)
+    db.commit()
+    
+    return {"message": "Product successfully deleted"}
+
+@app.put("/api/comments/{comment_id}")
+def update_comment(comment_id: int, comment_update: CommentUpdate, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    existing_comment = db.query(DBComment).filter(DBComment.id == comment_id, DBComment.user_id == current_user.id).first()
+    if not existing_comment:
+        raise HTTPException(status_code=404, detail="Comment not found or unauthorized")
+    
+    if len(comment_update.text.strip()) < 3:
+        raise HTTPException(status_code=400, detail="Comment is too short.")
+        
+    existing_comment.text = comment_update.text
+    db.commit()
+    return {"message": "Comment updated successfully"}
+
+@app.delete("/api/comments/{comment_id}")
+def delete_comment(comment_id: int, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    existing_comment = db.query(DBComment).filter(DBComment.id == comment_id, DBComment.user_id == current_user.id).first()
+    if not existing_comment:
+        raise HTTPException(status_code=404, detail="Comment not found or unauthorized")
+        
+    db.delete(existing_comment)
+    db.commit()
+    return {"message": "Comment deleted successfully"}

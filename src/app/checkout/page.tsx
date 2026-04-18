@@ -32,6 +32,7 @@ export default function CheckoutPage() {
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (authContext === undefined) return;
@@ -143,14 +144,19 @@ export default function CheckoutPage() {
       );
 
       if (res.ok) {
-        alert("Order successfully placed!");
+        const data = await res.json();
+        setToastMessage(`Order placed! Tracking ID: #${data.order_id}`);
         router.refresh();
-        router.push("/profile");
+
+        setTimeout(() => {
+          router.push("/profile");
+        }, 2500);
       } else {
-        alert("Checkout failed. Please try again.");
+        setToastMessage("Checkout failed. Please try again.");
       }
     } catch (err) {
       console.error("Checkout error:", err);
+      setToastMessage("An error occurred during checkout.");
     } finally {
       setIsProcessing(false);
     }
@@ -334,6 +340,27 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+      {toastMessage && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-neutral-900 text-white px-6 py-4 rounded-xl shadow-2xl font-bold text-sm animate-in fade-in slide-in-from-bottom-8 flex items-center gap-3 whitespace-nowrap">
+          <div className="bg-btn-green rounded-full p-1 shrink-0 text-white">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="3"
+              stroke="currentColor"
+              className="w-4 h-4"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m4.5 12.75 6 6 9-13.5"
+              />
+            </svg>
+          </div>
+          {toastMessage}
+        </div>
+      )}
     </div>
   );
 }
