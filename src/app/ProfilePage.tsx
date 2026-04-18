@@ -155,6 +155,9 @@ export default function ProfilePage() {
     setExpandedOrderId(expandedOrderId === id ? null : id);
   };
 
+  const earnedPoints = Math.floor(
+    orders.reduce((total, order) => total + order.total_amount, 0) / 10,
+  );
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -464,7 +467,9 @@ export default function ProfilePage() {
               <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-neutral-300 dark:text-neutral-600">
                 Points
               </p>
-              <p className="text-lg md:text-xl font-black text-btn-green">0</p>
+              <p className="text-lg md:text-xl font-black text-btn-green animate-in zoom-in duration-500">
+                {earnedPoints > 0 ? earnedPoints : 0}
+              </p>
             </div>
           </div>
         </div>
