@@ -149,6 +149,12 @@ export default function ProfilePage() {
   const [isAllOpen, setIsAllOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
+
+  const toggleOrderExpand = (id: number) => {
+    setExpandedOrderId(expandedOrderId === id ? null : id);
+  };
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -626,7 +632,7 @@ export default function ProfilePage() {
                     className={`flex w-full ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-[80%] md:max-w-[70%] p-3 md:p-4 rounded-2xl text-sm font-medium ${msg.sender === "user" ? "bg-btn-green text-white rounded-tr-sm" : "bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-spc-grey dark:text-neutral-200 rounded-tl-sm shadow-sm"}`}
+                      className={`max-w-[80%] md:max-w-[70%] p-3 md:p-4 rounded-2xl text-sm font-medium select-text cursor-text ${msg.sender === "user" ? "bg-btn-green text-white rounded-tr-sm" : "bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-spc-grey dark:text-neutral-200 rounded-tl-sm shadow-sm"}`}
                     >
                       {msg.text}
                     </div>
@@ -732,38 +738,140 @@ export default function ProfilePage() {
                   </div>
                   {processedOrders.length > 0 ? (
                     <div className="flex flex-col gap-3 pb-20 px-2">
-                      {processedOrders.map((order) => (
-                        <div
-                          key={order.id}
-                          className="flex items-center justify-between bg-white dark:bg-neutral-900 p-4 md:p-5 rounded-2xl border border-neutral-100 dark:border-neutral-800 shadow-sm hover:border-btn-green dark:hover:border-btn-green transition-all group w-full"
-                        >
-                          <div className="flex items-center gap-4 md:gap-6">
-                            <div className="px-3 md:px-4 h-12 md:h-14 bg-neutral-50 dark:bg-neutral-800 rounded-xl flex items-center justify-center text-sm md:text-base font-black text-neutral-400 dark:text-neutral-500 group-hover:text-btn-green dark:group-hover:text-btn-green transition-colors whitespace-nowrap">
-                              Order ID: #{order.id}
+                      {processedOrders.map((order) => {
+                        const isExpanded = expandedOrderId === order.id;
+
+                        return (
+                          <div
+                            key={order.id}
+                            className="flex flex-col bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-100 dark:border-neutral-800 shadow-sm transition-all group w-full overflow-hidden"
+                          >
+                            <div
+                              onClick={() => toggleOrderExpand(order.id)}
+                              className="flex items-center justify-between p-4 md:p-5 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-4 md:gap-6">
+                                <div className="px-3 md:px-4 h-12 md:h-14 bg-neutral-50 dark:bg-neutral-800 rounded-xl flex items-center justify-center text-sm md:text-base font-black text-neutral-400 dark:text-neutral-500 group-hover:text-btn-green dark:group-hover:text-btn-green transition-colors whitespace-nowrap">
+                                  Order ID: #{order.id}
+                                </div>
+                                <div className="text-left">
+                                  <p className="text-[9px] md:text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-0.5">
+                                    {new Date(
+                                      order.created_at,
+                                    ).toLocaleDateString("en-US", {
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
+                                    })}
+                                  </p>
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-xs md:text-sm font-black text-spc-grey dark:text-white">
+                                      {order.status}
+                                    </p>
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      strokeWidth="3"
+                                      stroke="currentColor"
+                                      className={`w-3 h-3 text-neutral-400 transition-transform duration-300 ${isExpanded ? "rotate-180 text-btn-green" : ""}`}
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                                      />
+                                    </svg>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-base md:text-lg font-black text-btn-green">
+                                  ${order.total_amount.toFixed(2)}
+                                </p>
+                              </div>
                             </div>
-                            <div className="text-left">
-                              <p className="text-[9px] md:text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-0.5">
-                                {new Date(order.created_at).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                  },
-                                )}
-                              </p>
-                              <p className="text-xs md:text-sm font-black text-spc-grey dark:text-white">
-                                {order.status}
-                              </p>
+
+                            <div
+                              className={`transition-all duration-300 ease-in-out ${isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}
+                            >
+                              <div className="p-4 md:p-5 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 flex flex-col gap-4">
+                                <div>
+                                  <h4 className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2">
+                                    Items in your order
+                                  </h4>
+                                  <div className="flex items-center gap-3 bg-white dark:bg-neutral-800 p-3 rounded-xl border border-neutral-100 dark:border-neutral-700">
+                                    <div className="w-10 h-10 bg-neutral-100 dark:bg-neutral-700 rounded-md flex items-center justify-center text-xl shrink-0">
+                                      🛍️
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="text-xs font-bold text-spc-grey dark:text-neutral-200">
+                                        Premium Market Products
+                                      </p>
+                                      <p className="text-[10px] font-medium text-neutral-500">
+                                        Qty: Multiple items included
+                                      </p>
+                                    </div>
+                                    <p className="text-xs font-black text-spc-grey dark:text-white">
+                                      ${order.total_amount.toFixed(2)}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 mt-2">
+                                  <div className="bg-white dark:bg-neutral-800 p-3 rounded-xl border border-neutral-100 dark:border-neutral-700">
+                                    <h4 className="text-[9px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-1">
+                                      Shipping Address
+                                    </h4>
+                                    <p className="text-[10px] md:text-xs font-medium text-spc-grey dark:text-neutral-300 leading-relaxed truncate">
+                                      {user?.name || "Customer"}
+                                      <br />
+                                      123 Commerce St, Suite 100
+                                      <br />
+                                      Istanbul, Turkey 34000
+                                    </p>
+                                  </div>
+                                  <div className="bg-white dark:bg-neutral-800 p-3 rounded-xl border border-neutral-100 dark:border-neutral-700">
+                                    <h4 className="text-[9px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-1">
+                                      Payment Method
+                                    </h4>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <div className="w-6 h-4 bg-neutral-200 dark:bg-neutral-600 rounded flex items-center justify-center text-[6px] font-black text-neutral-600 dark:text-neutral-300">
+                                        VISA
+                                      </div>
+                                      <p className="text-[10px] md:text-xs font-medium text-spc-grey dark:text-neutral-300">
+                                        •••• 4242
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="mt-2 flex justify-end">
+                                  <Link
+                                    href="/tracking"
+                                    className="bg-black dark:bg-neutral-700 hover:bg-neutral-800 dark:hover:bg-neutral-600 text-white px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-colors flex items-center gap-2 shadow-sm"
+                                  >
+                                    Track Package
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      strokeWidth="3"
+                                      stroke="currentColor"
+                                      className="w-3 h-3"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                                      />
+                                    </svg>
+                                  </Link>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-base md:text-lg font-black text-btn-green">
-                              ${order.total_amount.toFixed(2)}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="flex-1 flex items-center justify-center mt-10">
