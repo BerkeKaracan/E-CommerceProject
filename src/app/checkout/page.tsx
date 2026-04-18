@@ -34,6 +34,28 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const [promoCode, setPromoCode] = useState("");
+  const [discount, setDiscount] = useState(0);
+
+  const handleApplyPromo = () => {
+    if (promoCode.toUpperCase() === "LOYALTY5") {
+      setDiscount(5);
+      setToastMessage("Discount code LOYALTY5 applied! (-$5.00)");
+      setTimeout(() => setToastMessage(null), 3000);
+    } else {
+      setToastMessage("Invalid or expired promo code.");
+      setTimeout(() => setToastMessage(null), 3000);
+      setDiscount(0);
+    }
+  };
+
+  const productsCosts = cart.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0,
+  );
+  const shippingCost = cart.length > 0 ? 1.0 : 0;
+  const totalCost = Math.max(0, productsCosts + shippingCost - discount);
+
   useEffect(() => {
     if (authContext === undefined) return;
     if (!token) {
@@ -122,13 +144,6 @@ export default function CheckoutPage() {
       },
     );
   };
-
-  const productsCosts = cart.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0,
-  );
-  const shippingCost = cart.length > 0 ? 1.0 : 0;
-  const totalCost = productsCosts + shippingCost;
 
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -289,6 +304,23 @@ export default function CheckoutPage() {
                 Payment Details
               </h2>
 
+              <div className="mb-6 flex items-center gap-2">
+                <input
+                  type="text"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value)}
+                  placeholder="Promo Code"
+                  className="flex-1 bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-lg px-4 py-2 text-sm font-black uppercase text-spc-grey dark:text-neutral-200 outline-none focus:border-btn-green dark:focus:border-btn-green transition-colors placeholder:font-medium"
+                />
+                <button
+                  onClick={handleApplyPromo}
+                  disabled={!promoCode.trim() || cart.length === 0}
+                  className="bg-black dark:bg-neutral-800 hover:bg-neutral-800 dark:hover:bg-neutral-700 text-white disabled:bg-neutral-200 dark:disabled:bg-neutral-800/50 disabled:text-neutral-400 px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm active:scale-95"
+                >
+                  Apply
+                </button>
+              </div>
+
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between text-sm font-bold text-neutral-500 dark:text-neutral-400">
                   <span>Subtotal</span>
@@ -298,6 +330,12 @@ export default function CheckoutPage() {
                   <span>Shipping</span>
                   <span>${shippingCost.toFixed(2)}</span>
                 </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-sm font-black text-btn-green animate-in slide-in-from-right-4 duration-300">
+                    <span>Discount (LOYALTY5)</span>
+                    <span>-${discount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="w-full h-px bg-neutral-200 dark:bg-neutral-800 my-2" />
                 <div className="flex justify-between text-xl font-black text-spc-grey dark:text-white">
                   <span>Total</span>

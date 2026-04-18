@@ -151,13 +151,17 @@ export default function ProfilePage() {
 
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
 
+  const [redeemedCode, setRedeemedCode] = useState<string | null>(null);
+
   const toggleOrderExpand = (id: number) => {
     setExpandedOrderId(expandedOrderId === id ? null : id);
   };
 
-  const earnedPoints = Math.floor(
+  const rawPoints = Math.floor(
     orders.reduce((total, order) => total + order.total_amount, 0) / 10,
   );
+  const earnedPoints = redeemedCode ? rawPoints - 50 : rawPoints;
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -454,23 +458,47 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <div className="text-right flex items-center gap-4 md:gap-8 shrink-0">
-            <div className="flex flex-col items-end">
-              <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-neutral-300 dark:text-neutral-600">
-                Orders
-              </p>
-              <p className="text-lg md:text-xl font-black text-spc-grey dark:text-white">
-                {orders.length > 0 ? orders.length : stats?.order_count || 0}
-              </p>
-            </div>
-            <div className="flex flex-col items-end">
-              <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-neutral-300 dark:text-neutral-600">
-                Points
-              </p>
-              <p className="text-lg md:text-xl font-black text-btn-green animate-in zoom-in duration-500">
-                {earnedPoints > 0 ? earnedPoints : 0}
-              </p>
-            </div>
+          <div className="flex flex-col items-end">
+            <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-neutral-300 dark:text-neutral-600">
+              Points
+            </p>
+            <p className="text-lg md:text-xl font-black text-btn-green animate-in zoom-in duration-500">
+              {earnedPoints > 0 ? earnedPoints : 0}
+            </p>
+            {earnedPoints >= 50 && !redeemedCode && (
+              <button
+                onClick={() => setRedeemedCode("LOYALTY5")}
+                className="mt-1 bg-btn-green text-white text-[9px] font-black px-2 py-1 rounded-md hover:bg-green-600 transition-colors uppercase tracking-widest shadow-sm active:scale-95"
+              >
+                Get $5 Code
+              </button>
+            )}
+            {redeemedCode && (
+              <div
+                onClick={() => {
+                  navigator.clipboard.writeText(redeemedCode);
+                  alert("Promo Code Copied: " + redeemedCode);
+                }}
+                className="mt-1 flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-[10px] font-black text-spc-grey dark:text-white px-2 py-1.5 rounded-md uppercase tracking-widest cursor-pointer hover:border-btn-green dark:hover:border-btn-green transition-colors"
+                title="Click to copy"
+              >
+                {redeemedCode}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2.5"
+                  stroke="currentColor"
+                  className="w-3 h-3 text-neutral-400"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75"
+                  />
+                </svg>
+              </div>
+            )}
           </div>
         </div>
 
