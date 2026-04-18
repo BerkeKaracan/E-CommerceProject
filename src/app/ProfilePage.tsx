@@ -548,7 +548,7 @@ export default function ProfilePage() {
             </button>
 
             {isAllOpen && (
-              <div className="hidden md:block absolute top-[calc(100%+10px)] right-0 w-64 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl shadow-[0_20px_50px_-15px_rgba(0,0,0,0.15)] dark:shadow-none overflow-hidden z-110 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="hidden md:block absolute top-[calc(100%+10px)] right-0 w-64 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl shadow-[0_20px_50px_-15px_rgba(0,0,0,0.15)] dark:shadow-none overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                 {filteredMenuOptions.length > 0 ? (
                   filteredMenuOptions.map((group, idx) => (
                     <div
@@ -1017,7 +1017,7 @@ export default function ProfilePage() {
 
       {/* Dropdown Menu - Mobile Bottom Sheet */}
       {isAllOpen && (
-        <div className="md:hidden fixed inset-0 z-120 flex flex-col justify-end">
+        <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end">
           <div
             className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-in fade-in duration-200"
             onClick={() => setIsAllOpen(false)}

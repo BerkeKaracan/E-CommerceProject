@@ -152,15 +152,15 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-6 select-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 select-none transition-colors duration-300">
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
         onClick={handleClose}
       />
 
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex overflow-hidden animate-in fade-in zoom-in-95 duration-300 min-h-[500px] sm:min-h-[600px]">
+      <div className="relative bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-4xl flex overflow-hidden animate-in fade-in zoom-in-95 duration-300 min-h-[500px] sm:min-h-[600px] border border-transparent dark:border-neutral-800 transition-colors">
         {/* Left Side Showcase */}
-        <div className="hidden md:block md:w-1/2 relative bg-neutral-100 group">
+        <div className="hidden md:block md:w-1/2 relative bg-neutral-100 dark:bg-neutral-800 group transition-colors">
           <Image
             src="/necklace.png"
             alt="Premium Collection"
@@ -179,10 +179,10 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         </div>
 
         {/* Right Side Form */}
-        <div className="w-full md:w-1/2 p-8 sm:p-12 flex flex-col justify-center bg-white relative">
+        <div className="w-full md:w-1/2 p-8 sm:p-12 flex flex-col justify-center bg-white dark:bg-neutral-900 relative transition-colors">
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-spc-grey hover:bg-neutral-50 rounded-full transition-colors"
+            className="absolute top-4 right-4 p-2 text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-full transition-colors"
             aria-label="Close modal"
           >
             <svg
@@ -202,14 +202,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </button>
 
           <div className="mb-6">
-            <h2 className="text-3xl font-black text-spc-grey mb-2 tracking-tight">
+            <h2 className="text-3xl font-black text-spc-grey dark:text-white mb-2 tracking-tight transition-colors">
               {isForgotPassword
                 ? "Reset Password"
                 : isLogin
                   ? "Welcome Back"
                   : "Create Account"}
             </h2>
-            <p className="text-sm text-neutral-400 font-medium">
+            <p className="text-sm text-neutral-400 dark:text-neutral-500 font-medium transition-colors">
               {isForgotPassword
                 ? "Enter your email to receive a reset link."
                 : isLogin
@@ -219,7 +219,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl flex items-center gap-2">
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs font-bold rounded-xl flex items-center gap-2 transition-colors">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
@@ -237,7 +237,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           )}
 
           {resetMessage && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 text-xs font-bold rounded-xl flex items-center gap-2">
+            <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/50 text-green-700 dark:text-green-400 text-xs font-bold rounded-xl flex items-center gap-2 transition-colors">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
@@ -260,7 +260,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               onSubmit={handleForgotPassword}
             >
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-spc-grey uppercase tracking-widest pl-1">
+                <label className="text-[11px] font-bold text-spc-grey dark:text-neutral-300 uppercase tracking-widest pl-1 transition-colors">
                   Email
                 </label>
                 <input
@@ -268,13 +268,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="example@mail.com"
-                  className="w-full bg-neutral-50 hover:bg-neutral-100/50 border border-neutral-200 rounded-xl px-4 py-3 text-sm text-spc-grey focus:outline-none focus:border-btn-green focus:ring-1 focus:ring-btn-green transition-all"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100/50 dark:hover:bg-neutral-700/50 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm text-spc-grey dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-btn-green dark:focus:border-btn-green focus:ring-1 focus:ring-btn-green transition-all"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-spc-grey hover:bg-btn-green text-white font-black uppercase tracking-wide text-sm rounded-xl py-3.5 mt-2 transition-all duration-300 shadow-md hover:shadow-lg active:scale-[0.98]"
+                className="w-full bg-spc-grey dark:bg-neutral-800 hover:bg-btn-green dark:hover:bg-btn-green text-white font-black uppercase tracking-wide text-sm rounded-xl py-3.5 mt-2 transition-all duration-300 shadow-md hover:shadow-lg active:scale-[0.98]"
               >
                 Send Reset Link
               </button>
@@ -286,7 +286,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   setError(null);
                   setResetMessage(null);
                 }}
-                className="text-xs font-bold text-neutral-400 hover:text-spc-grey transition-colors mt-2"
+                className="text-xs font-bold text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-colors mt-2"
               >
                 Back to Sign In
               </button>
@@ -298,7 +298,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             >
               {!isLogin && (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-bold text-spc-grey uppercase tracking-widest pl-1">
+                  <label className="text-[11px] font-bold text-spc-grey dark:text-neutral-300 uppercase tracking-widest pl-1 transition-colors">
                     Full Name
                   </label>
                   <input
@@ -306,13 +306,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="John Doe"
-                    className="w-full bg-neutral-50 hover:bg-neutral-100/50 border border-neutral-200 rounded-xl px-4 py-3 text-sm text-spc-grey focus:outline-none focus:border-btn-green focus:ring-1 focus:ring-btn-green transition-all"
+                    className="w-full bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100/50 dark:hover:bg-neutral-700/50 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm text-spc-grey dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-btn-green dark:focus:border-btn-green focus:ring-1 focus:ring-btn-green transition-all"
                   />
                 </div>
               )}
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-spc-grey uppercase tracking-widest pl-1">
+                <label className="text-[11px] font-bold text-spc-grey dark:text-neutral-300 uppercase tracking-widest pl-1 transition-colors">
                   Email
                 </label>
                 <input
@@ -320,13 +320,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="example@mail.com"
-                  className="w-full bg-neutral-50 hover:bg-neutral-100/50 border border-neutral-200 rounded-xl px-4 py-3 text-sm text-spc-grey focus:outline-none focus:border-btn-green focus:ring-1 focus:ring-btn-green transition-all"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100/50 dark:hover:bg-neutral-700/50 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm text-spc-grey dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-btn-green dark:focus:border-btn-green focus:ring-1 focus:ring-btn-green transition-all"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between pl-1">
-                  <label className="text-[11px] font-bold text-spc-grey uppercase tracking-widest">
+                  <label className="text-[11px] font-bold text-spc-grey dark:text-neutral-300 uppercase tracking-widest transition-colors">
                     Password
                   </label>
                   {isLogin && (
@@ -337,7 +337,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                         setError(null);
                         setResetMessage(null);
                       }}
-                      className="text-[11px] font-bold text-neutral-400 hover:text-btn-green transition-colors"
+                      className="text-[11px] font-bold text-neutral-400 dark:text-neutral-500 hover:text-btn-green dark:hover:text-btn-green transition-colors"
                     >
                       Forgot Password?
                     </button>
@@ -348,13 +348,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-neutral-50 hover:bg-neutral-100/50 border border-neutral-200 rounded-xl px-4 py-3 text-sm text-spc-grey focus:outline-none focus:border-btn-green focus:ring-1 focus:ring-btn-green transition-all"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100/50 dark:hover:bg-neutral-700/50 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm text-spc-grey dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-btn-green dark:focus:border-btn-green focus:ring-1 focus:ring-btn-green transition-all"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-spc-grey hover:bg-btn-green text-white font-black uppercase tracking-wide text-sm rounded-xl py-3.5 mt-2 transition-all duration-300 shadow-md hover:shadow-lg active:scale-[0.98]"
+                className="w-full bg-spc-grey dark:bg-neutral-800 hover:bg-btn-green dark:hover:bg-btn-green text-white font-black uppercase tracking-wide text-sm rounded-xl py-3.5 mt-2 transition-all duration-300 shadow-md hover:shadow-lg active:scale-[0.98]"
               >
                 {isLogin ? "Sign In" : "Sign Up"}
               </button>
@@ -363,7 +363,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
           {!isForgotPassword && (
             <div className="mt-6 text-center">
-              <p className="text-sm font-medium text-neutral-500">
+              <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400 transition-colors">
                 {isLogin
                   ? "Don't have an account? "
                   : "Already have an account? "}
@@ -373,7 +373,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     setIsLogin(!isLogin);
                     setError(null);
                   }}
-                  className="text-btn-green font-bold hover:text-category-blue transition-colors underline decoration-2 underline-offset-4"
+                  className="text-btn-green font-bold hover:text-category-blue dark:hover:text-white transition-colors underline decoration-2 underline-offset-4"
                 >
                   {isLogin ? "Sign Up Now" : "Sign In"}
                 </button>

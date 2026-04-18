@@ -245,7 +245,7 @@ export default function Home() {
           onClick={() => setIsSearchFocused(false)}
         />
       )}
-      <nav className="shrink-0 z-50 bg-neutral-50 dark:bg-neutral-950 w-full shadow-sm border-b border-neutral-200 dark:border-neutral-800 transition-colors duration-300">
+      <nav className="shrink-0 z-40 bg-neutral-50 dark:bg-neutral-950 w-full shadow-sm border-b border-neutral-200 dark:border-neutral-800 transition-colors duration-300">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-4 lg:px-4">
           <div className="flex items-center justify-between h-20 gap-6 lg:gap-10">
             <div className="flex items-center gap-4 sm:gap-6 shrink-0">
@@ -975,12 +975,12 @@ export default function Home() {
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
 
       {isMenuOpen && (
-        <div className="fixed inset-0 z-100 flex">
+        <div className="fixed inset-0 z-50 flex">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity animate-in fade-in duration-300"
             onClick={() => setIsMenuOpen(false)}
           />
-          <div className="relative w-[85%] max-w-[320px] bg-white dark:bg-neutral-950 h-full shadow-2xl flex flex-col animate-in slide-in-from-left duration-300 z-101">
+          <div className="relative w-[85%] max-w-[320px] bg-white dark:bg-neutral-950 h-full shadow-2xl flex flex-col animate-in slide-in-from-left duration-300 z-50">
             <div className="flex items-center justify-between p-5 border-b border-neutral-100 dark:border-neutral-800">
               <span className="text-2xl font-black tracking-tighter text-btn-green">
                 market
