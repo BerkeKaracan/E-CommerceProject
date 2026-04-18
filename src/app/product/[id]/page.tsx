@@ -269,7 +269,7 @@ export default function ProductDetailPage() {
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950 transition-colors duration-300">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-btn-green"></div>
+        <div className="w-12 h-12 border-4 border-neutral-200/50 dark:border-neutral-800 border-t-btn-green dark:border-t-btn-green rounded-full animate-spin"></div>
       </div>
     );
   }

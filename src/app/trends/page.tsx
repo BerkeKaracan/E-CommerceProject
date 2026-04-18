@@ -105,7 +105,7 @@ export default function TrendsPage() {
         {/* Leaderboard (Products) */}
         {isLoading ? (
           <div className="flex-1 flex justify-center items-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-btn-green"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-neutral-200 dark:border-neutral-800 border-t-btn-green dark:border-t-btn-green"></div>
           </div>
         ) : trendingProducts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

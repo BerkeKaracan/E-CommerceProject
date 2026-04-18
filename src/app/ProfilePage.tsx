@@ -308,7 +308,7 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <div className="h-screen flex items-center justify-center bg-white dark:bg-neutral-950 transition-colors duration-300">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-spc-grey dark:border-white"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-[3px] border-neutral-200 dark:border-neutral-800 border-t-btn-green dark:border-t-btn-green"></div>
       </div>
     );
   }
