@@ -44,11 +44,12 @@ To run this project locally, follow these steps:
 
 5. Open http://localhost:3000 with your browser to see the result.
 
-## 🎯 Project Highlights
+## 🎯 Technical Highlights
 
-- **Anti-Aliasing Fixes:** Handled subpixel rendering artifacts in webkit browsers for perfect circular loading spinners.
-- **Z-Index Standardization:** Carefully managed z-index hierarchy (z-40, z-50) to ensure modals, drop-downs, and navigation bars never conflict.
-- **Form Validations:** Simulated authentication (AuthModal) with email formatting checks, password length requirements, and error handling.
+- ⚡ Performance Optimized: Built with Next.js App Router for lightning-fast page loads, optimized image rendering, and seamless client-side navigation.
+- 🎨 Modern UI/UX Architecture: Fully custom, headless UI components with Tailwind CSS v4, featuring smooth micro-interactions, mobile bottom-sheets, and fluid animations.
+- 🔐 Robust State Management: Advanced Context API implementations handling real-time cart synchronization, user authentication states, and dynamic discount calculations.
+- 🌐 Scalable & API-Ready: A modular, component-based folder structure designed to easily integrate with headless CMS platforms, real payment gateways (like Stripe), and external AI backends.
 
 ---
 
