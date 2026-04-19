@@ -509,37 +509,41 @@ export default function Home() {
           }}
           className="flex-1 h-full overflow-y-auto pr-2 pb-20 lg:pb-4 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-neutral-300 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700 [&::-webkit-scrollbar-thumb]:rounded-full"
         >
-          <div className="relative w-full h-[180px] md:h-[220px] lg:h-[280px] rounded-3xl overflow-hidden mb-8 shrink-0 flex items-center group cursor-pointer shadow-sm border border-transparent dark:border-neutral-800">
-            <Image
-              src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200&auto=format&fit=crop"
-              alt="Summer Collection 2026"
-              fill
-              className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
-              priority
-            />
-            <div className="absolute inset-0 bg-linear-to-r from-neutral-900/90 via-neutral-900/50 to-transparent"></div>
-            <div className="relative z-10 px-6 md:px-12 max-w-lg">
-              <span className="inline-block py-1 px-3 rounded-full bg-btn-green/20 text-btn-green text-[10px] font-black uppercase tracking-widest mb-3 backdrop-blur-md border border-btn-green/30">
-                Limited Time Offer
-              </span>
-              <h2 className="text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight mb-2 tracking-tight">
-                2026 Exclusive <br className="hidden md:block" /> Collection
-              </h2>
-              <p className="text-neutral-300 text-xs md:text-sm mb-6 font-medium max-w-xs">
-                Discover the new season with up to 50% off on selected premium
-                items. Elevate your style.
-              </p>
-              <button className="bg-white text-spc-grey px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-btn-green hover:text-white transition-colors shadow-lg active:scale-95">
-                Shop Now
-              </button>
+          {searchQuery.trim().length === 0 && selectedCategory === "All" && (
+            <div className="relative w-full h-[180px] md:h-[220px] lg:h-[280px] rounded-3xl overflow-hidden mb-8 shrink-0 flex items-center group cursor-pointer shadow-sm border border-transparent dark:border-neutral-800">
+              <Image
+                src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200&auto=format&fit=crop"
+                alt="Summer Collection 2026"
+                fill
+                className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
+                priority
+              />
+              <div className="absolute inset-0 bg-linear-to-r from-neutral-900/90 via-neutral-900/50 to-transparent"></div>
+              <div className="relative z-10 px-6 md:px-12 max-w-lg">
+                <span className="inline-block py-1 px-3 rounded-full bg-btn-green/20 text-btn-green text-[10px] font-black uppercase tracking-widest mb-3 backdrop-blur-md border border-btn-green/30">
+                  Limited Time Offer
+                </span>
+                <h2 className="text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight mb-2 tracking-tight">
+                  2026 Exclusive <br className="hidden md:block" /> Collection
+                </h2>
+                <p className="text-neutral-300 text-xs md:text-sm mb-6 font-medium max-w-xs">
+                  Discover the new season with up to 50% off on selected premium
+                  items. Elevate your style.
+                </p>
+                <button className="bg-white text-spc-grey px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-btn-green hover:text-white transition-colors shadow-lg active:scale-95">
+                  Shop Now
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex justify-between items-end mb-6 mt-2">
             <h2 className="text-lg md:text-xl font-black text-spc-grey dark:text-neutral-100 hidden md:block">
-              {selectedCategory === "All"
-                ? "Featured Products"
-                : `${selectedCategory} Collection`}
+              {searchQuery.trim().length > 0
+                ? `Results for "${searchQuery}"`
+                : selectedCategory === "All"
+                  ? "Featured Products"
+                  : `${selectedCategory} Collection`}
             </h2>
 
             <div className="flex flex-col md:flex-row items-end md:items-center gap-3 w-full md:w-auto">

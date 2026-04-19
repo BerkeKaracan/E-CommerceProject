@@ -96,6 +96,21 @@ export default function ProfilePage() {
     },
   ]);
 
+  useEffect(() => {
+    const savedHistory = localStorage.getItem("ai_chat_history");
+    if (savedHistory) {
+      try {
+        setChatHistory(JSON.parse(savedHistory));
+      } catch (e) {
+        console.error("Failed to parse chat history", e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("ai_chat_history", JSON.stringify(chatHistory));
+  }, [chatHistory]);
+
   const [myComments, setMyComments] = useState<UserComment[]>([]);
   const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
 
@@ -639,25 +654,60 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setIsAiOpen(false)}
-                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-colors"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="3"
-                    stroke="currentColor"
-                    className="w-4 h-4"
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => {
+                      const defaultMsg = [
+                        {
+                          id: 1,
+                          sender: "ai" as const,
+                          text: "Hello! I am your personal virtual assistant. I can help you choose a gift, navigate the store, or just chat. How can I help you today?",
+                        },
+                      ];
+                      setChatHistory(defaultMsg);
+                      localStorage.setItem(
+                        "ai_chat_history",
+                        JSON.stringify(defaultMsg),
+                      );
+                    }}
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 text-neutral-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                    title="Clear History"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18 18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="2.5"
+                      stroke="currentColor"
+                      className="w-4 h-4"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setIsAiOpen(false)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-colors"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="3"
+                      stroke="currentColor"
+                      className="w-4 h-4"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M6 18 18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
 
               {/* Chat Messages */}
@@ -1086,8 +1136,17 @@ export default function ProfilePage() {
       )}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 bg-btn-green text-white px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-2xl animate-in slide-in-from-bottom-4 duration-300 z-50 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="w-4 h-4"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+              clipRule="evenodd"
+            />
           </svg>
           {toastMessage}
         </div>
