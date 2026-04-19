@@ -58,9 +58,10 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           return;
         }
 
-        alert("Account created successfully! Now you can sign in. 🚀");
+        setResetMessage("Account created successfully! Now you can sign in.");
         setIsLogin(true);
         setPassword("");
+        setTimeout(() => setResetMessage(null), 2000);
       } catch (err) {
         console.error("Server Connection Error:", err);
         setError("Cannot connect to the server. Is backend running?");

@@ -82,6 +82,8 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [orders, setOrders] = useState<ApiOrder[]>([]);
 
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [aiInput, setAiInput] = useState("");
   const [isAiTyping, setIsAiTyping] = useState(false);
@@ -477,7 +479,8 @@ export default function ProfilePage() {
               <div
                 onClick={() => {
                   navigator.clipboard.writeText(redeemedCode);
-                  alert("Promo Code Copied: " + redeemedCode);
+                  setToastMessage("Promo Code Copied: " + redeemedCode);
+                  setTimeout(() => setToastMessage(null), 3000);
                 }}
                 className="mt-1 flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-[10px] font-black text-spc-grey dark:text-white px-2 py-1.5 rounded-md uppercase tracking-widest cursor-pointer hover:border-btn-green dark:hover:border-btn-green transition-colors"
                 title="Click to copy"
@@ -1079,6 +1082,14 @@ export default function ProfilePage() {
               ))}
             </div>
           </div>
+        </div>
+      )}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 bg-btn-green text-white px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-2xl animate-in slide-in-from-bottom-4 duration-300 z-50 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+          </svg>
+          {toastMessage}
         </div>
       )}
     </div>
