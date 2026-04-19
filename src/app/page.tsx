@@ -1087,31 +1087,37 @@ export default function Home() {
                   ),
                 )}
               </div>
-              <div className="flex flex-col gap-2 border-t border-neutral-100 dark:border-neutral-800 pt-6 mb-6">
-                <p className="text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-2 px-1">
+              {/* Support */}
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-widest text-spc-grey dark:text-white mb-6 transition-colors">
                   Support
-                </p>
-                <Link
-                  href="#"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="px-3 py-2 text-xs font-bold text-neutral-500 dark:text-neutral-400 hover:text-spc-grey dark:hover:text-neutral-200 transition-colors"
-                >
-                  Help Center
-                </Link>
-                <Link
-                  href="#"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="px-3 py-2 text-xs font-bold text-neutral-500 dark:text-neutral-400 hover:text-spc-grey dark:hover:text-neutral-200 transition-colors"
-                >
-                  Returns & Refunds
-                </Link>
-                <Link
-                  href="#"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="px-3 py-2 text-xs font-bold text-neutral-500 dark:text-neutral-400 hover:text-spc-grey dark:hover:text-neutral-200 transition-colors"
-                >
-                  Contact Us
-                </Link>
+                </h3>
+                <ul className="flex flex-col gap-4">
+                  <li>
+                    <Link
+                      href="/support#faq"
+                      className="text-sm font-bold text-neutral-500 dark:text-neutral-400 hover:text-btn-green dark:hover:text-btn-green transition-colors"
+                    >
+                      Help Center
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/support#returns"
+                      className="text-sm font-bold text-neutral-500 dark:text-neutral-400 hover:text-btn-green dark:hover:text-btn-green transition-colors"
+                    >
+                      Returns & Refunds
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/support#contact"
+                      className="text-sm font-bold text-neutral-500 dark:text-neutral-400 hover:text-btn-green dark:hover:text-btn-green transition-colors"
+                    >
+                      Contact Us
+                    </Link>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>

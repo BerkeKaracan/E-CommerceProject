@@ -66,7 +66,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Support */}
           <div>
             <h3 className="text-xs font-black uppercase tracking-widest text-spc-grey dark:text-white mb-6 transition-colors">
               Support
@@ -74,7 +73,7 @@ export default function Footer() {
             <ul className="flex flex-col gap-4">
               <li>
                 <Link
-                  href="#"
+                  href="/support#faq"
                   className="text-sm font-bold text-neutral-500 dark:text-neutral-400 hover:text-btn-green dark:hover:text-btn-green transition-colors"
                 >
                   Help Center
@@ -82,7 +81,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="/support#returns"
                   className="text-sm font-bold text-neutral-500 dark:text-neutral-400 hover:text-btn-green dark:hover:text-btn-green transition-colors"
                 >
                   Returns & Refunds
@@ -90,7 +89,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="/support#contact"
                   className="text-sm font-bold text-neutral-500 dark:text-neutral-400 hover:text-btn-green dark:hover:text-btn-green transition-colors"
                 >
                   Contact Us

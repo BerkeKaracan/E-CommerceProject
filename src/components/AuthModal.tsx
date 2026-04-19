@@ -138,6 +138,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         setResetMessage(null);
       }, 4000);
     } catch (err) {
+      console.error("Forgot Password Error:", err);
       setError("Cannot connect to the server. Is backend running?");
     }
   };
