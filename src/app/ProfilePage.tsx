@@ -1747,7 +1747,7 @@ export default function ProfilePage() {
                         )}
                       </div>
 
-                      <div className="w-52 h-52 bg-white rounded-3xl flex items-center justify-center shrink-0 overflow-hidden relative p-6 shadow-2xl border-4 border-neutral-100">
+                      <div className="w-48 h-48 bg-white rounded-2xl flex items-center justify-center p-4 shadow-xl border-4 border-neutral-100">
                         {!twoFaSetup ? (
                           <div className="text-center opacity-40">
                             <p className="text-4xl mb-2">📱</p>
@@ -1757,8 +1757,9 @@ export default function ProfilePage() {
                           </div>
                         ) : (
                           <div className="w-full h-full bg-white flex items-center justify-center">
+                            {(console.log("QR URI:", twoFaSetup?.uri), null)}
                             <QRCodeSVG
-                              value={twoFaSetup.uri}
+                              value={twoFaSetup.uri || ""}
                               size={160}
                               level="M"
                               includeMargin={false}
