@@ -818,3 +818,10 @@ def verify_2fa(req: TwoFaVerifyRequest, db: Session = Depends(get_db), current_u
         return {"message": "2FA successfully enabled!"}
     
     raise HTTPException(status_code=400, detail="Invalid verification code.")
+
+@app.get("/api/2fa/reset-test")
+def reset_2fa_test(db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    current_user.is_2fa_enabled = 0
+    current_user.totp_secret = None
+    db.commit()
+    return {"message": "Test için 2FA sıfırlandı. Şimdi QR oluşturmayı dene!"}
