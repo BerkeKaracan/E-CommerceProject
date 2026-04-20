@@ -819,12 +819,3 @@ def verify_2fa(req: TwoFaVerifyRequest, db: Session = Depends(get_db), current_u
     
     raise HTTPException(status_code=400, detail="Invalid verification code.")
 
-@app.get("/api/2fa/reset-test")
-def reset_2fa_test(email: str, db: Session = Depends(get_db)):
-    user = db.query(DBUser).filter(DBUser.email == email).first()
-    if user:
-        user.is_2fa_enabled = 0
-        user.totp_secret = None
-        db.commit()
-        return {"status": "success", "message": f"{email} için 2FA sıfırlandı. Sayfaya dönüp dene!"}
-    return {"status": "error", "message": "Kullanıcı bulunamadı. Lütfen e-postanı doğru yazdığından emin ol."}
