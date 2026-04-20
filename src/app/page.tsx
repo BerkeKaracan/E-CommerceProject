@@ -434,24 +434,45 @@ export default function Home() {
               </Link>
               <ThemeToggle />
               {user ? (
-                <div className="flex items-center gap-2 sm:gap-3 bg-neutral-100 dark:bg-neutral-800 px-2 sm:px-3 py-1.5 rounded-xl max-w-[130px] sm:max-w-none shrink-0 border border-transparent dark:border-neutral-700">
+                <div className="flex items-center gap-2 sm:gap-3 bg-neutral-100 dark:bg-neutral-800 px-2 sm:px-3 py-1.5 rounded-xl shrink-0 border border-transparent dark:border-neutral-700">
                   <Link
                     href="/profile"
-                    className="cursor-pointer hover:text-btn-green transition-colors truncate text-xs sm:text-sm font-bold text-spc-grey dark:text-neutral-200 block w-full"
+                    className="cursor-pointer hover:text-btn-green transition-colors truncate text-xs sm:text-sm font-bold text-spc-grey dark:text-neutral-200 hidden sm:block"
                   >
                     Hi, {user.name}
                   </Link>
+                  <Link
+                    href="/profile"
+                    className="cursor-pointer hover:text-btn-green transition-colors sm:hidden w-7 h-7 bg-neutral-200 dark:bg-neutral-700 rounded-full flex items-center justify-center text-[10px] font-black text-spc-grey dark:text-white"
+                  >
+                    {user.name.charAt(0).toUpperCase()}
+                  </Link>
+
                   <div className="w-px h-4 bg-neutral-300 dark:bg-neutral-600 shrink-0"></div>
+
                   <button
                     onClick={() => {
                       if (logout) logout();
                       setToastMessage("Logged out successfully!");
                       setTimeout(() => setToastMessage(null), 2200);
                     }}
-                    className="text-[10px] sm:text-xs font-black text-red-500 hover:text-red-600 transition-colors uppercase tracking-wider shrink-0"
+                    className="text-[10px] sm:text-xs font-black text-red-500 hover:text-red-600 transition-colors uppercase tracking-wider shrink-0 p-1 sm:p-0"
                   >
                     <span className="hidden sm:inline">Sign Out</span>
-                    <span className="sm:hidden">Out</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="2.5"
+                      stroke="currentColor"
+                      className="w-4 h-4 sm:hidden"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"
+                      />
+                    </svg>
                   </button>
                 </div>
               ) : (
@@ -510,7 +531,7 @@ export default function Home() {
           className="flex-1 h-full overflow-y-auto pr-2 pb-20 lg:pb-4 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-neutral-300 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700 [&::-webkit-scrollbar-thumb]:rounded-full"
         >
           {searchQuery.trim().length === 0 && selectedCategory === "All" && (
-            <div className="relative w-full h-[180px] md:h-[220px] lg:h-[280px] rounded-3xl overflow-hidden mb-8 shrink-0 flex items-center group cursor-pointer shadow-sm border border-transparent dark:border-neutral-800">
+            <div className="relative w-full aspect-video md:aspect-21/9 rounded-3xl overflow-hidden mb-8 shrink-0 flex items-center group cursor-pointer shadow-sm border border-transparent dark:border-neutral-800">
               <Image
                 src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200&auto=format&fit=crop"
                 alt="Summer Collection 2026"

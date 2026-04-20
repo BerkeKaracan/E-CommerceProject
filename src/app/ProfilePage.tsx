@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AuthContext } from "@/context/AuthContext";
 import ThemeToggle from "@/components/ThemeToggle";
+import { QRCodeSVG } from "qrcode.react";
 
 interface UserStats {
   id: number;
@@ -12,6 +13,7 @@ interface UserStats {
   name: string;
   order_count: number;
   joined_at: string;
+  is_2fa_enabled?: number;
 }
 
 interface SavedItem {
@@ -21,6 +23,13 @@ interface SavedItem {
   product_image: string;
   product_price: number;
   saved_at: string;
+}
+
+interface ApiAddress {
+  id: number;
+  title: string;
+  full_address: string;
+  is_default: number;
 }
 
 interface UserComment {
@@ -82,12 +91,33 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [orders, setOrders] = useState<ApiOrder[]>([]);
 
+  const [twoFaSetup, setTwoFaSetup] = useState<{
+    secret: string;
+    uri: string;
+  } | null>(null);
+  const [twoFaCode, setTwoFaCode] = useState("");
+  const [isVerifying2Fa, setIsVerifying2Fa] = useState(false);
+
+  const [addresses, setAddresses] = useState<ApiAddress[]>([]);
+  const [isAddressFormOpen, setIsAddressFormOpen] = useState(false);
+  const [addressForm, setAddressForm] = useState({
+    title: "",
+    full_address: "",
+    is_default: 0,
+  });
+
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [aiInput, setAiInput] = useState("");
   const [isAiTyping, setIsAiTyping] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isPasswordChanging, setIsPasswordChanging] = useState(false);
+
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
     {
       id: 1,
@@ -160,6 +190,54 @@ export default function ProfilePage() {
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const handleSaveAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/addresses`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(addressForm),
+        },
+      );
+      if (res.ok) {
+        setToastMessage("📍 Address successfully saved!");
+        setTimeout(() => setToastMessage(null), 3000);
+        setIsAddressFormOpen(false);
+        setAddressForm({ title: "", full_address: "", is_default: 0 });
+        const updated = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/addresses`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        setAddresses(await updated.json());
+      }
+    } catch (err) {
+      setToastMessage("❌ Failed to save address.");
+      setTimeout(() => setToastMessage(null), 3000);
+    }
+  };
+
+  const handleDeleteAddress = async (id: number) => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/addresses/${id}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      if (res.ok) {
+        setToastMessage("🗑️ Address deleted.");
+        setTimeout(() => setToastMessage(null), 3000);
+        setAddresses(addresses.filter((a) => a.id !== id));
+      }
+    } catch (err) {}
   };
 
   const [activeTab, setActiveTab] = useState("Orders");
@@ -261,6 +339,14 @@ export default function ProfilePage() {
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
         if (Array.isArray(data)) setSavedItems(data);
+      })
+      .catch(console.error);
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/addresses`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) setAddresses(data);
       })
       .catch(console.error);
   }, [token, router]);
@@ -484,7 +570,23 @@ export default function ProfilePage() {
             </p>
             {earnedPoints >= 50 && !redeemedCode && (
               <button
-                onClick={() => setRedeemedCode("LOYALTY5")}
+                onClick={async () => {
+                  try {
+                    const res = await fetch(
+                      `${process.env.NEXT_PUBLIC_API_URL}/api/promo/generate`,
+                      {
+                        method: "POST",
+                        headers: { Authorization: `Bearer ${token}` },
+                      },
+                    );
+                    if (res.ok) {
+                      const data = await res.json();
+                      setRedeemedCode(data.code);
+                    }
+                  } catch (e) {
+                    setToastMessage("Failed to generate code.");
+                  }
+                }}
                 className="mt-1 bg-btn-green text-white text-[9px] font-black px-2 py-1 rounded-md hover:bg-green-600 transition-colors uppercase tracking-widest shadow-sm active:scale-95"
               >
                 Get $5 Code
@@ -613,7 +715,10 @@ export default function ProfilePage() {
                         {group.items.map((item) => (
                           <button
                             key={item}
-                            onClick={() => setIsAllOpen(false)}
+                            onClick={() => {
+                              setIsAllOpen(false);
+                              setActiveTab(item);
+                            }}
                             className="text-left text-[11px] font-bold text-spc-grey dark:text-neutral-300 hover:text-btn-green dark:hover:text-btn-green transition-colors flex items-center justify-between group/item"
                           >
                             {item}
@@ -1081,11 +1186,662 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </div>
-              ) : (
-                <div className="flex-1 flex items-center justify-center">
-                  <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] text-neutral-200 dark:text-neutral-700 text-center">
-                    {activeTab} Content Area
+              ) : activeTab === "Support" ? (
+                <div className="flex-1 w-full max-w-3xl flex flex-col items-center justify-center gap-4 mt-16 animate-in fade-in zoom-in-95 duration-300">
+                  <div className="w-16 h-16 bg-neutral-50 dark:bg-neutral-800 rounded-full flex items-center justify-center text-2xl mb-2 shadow-sm border border-neutral-100 dark:border-neutral-700">
+                    🎧
+                  </div>
+                  <h3 className="text-lg font-black text-spc-grey dark:text-white uppercase tracking-widest">
+                    How can we help?
+                  </h3>
+                  <p className="text-xs font-bold text-neutral-400 text-center max-w-xs">
+                    Access our full Help Center, FAQ, and contact forms from our
+                    dedicated support portal.
                   </p>
+                  <Link
+                    href="/support"
+                    className="mt-4 bg-btn-green text-white px-8 py-3.5 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-green-600 transition-colors shadow-sm active:scale-95"
+                  >
+                    Open Help Center
+                  </Link>
+                </div>
+              ) : activeTab === "Personal Information" ? (
+                <div className="flex-1 w-full max-w-3xl flex flex-col mt-4 md:mt-6 animate-in fade-in zoom-in-95 duration-300 px-2 pb-20">
+                  <div className="flex items-center gap-3 mb-6 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+                    <div className="w-10 h-10 bg-white dark:bg-neutral-800 rounded-xl flex items-center justify-center shadow-sm border border-neutral-100 dark:border-neutral-700 text-lg">
+                      👤
+                    </div>
+                    <div>
+                      <h2 className="text-sm md:text-base font-black text-spc-grey dark:text-white uppercase tracking-wider">
+                        Personal Information
+                      </h2>
+                      <p className="text-[10px] font-bold text-neutral-400">
+                        Manage your basic profile details
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-6 shadow-sm space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 block mb-2">
+                          Full Name
+                        </label>
+                        <div className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm font-bold text-spc-grey dark:text-white cursor-not-allowed">
+                          {user?.name}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 block mb-2">
+                          Email Address
+                        </label>
+                        <div className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm font-bold text-spc-grey dark:text-white cursor-not-allowed">
+                          {user?.email}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="border-t border-neutral-100 dark:border-neutral-800 pt-6 mt-4">
+                      <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-4">
+                        To securely edit your details, use the edit icon next to
+                        your name at the top of your profile dashboard.
+                      </p>
+                      <button
+                        onClick={() => {
+                          setActiveTab("Orders");
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="bg-black dark:bg-neutral-800 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-btn-green dark:hover:bg-btn-green transition-all active:scale-95"
+                      >
+                        Go to top to Edit
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : activeTab === "Delivery Addresses" ? (
+                <div className="flex-1 w-full max-w-3xl flex flex-col mt-4 md:mt-6 animate-in fade-in zoom-in-95 duration-300 px-2 pb-20">
+                  <div className="flex items-center justify-between mb-6 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white dark:bg-neutral-800 rounded-xl flex items-center justify-center shadow-sm border border-neutral-100 dark:border-neutral-700 text-lg">
+                        📍
+                      </div>
+                      <div>
+                        <h2 className="text-sm md:text-base font-black text-spc-grey dark:text-white uppercase tracking-wider">
+                          Delivery Addresses
+                        </h2>
+                        <p className="text-[10px] font-bold text-neutral-400">
+                          Manage where your orders are sent
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setIsAddressFormOpen(!isAddressFormOpen)}
+                      className={`${isAddressFormOpen ? "bg-neutral-200 text-spc-grey dark:bg-neutral-800 dark:text-white" : "bg-btn-green text-white"} px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm hover:opacity-80 transition-all active:scale-95`}
+                    >
+                      {isAddressFormOpen ? "Cancel" : "+ Add New"}
+                    </button>
+                  </div>
+
+                  {isAddressFormOpen && (
+                    <form
+                      onSubmit={handleSaveAddress}
+                      className="mb-6 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-5 rounded-2xl shadow-sm animate-in fade-in slide-in-from-top-2"
+                    >
+                      <div className="grid grid-cols-1 gap-4 mb-4">
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-2">
+                            Address Title (e.g. Home, Office)
+                          </label>
+                          <input
+                            required
+                            value={addressForm.title}
+                            onChange={(e) =>
+                              setAddressForm({
+                                ...addressForm,
+                                title: e.target.value,
+                              })
+                            }
+                            className="w-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm font-bold text-spc-grey dark:text-white outline-none focus:border-btn-green transition-colors"
+                            placeholder="Home"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-2">
+                            Full Address
+                          </label>
+                          <textarea
+                            required
+                            rows={3}
+                            value={addressForm.full_address}
+                            onChange={(e) =>
+                              setAddressForm({
+                                ...addressForm,
+                                full_address: e.target.value,
+                              })
+                            }
+                            className="w-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm font-bold text-spc-grey dark:text-white outline-none focus:border-btn-green transition-colors"
+                            placeholder="123 Premium Market St..."
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id="is_default"
+                            checked={addressForm.is_default === 1}
+                            onChange={(e) =>
+                              setAddressForm({
+                                ...addressForm,
+                                is_default: e.target.checked ? 1 : 0,
+                              })
+                            }
+                            className="w-4 h-4 accent-btn-green rounded cursor-pointer"
+                          />
+                          <label
+                            htmlFor="is_default"
+                            className="text-xs font-bold text-spc-grey dark:text-neutral-300 cursor-pointer"
+                          >
+                            Set as Default Address
+                          </label>
+                        </div>
+                      </div>
+                      <button
+                        type="submit"
+                        className="bg-black dark:bg-neutral-800 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-btn-green transition-all active:scale-95"
+                      >
+                        Save Address
+                      </button>
+                    </form>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {addresses.length > 0
+                      ? addresses.map((addr) => (
+                          <div
+                            key={addr.id}
+                            className={`bg-white dark:bg-neutral-900 border-2 rounded-2xl p-5 shadow-sm relative group transition-all ${addr.is_default ? "border-btn-green" : "border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-600"}`}
+                          >
+                            {addr.is_default === 1 && (
+                              <span className="absolute top-4 right-4 bg-btn-green/20 text-btn-green text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-widest">
+                                Default
+                              </span>
+                            )}
+                            <h3 className="text-xs font-black uppercase tracking-widest text-spc-grey dark:text-white mb-2">
+                              {addr.title}
+                            </h3>
+                            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400 leading-relaxed mb-4 whitespace-pre-line">
+                              {user?.name}
+                              <br />
+                              {addr.full_address}
+                            </p>
+                            <div className="flex items-center gap-3 border-t border-neutral-100 dark:border-neutral-800 pt-3">
+                              <button
+                                onClick={() => handleDeleteAddress(addr.id)}
+                                className="text-[10px] font-bold text-red-500 uppercase tracking-widest hover:underline"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      : !isAddressFormOpen && (
+                          <div className="col-span-full py-10 text-center border-2 border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl">
+                            <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
+                              No addresses saved yet.
+                            </p>
+                          </div>
+                        )}
+                  </div>
+                </div>
+              ) : activeTab === "Payment Methods" ? (
+                <div className="flex-1 w-full max-w-3xl flex flex-col mt-4 md:mt-6 animate-in fade-in zoom-in-95 duration-300 px-2 pb-20">
+                  <div className="flex items-center justify-between mb-6 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white dark:bg-neutral-800 rounded-xl flex items-center justify-center shadow-sm border border-neutral-100 dark:border-neutral-700 text-lg">
+                        💳
+                      </div>
+                      <div>
+                        <h2 className="text-sm md:text-base font-black text-spc-grey dark:text-white uppercase tracking-wider">
+                          Payment Methods
+                        </h2>
+                        <p className="text-[10px] font-bold text-neutral-400">
+                          Manage your saved credit cards and billing options
+                        </p>
+                      </div>
+                    </div>
+                    <button className="bg-btn-green text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-green-600 transition-colors active:scale-95">
+                      + Add Card
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {/* Primary Card (Mastercard) */}
+                    <div className="relative overflow-hidden bg-spc-grey dark:bg-black border-2 border-btn-green rounded-2xl p-6 shadow-lg hover:-translate-y-1 transition-transform cursor-pointer group">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-10 -mt-10 blur-2xl pointer-events-none"></div>
+                      <div className="absolute bottom-0 left-0 w-24 h-24 bg-btn-green/20 rounded-full -ml-8 -mb-8 blur-xl pointer-events-none"></div>
+
+                      <div className="relative z-10 flex justify-between items-start mb-8">
+                        <span className="bg-btn-green text-white text-[8px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest shadow-sm">
+                          Default
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <div className="w-7 h-7 rounded-full bg-red-500 opacity-80 mix-blend-screen"></div>
+                          <div className="w-7 h-7 rounded-full bg-yellow-500 opacity-80 mix-blend-screen -ml-4"></div>
+                        </div>
+                      </div>
+
+                      <div className="relative z-10 mb-6">
+                        <p className="text-white font-mono text-lg md:text-xl tracking-[0.2em] opacity-90 drop-shadow-sm">
+                          •••• •••• •••• 4242
+                        </p>
+                      </div>
+
+                      <div className="relative z-10 flex justify-between items-end">
+                        <div>
+                          <p className="text-[8px] text-neutral-400 uppercase tracking-widest mb-1">
+                            Cardholder Name
+                          </p>
+                          <p className="text-sm text-white font-bold uppercase tracking-wider truncate max-w-[120px]">
+                            {user?.name || "Customer"}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[8px] text-neutral-400 uppercase tracking-widest mb-1">
+                            Expires
+                          </p>
+                          <p className="text-sm text-white font-bold tracking-wider">
+                            12/28
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Hover Actions (Glassmorphism) */}
+                      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 z-20">
+                        <button className="bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-neutral-200 transition-colors shadow-sm">
+                          Edit
+                        </button>
+                        <button className="bg-[#EF4444] text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-colors shadow-sm">
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Secondary Card (Visa) */}
+                    <div className="relative overflow-hidden bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl p-6 shadow-sm hover:-translate-y-1 transition-transform cursor-pointer group">
+                      <div className="relative z-10 flex justify-between items-start mb-8">
+                        <div className="w-6 h-4 bg-transparent"></div>{" "}
+                        {/* Placeholder for alignment */}
+                        <div className="text-xl font-black text-blue-800 dark:text-blue-400 italic tracking-tighter">
+                          VISA
+                        </div>
+                      </div>
+
+                      <div className="relative z-10 mb-6">
+                        <p className="text-spc-grey dark:text-neutral-300 font-mono text-lg md:text-xl tracking-[0.2em] opacity-90 drop-shadow-sm">
+                          •••• •••• •••• 5555
+                        </p>
+                      </div>
+
+                      <div className="relative z-10 flex justify-between items-end">
+                        <div>
+                          <p className="text-[8px] text-neutral-500 uppercase tracking-widest mb-1">
+                            Cardholder Name
+                          </p>
+                          <p className="text-sm text-spc-grey dark:text-white font-bold uppercase tracking-wider truncate max-w-[120px]">
+                            {user?.name || "Customer"}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[8px] text-neutral-500 uppercase tracking-widest mb-1">
+                            Expires
+                          </p>
+                          <p className="text-sm text-spc-grey dark:text-white font-bold tracking-wider">
+                            04/26
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Hover Actions (Glassmorphism) */}
+                      <div className="absolute inset-0 bg-white/80 dark:bg-black/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 z-20">
+                        <button className="bg-spc-grey dark:bg-white text-white dark:text-black w-32 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:brightness-90 transition-colors shadow-sm">
+                          Make Default
+                        </button>
+                        <button className="bg-[#EF4444] text-white w-32 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-colors shadow-sm">
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : activeTab === "Change Password" ? (
+                <div className="flex-1 w-full max-w-3xl flex flex-col mt-4 md:mt-6 animate-in fade-in zoom-in-95 duration-300 px-2 pb-20">
+                  <div className="flex items-center gap-3 mb-6 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+                    <div className="w-10 h-10 bg-white dark:bg-neutral-800 rounded-xl flex items-center justify-center shadow-sm border border-neutral-100 dark:border-neutral-700 text-lg">
+                      🔒
+                    </div>
+                    <div>
+                      <h2 className="text-sm md:text-base font-black text-spc-grey dark:text-white uppercase tracking-wider">
+                        Change Password
+                      </h2>
+                      <p className="text-[10px] font-bold text-neutral-400">
+                        Ensure your account uses a strong, secure password
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* GERÇEK VE İŞLEVLİ ŞİFRE FORMU */}
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (newPassword !== confirmPassword) {
+                        setToastMessage("❌ Passwords do not match!");
+                        setTimeout(() => setToastMessage(null), 3000);
+                        return;
+                      }
+                      setIsPasswordChanging(true);
+                      try {
+                        const res = await fetch(
+                          `${process.env.NEXT_PUBLIC_API_URL}/api/change-password`,
+                          {
+                            method: "PUT",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({
+                              current_password: currentPassword,
+                              new_password: newPassword,
+                            }),
+                          },
+                        );
+                        const data = await res.json();
+                        if (res.ok) {
+                          setToastMessage("🔒 " + data.message);
+                          setCurrentPassword("");
+                          setNewPassword("");
+                          setConfirmPassword("");
+                        } else {
+                          setToastMessage(
+                            "❌ " + (data.detail || "Failed to update."),
+                          );
+                        }
+                      } catch (err) {
+                        setToastMessage("❌ Server Error!");
+                      } finally {
+                        setIsPasswordChanging(false);
+                        setTimeout(() => setToastMessage(null), 3000);
+                      }
+                    }}
+                    className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm space-y-5 max-w-xl"
+                  >
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 block mb-2">
+                        Current Password
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm font-bold text-spc-grey dark:text-white outline-none focus:border-btn-green transition-colors"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 block mb-2">
+                        New Password
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        minLength={8}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm font-bold text-spc-grey dark:text-white outline-none focus:border-btn-green transition-colors"
+                        placeholder="Minimum 8 characters"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 block mb-2">
+                        Confirm New Password
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        minLength={8}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm font-bold text-spc-grey dark:text-white outline-none focus:border-btn-green transition-colors"
+                        placeholder="Must match new password"
+                      />
+                    </div>
+                    <div className="pt-2">
+                      <button
+                        type="submit"
+                        disabled={isPasswordChanging}
+                        className="w-full md:w-auto bg-black dark:bg-neutral-800 text-white px-8 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-btn-green transition-all active:scale-95 disabled:opacity-50"
+                      >
+                        {isPasswordChanging ? "Updating..." : "Update Password"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              ) : activeTab === "Two-Factor Authentication" ? (
+                <div className="flex-1 w-full max-w-3xl flex flex-col mt-4 md:mt-6 animate-in fade-in zoom-in-95 duration-300 px-2 pb-20">
+                  <div className="flex items-center gap-3 mb-6 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+                    <div className="w-10 h-10 bg-white dark:bg-neutral-800 rounded-xl flex items-center justify-center shadow-sm border border-neutral-100 dark:border-neutral-700 text-lg">
+                      🛡️
+                    </div>
+                    <div>
+                      <h2 className="text-sm md:text-base font-black text-spc-grey dark:text-white uppercase tracking-wider">
+                        Two-Factor Authentication
+                      </h2>
+                      <p className="text-[10px] font-bold text-neutral-400">
+                        Add an extra layer of security to your account
+                      </p>
+                    </div>
+                  </div>
+
+                  {stats?.is_2fa_enabled === 1 ? (
+                    <div className="bg-btn-green/10 border-2 border-btn-green rounded-2xl p-8 flex flex-col items-center justify-center text-center">
+                      <div className="w-16 h-16 bg-btn-green text-white rounded-full flex items-center justify-center text-3xl mb-4 shadow-lg">
+                        ✓
+                      </div>
+                      <h3 className="text-lg font-black uppercase tracking-widest text-btn-green mb-2">
+                        2FA is Enabled
+                      </h3>
+                      <p className="text-xs font-bold text-spc-grey dark:text-neutral-300">
+                        Your account is fully protected by Google Authenticator.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm flex flex-col md:flex-row gap-8 items-center md:items-start transition-all">
+                      <div className="flex-1 space-y-4 text-center md:text-left">
+                        <h3 className="text-sm font-black uppercase tracking-widest text-spc-grey dark:text-white">
+                          Authenticator App
+                        </h3>
+                        <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                          {!twoFaSetup
+                            ? "Use Google Authenticator or Authy to generate a one-time code. Click below to reveal your secure QR Code."
+                            : "Scan the QR code with your Authenticator app, then enter the 6-digit code below to verify."}
+                        </p>
+
+                        {!twoFaSetup ? (
+                          <div className="flex items-center justify-center md:justify-start gap-3 mt-4">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const res = await fetch(
+                                    `${process.env.NEXT_PUBLIC_API_URL}/api/2fa/setup`,
+                                    {
+                                      headers: {
+                                        Authorization: `Bearer ${token}`,
+                                      },
+                                    },
+                                  );
+                                  if (res.ok) setTwoFaSetup(await res.json());
+                                } catch (err) {
+                                  setToastMessage(
+                                    "❌ Failed to start 2FA setup",
+                                  );
+                                }
+                              }}
+                              className="bg-black dark:bg-neutral-800 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-btn-green transition-colors active:scale-95"
+                            >
+                              Generate QR Code
+                            </button>
+                          </div>
+                        ) : (
+                          <form
+                            onSubmit={async (e) => {
+                              e.preventDefault();
+                              setIsVerifying2Fa(true);
+                              try {
+                                const res = await fetch(
+                                  `${process.env.NEXT_PUBLIC_API_URL}/api/2fa/verify`,
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                      Authorization: `Bearer ${token}`,
+                                    },
+                                    body: JSON.stringify({
+                                      code: twoFaCode,
+                                      secret: twoFaSetup.secret,
+                                    }),
+                                  },
+                                );
+                                if (res.ok) {
+                                  setStats({ ...stats!, is_2fa_enabled: 1 });
+                                  setTwoFaSetup(null);
+                                  setToastMessage(
+                                    "🛡️ 2FA Successfully Enabled!",
+                                  );
+                                } else {
+                                  setToastMessage("❌ Invalid 6-digit code!");
+                                }
+                              } catch (err) {
+                              } finally {
+                                setIsVerifying2Fa(false);
+                                setTimeout(() => setToastMessage(null), 3000);
+                              }
+                            }}
+                            className="flex items-center gap-2 mt-4"
+                          >
+                            <input
+                              type="text"
+                              maxLength={6}
+                              required
+                              value={twoFaCode}
+                              onChange={(e) =>
+                                setTwoFaCode(e.target.value.replace(/\D/g, ""))
+                              }
+                              placeholder="000000"
+                              className="w-32 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-center text-lg font-black tracking-[0.3em] text-spc-grey dark:text-white outline-none focus:border-btn-green transition-colors"
+                            />
+                            <button
+                              type="submit"
+                              disabled={isVerifying2Fa || twoFaCode.length < 6}
+                              className="bg-btn-green text-white px-6 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-green-600 transition-colors disabled:opacity-50"
+                            >
+                              Verify
+                            </button>
+                          </form>
+                        )}
+                      </div>
+
+                      <div className="w-40 h-40 bg-neutral-50 dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 flex flex-col items-center justify-center shrink-0 overflow-hidden relative group p-2">
+                        {!twoFaSetup ? (
+                          <div className="text-center opacity-50">
+                            <p className="text-4xl mb-2">📱</p>
+                            <p className="text-[8px] font-black uppercase tracking-widest">
+                              Hidden
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="w-full h-full bg-white rounded-xl flex items-center justify-center p-2">
+                            <QRCodeSVG
+                              value={twoFaSetup.uri}
+                              size={120}
+                              level="H"
+                              includeMargin={false}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SMS Recovery Section */}
+                  <div className="mt-4 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-8 h-8 rounded-full bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center text-sm border border-neutral-100 dark:border-neutral-700">
+                        💬
+                      </div>
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-widest text-spc-grey dark:text-white mb-0.5">
+                          SMS Recovery
+                        </p>
+                        <p className="text-[9px] font-bold text-neutral-400">
+                          Receive backup codes via text message
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setToastMessage(
+                          "📱 SMS Recovery setup interface opened.",
+                        );
+                        setTimeout(() => setToastMessage(null), 3000);
+                      }}
+                      className="text-[10px] font-black text-btn-green uppercase tracking-widest hover:underline"
+                    >
+                      Setup
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex-1 w-full max-w-3xl flex flex-col mt-4 md:mt-8 animate-in fade-in zoom-in-95 duration-300 px-2 pb-20">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-white dark:bg-neutral-800 rounded-xl flex items-center justify-center shadow-sm border border-neutral-100 dark:border-neutral-700 text-lg">
+                      ⚙️
+                    </div>
+                    <div>
+                      <h2 className="text-sm md:text-base font-black text-spc-grey dark:text-white uppercase tracking-wider">
+                        {activeTab}
+                      </h2>
+                      <p className="text-[10px] font-bold text-neutral-400">
+                        Settings module configuration
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-8 md:p-12 shadow-sm flex flex-col items-center justify-center text-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="1.5"
+                      stroke="currentColor"
+                      className="w-12 h-12 text-neutral-300 dark:text-neutral-600 mb-4"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.827M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"
+                      />
+                    </svg>
+                    <h3 className="text-sm font-black text-spc-grey dark:text-white uppercase tracking-widest mb-2">
+                      Module in Development
+                    </h3>
+                    <p className="text-xs font-medium text-neutral-400 dark:text-neutral-500 max-w-sm mb-6 leading-relaxed">
+                      The <b>{activeTab}</b> panel is currently being structured
+                      by our engineering team. It will be available in the
+                      upcoming v2.0 update.
+                    </p>
+                    <button
+                      onClick={() => setActiveTab("Orders")}
+                      className="bg-neutral-100 dark:bg-neutral-800 hover:bg-btn-green dark:hover:bg-btn-green hover:text-white text-spc-grey dark:text-neutral-300 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm active:scale-95"
+                    >
+                      Return to Orders
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -1120,7 +1876,10 @@ export default function ProfilePage() {
                     {group.items.map((item) => (
                       <button
                         key={item}
-                        onClick={() => setIsAllOpen(false)}
+                        onClick={() => {
+                          setIsAllOpen(false);
+                          setActiveTab(item);
+                        }}
                         className="text-left text-sm font-bold text-spc-grey dark:text-neutral-300 hover:text-btn-green dark:hover:text-btn-green transition-colors flex items-center justify-between"
                       >
                         {item}

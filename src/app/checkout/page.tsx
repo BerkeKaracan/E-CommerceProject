@@ -37,15 +37,36 @@ export default function CheckoutPage() {
   const [promoCode, setPromoCode] = useState("");
   const [discount, setDiscount] = useState(0);
 
-  const handleApplyPromo = () => {
-    if (promoCode.toUpperCase() === "LOYALTY5") {
-      setDiscount(5);
-      setToastMessage("Discount code LOYALTY5 applied! (-$5.00)");
-      setTimeout(() => setToastMessage(null), 3000);
-    } else {
-      setToastMessage("Invalid or expired promo code.");
-      setTimeout(() => setToastMessage(null), 3000);
-      setDiscount(0);
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) return;
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/promo/validate`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ code: promoCode }),
+        },
+      );
+      const data = await res.json();
+      if (res.ok && data.valid) {
+        setDiscount(data.discount_amount);
+        setToastMessage(
+          `Discount code applied! (-$${data.discount_amount.toFixed(2)})`,
+        );
+        setTimeout(() => setToastMessage(null), 3000);
+      } else {
+        setToastMessage(
+          "❌ " + (data.detail || "Invalid or expired promo code."),
+        );
+        setTimeout(() => setToastMessage(null), 3000);
+        setDiscount(0);
+      }
+    } catch (e) {
+      setToastMessage("Server error while validating code.");
     }
   };
 
@@ -154,7 +175,11 @@ export default function CheckoutPage() {
         `${process.env.NEXT_PUBLIC_API_URL}/api/checkout`,
         {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ promo_code: discount > 0 ? promoCode : null }),
         },
       );
 

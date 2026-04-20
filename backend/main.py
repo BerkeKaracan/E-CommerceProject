@@ -18,6 +18,7 @@ from sqlalchemy import text
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import pyotp;
 
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -56,6 +57,16 @@ class DBUser(Base):
   email = Column(String, unique=True, index=True)
   hashed_password = Column(String)
   created_at = Column(DateTime(timezone=True), server_default=func.now())
+  totp_secret = Column(String, nullable=True)
+  is_2fa_enabled = Column(Integer, default=0)
+
+class DBPromoCode(Base):
+  __tablename__ = "PromoCode"
+  id = Column(Integer, primary_key=True, index=True)
+  code = Column(String, unique=True, index=True)
+  discount_amount = Column(Float, default=5.0)
+  is_used = Column(Integer, default=0)
+  user_id = Column(Integer, ForeignKey("User.id"))
 
 class DBCartItem(Base):
   __tablename__ = "CartItem"
@@ -87,9 +98,31 @@ class DBSavedItem(Base):
   product_id = Column(Integer, ForeignKey("Product.id"))
   created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+class DBAddress(Base):
+    __tablename__ = "Address"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("User.id", ondelete="CASCADE"))
+    title = Column(String, nullable=False) # Ev, İş vs.
+    full_address = Column(String, nullable=False)
+    is_default = Column(Integer, default=0)
+
 # --- PYDANTIC SCHEMAS ---
 class CommentUpdate(BaseModel):
     text: str
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+class PromoValidateRequest(BaseModel):
+    code: str
+  
+class TwoFaVerifyRequest(BaseModel):
+    code: str
+    secret: str
+
+class CheckoutRequest(BaseModel):
+    promo_code: Optional[str] = None
 
 class ProductSchema(BaseModel):
   id: int
@@ -104,6 +137,11 @@ class ProductSchema(BaseModel):
 class CommentAdd(BaseModel):
     product_id: int
     text: str
+
+class AddressCreate(BaseModel):
+    title: str
+    full_address: str
+    is_default: int = 0
 
 class UserCreate(BaseModel):
   name: str
@@ -338,8 +376,37 @@ def remove_from_cart(product_id: int, quantity: int = 1, db: Session = Depends(g
     
   return {"message": "Item removed from cart"}
 
+@app.post("/api/promo/generate")
+def generate_promo(db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    existing = db.query(DBPromoCode).filter(DBPromoCode.user_id == current_user.id, DBPromoCode.is_used == 0).first()
+    if existing:
+        return {"code": existing.code, "discount_amount": existing.discount_amount}
+    
+    import random, string
+    new_code = "GIFT-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    promo = DBPromoCode(code=new_code, discount_amount=5.0, user_id=current_user.id)
+    db.add(promo)
+    db.commit()
+    return {"code": new_code, "discount_amount": 5.0}
+
+@app.post("/api/promo/validate")
+def validate_promo(req: PromoValidateRequest, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    code_str = req.code.strip().upper()
+    if code_str == "LOYALTY5":
+        return {"valid": True, "discount_amount": 5.0}
+        
+    promo = db.query(DBPromoCode).filter(DBPromoCode.code == code_str).first()
+    if not promo:
+        raise HTTPException(status_code=400, detail="Invalid promo code.")
+    if promo.is_used == 1:
+        raise HTTPException(status_code=400, detail="This promo code has already been used.")
+    if promo.user_id != current_user.id:
+        raise HTTPException(status_code=400, detail="This code belongs to another user.")
+        
+    return {"valid": True, "discount_amount": promo.discount_amount}
+
 @app.post("/api/checkout")
-def process_checkout(db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+def process_checkout(req: CheckoutRequest, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
   cart_items = db.query(DBCartItem).filter(DBCartItem.user_id == current_user.id).all()
   if not cart_items:
     raise HTTPException(status_code=400, detail="Cart is empty")
@@ -351,13 +418,28 @@ def process_checkout(db: Session = Depends(get_db), current_user: DBUser = Depen
       total += product.price * item.quantity
       product.sales_count = (product.sales_count or 0) + item.quantity
 
-  total += 1.0 
+  discount = 0.0
+  if req.promo_code:
+      code_str = req.promo_code.strip().upper()
+      if code_str == "LOYALTY5":
+          discount = 5.0
+      else:
+          promo = db.query(DBPromoCode).filter(DBPromoCode.code == code_str, DBPromoCode.is_used == 0).first()
+          if promo and promo.user_id == current_user.id:
+              discount = promo.discount_amount
+              promo.is_used = 1 
+
+  total = total + 1.0 - discount
+  if total < 0:
+      total = 0
+
   new_order = DBOrder(user_id=current_user.id, total_amount=total)
   db.add(new_order)
 
   db.query(DBCartItem).filter(DBCartItem.user_id == current_user.id).delete()
   db.commit()
   return {"message": "Order completed successfully", "order_id": new_order.id}
+
 
 @app.get("/api/orders")
 def get_user_orders(db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
@@ -472,6 +554,29 @@ def fix_database(db: Session = Depends(get_db)):
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         """))
+        db.execute(text("""
+            CREATE TABLE IF NOT EXISTS "PromoCode" (
+                id SERIAL PRIMARY KEY,
+                code VARCHAR UNIQUE NOT NULL,
+                discount_amount FLOAT DEFAULT 5.0,
+                is_used INTEGER DEFAULT 0,
+                user_id INTEGER REFERENCES "User"(id) ON DELETE CASCADE
+            );
+        """))
+        db.execute(text("""
+            CREATE TABLE IF NOT EXISTS "Address" (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES "User"(id) ON DELETE CASCADE,
+                title VARCHAR NOT NULL,
+                full_address VARCHAR NOT NULL,
+                is_default INTEGER DEFAULT 0
+            );
+        """))
+        try:
+            db.execute(text('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS totp_secret VARCHAR;'))
+            db.execute(text('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS is_2fa_enabled INTEGER DEFAULT 0;'))
+        except:
+            pass
 
         try:
             db.execute(text('ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS description VARCHAR DEFAULT \'Premium quality product.\';'))
@@ -658,3 +763,58 @@ def delete_comment(comment_id: int, db: Session = Depends(get_db), current_user:
     db.delete(existing_comment)
     db.commit()
     return {"message": "Comment deleted successfully"}
+  
+@app.put("/api/change-password")
+def change_password(request: ChangePasswordRequest, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    if not pwd_context.verify(request.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Mevcut şifreniz hatalı.")
+    
+    if len(request.new_password) < 8:
+        raise HTTPException(status_code=400, detail="Yeni şifre en az 8 karakter olmalıdır.")
+        
+    current_user.hashed_password = pwd_context.hash(request.new_password)
+    db.commit()
+    return {"message": "Password successfully updated!"}
+
+@app.get("/api/addresses")
+def get_addresses(db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    return db.query(DBAddress).filter(DBAddress.user_id == current_user.id).all()
+
+@app.post("/api/addresses")
+def create_address(req: AddressCreate, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    if req.is_default == 1:
+        db.query(DBAddress).filter(DBAddress.user_id == current_user.id).update({"is_default": 0})
+    
+    new_address = DBAddress(user_id=current_user.id, title=req.title, full_address=req.full_address, is_default=req.is_default)
+    db.add(new_address)
+    db.commit()
+    return {"message": "Address added successfully"}
+
+@app.delete("/api/addresses/{address_id}")
+def delete_address(address_id: int, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    address = db.query(DBAddress).filter(DBAddress.id == address_id, DBAddress.user_id == current_user.id).first()
+    if not address:
+        raise HTTPException(status_code=404, detail="Address not found")
+    db.delete(address)
+    db.commit()
+    return {"message": "Address deleted"}
+
+@app.get("/api/2fa/setup")
+def setup_2fa(current_user: DBUser = Depends(get_current_user)):
+    if current_user.is_2fa_enabled == 1:
+        return {"message": "2FA is already enabled"}
+        
+    secret = pyotp.random_base32()
+    uri = pyotp.totp.TOTP(secret).provisioning_uri(name=current_user.email, issuer_name="Premium Market")
+    return {"secret": secret, "uri": uri}
+
+@app.post("/api/2fa/verify")
+def verify_2fa(req: TwoFaVerifyRequest, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    totp = pyotp.TOTP(req.secret)
+    if totp.verify(req.code):
+        current_user.totp_secret = req.secret
+        current_user.is_2fa_enabled = 1
+        db.commit()
+        return {"message": "2FA successfully enabled!"}
+    
+    raise HTTPException(status_code=400, detail="Invalid verification code.")
