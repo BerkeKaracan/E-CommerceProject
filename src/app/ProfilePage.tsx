@@ -1763,10 +1763,12 @@ export default function ProfilePage() {
                           <div className="w-full h-full bg-white flex items-center justify-center">
                             {(console.log("QR URI:", twoFaSetup?.uri), null)}
                             <QRCodeSVG
-                              value={twoFaSetup.uri || ""}
+                              value={
+                                twoFaSetup?.uri ||
+                                "https://premiummarket.com/error"
+                              }
                               size={160}
                               level="M"
-                              includeMargin={false}
                               bgColor="#FFFFFF"
                               fgColor="#000000"
                             />
