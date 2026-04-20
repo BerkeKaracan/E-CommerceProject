@@ -802,16 +802,10 @@ def delete_address(address_id: int, db: Session = Depends(get_db), current_user:
 @app.get("/api/2fa/setup")
 def setup_2fa(current_user: DBUser = Depends(get_current_user)):
     if current_user.is_2fa_enabled == 1:
-        return {"message": "2FA is already enabled"}
+        raise HTTPException(status_code=400, detail="2FA is already enabled on this account.")
         
     secret = pyotp.random_base32()
-    issuer = "PremiumMarket" 
-    email = current_user.email.strip()
-
-    uri = pyotp.totp.TOTP(secret).provisioning_uri(name=email, issuer_name=issuer)
-    
-    print(f"DEBUG: Generated 2FA URI: {uri}") 
-    
+    uri = pyotp.totp.TOTP(secret).provisioning_uri(name=current_user.email, issuer_name="PremiumMarket")
     return {"secret": secret, "uri": uri}
 
 @app.post("/api/2fa/verify")

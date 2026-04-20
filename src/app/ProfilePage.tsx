@@ -1667,20 +1667,24 @@ export default function ProfilePage() {
                           <div className="flex items-center justify-center md:justify-start gap-3 mt-4">
                             <button
                               onClick={async () => {
-                                try {
-                                  const res = await fetch(
-                                    `${process.env.NEXT_PUBLIC_API_URL}/api/2fa/setup`,
-                                    {
-                                      headers: {
-                                        Authorization: `Bearer ${token}`,
-                                      },
+                                const res = await fetch(
+                                  `${process.env.NEXT_PUBLIC_API_URL}/api/2fa/setup`,
+                                  {
+                                    headers: {
+                                      Authorization: `Bearer ${token}`,
                                     },
-                                  );
-                                  if (res.ok) setTwoFaSetup(await res.json());
-                                } catch (err) {
+                                  },
+                                );
+                                const data = await res.json();
+                                if (res.ok && data.uri) {
+                                  setTwoFaSetup(data);
+                                } else {
                                   setToastMessage(
-                                    "❌ Failed to start 2FA setup",
+                                    "❌ " +
+                                      (data.detail ||
+                                        "2FA is already enabled or server error."),
                                   );
+                                  setTimeout(() => setToastMessage(null), 3000);
                                 }
                               }}
                               className="bg-black dark:bg-neutral-800 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-btn-green transition-colors active:scale-95"
