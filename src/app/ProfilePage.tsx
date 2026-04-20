@@ -1747,21 +1747,23 @@ export default function ProfilePage() {
                         )}
                       </div>
 
-                      <div className="w-40 h-40 bg-neutral-50 dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 flex flex-col items-center justify-center shrink-0 overflow-hidden relative group p-2">
+                      <div className="w-52 h-52 bg-white rounded-3xl flex items-center justify-center shrink-0 overflow-hidden relative p-6 shadow-2xl border-4 border-neutral-100">
                         {!twoFaSetup ? (
-                          <div className="text-center opacity-50">
+                          <div className="text-center opacity-40">
                             <p className="text-4xl mb-2">📱</p>
-                            <p className="text-[8px] font-black uppercase tracking-widest">
+                            <p className="text-[8px] font-black uppercase tracking-widest text-black">
                               Hidden
                             </p>
                           </div>
                         ) : (
-                          <div className="w-full h-full bg-white rounded-xl flex items-center justify-center p-2">
+                          <div className="w-full h-full bg-white flex items-center justify-center">
                             <QRCodeSVG
                               value={twoFaSetup.uri}
-                              size={120}
-                              level="H"
+                              size={160}
+                              level="M"
                               includeMargin={false}
+                              bgColor="#FFFFFF"
+                              fgColor="#000000"
                             />
                           </div>
                         )}

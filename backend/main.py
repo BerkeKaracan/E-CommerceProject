@@ -805,7 +805,7 @@ def setup_2fa(current_user: DBUser = Depends(get_current_user)):
         return {"message": "2FA is already enabled"}
         
     secret = pyotp.random_base32()
-    uri = pyotp.totp.TOTP(secret).provisioning_uri(name=current_user.email, issuer_name="Premium Market")
+    uri = pyotp.totp.TOTP(secret).provisioning_uri(name=current_user.email, issuer_name="PremiumMarket")
     return {"secret": secret, "uri": uri}
 
 @app.post("/api/2fa/verify")
