@@ -106,8 +106,10 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setVisibleCount(12);
+    if (visibleCount !== 12) {
+      setVisibleCount(12);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, selectedCategory, priceFilter, sortOption]);
 
   const handleShopSelect = (productId: number, val: number) => {
@@ -246,9 +248,9 @@ export default function Home() {
         />
       )}
       <nav className="shrink-0 z-40 bg-neutral-50 dark:bg-neutral-950 w-full shadow-sm border-b border-neutral-200 dark:border-neutral-800 transition-colors duration-300">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-4 lg:px-4">
-          <div className="flex items-center justify-between h-20 gap-6 lg:gap-10">
-            <div className="flex items-center gap-4 sm:gap-6 shrink-0">
+        <div className="max-w-[1440px] mx-auto px-6 sm:px-4 lg:px-4">
+          <div className="flex items-center justify-between h-20 gap-2 lg:gap-10">
+            <div className="flex items-center gap-2 sm:gap-6 shrink-0">
               <button
                 onClick={() => setIsMenuOpen(true)}
                 className="p-2 -ml-2 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-300 dark:focus:ring-neutral-700"
@@ -425,7 +427,7 @@ export default function Home() {
               )}
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
               <Link
                 href="/tracking"
                 className="hidden lg:block text-sm font-bold text-spc-grey dark:text-neutral-300 hover:text-btn-green px-2 py-2 transition-colors duration-200 whitespace-nowrap mr-2 select-none"
@@ -519,7 +521,7 @@ export default function Home() {
         </div>
       </nav>
 
-      <div className="flex-1 max-w-[1440px] mx-auto w-full px-4 sm:px-4 lg:px-4 py-6 flex flex-col lg:flex-row gap-6 lg:gap-8 overflow-hidden">
+      <div className="flex-1 max-w-[1440px] mx-auto w-full px-6 sm:px-4 lg:px-4 py-6 flex flex-col lg:flex-row gap-6 lg:gap-8 overflow-hidden">
         <div
           onScroll={(e) => {
             const bottom =
@@ -1112,7 +1114,6 @@ export default function Home() {
                   ),
                 )}
               </div>
-              {/* Support */}
               <div>
                 <h3 className="text-xs font-black uppercase tracking-widest text-spc-grey dark:text-white mb-6 transition-colors">
                   Support
