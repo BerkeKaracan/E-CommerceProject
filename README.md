@@ -11,7 +11,7 @@ A feature-rich, high-performance modern e-commerce frontend built to demonstrate
 ## ✨ Key Features
 
 - 🌓 **Absolute Dark/Light Mode:** Flawless transition across all components, including modals, dropdowns, and loading spinners.
-- 🎁 **Dynamic Loyalty Program:** Automated points calculation based on order history. Users can redeem 50 points for a functional $5 discount code (LOYALTY5).
+- 🎁 **Dynamic Loyalty Program:** Automated points calculation based on order history. Users can redeem 50 points for a functional $5 discount code.
 - 🛒 **Advanced Cart & Checkout:** Real-time price calculation, dynamic subtotaling, shipping costs, and promo code validation.
 - 👤 **Comprehensive User Profile:** Accordion-style detailed order history, real-time settings, saved items, and product review displays.
 - 🤖 **AI Assistant Interface:** Integrated chat UI simulating an AI-powered customer support and shopping assistant.
