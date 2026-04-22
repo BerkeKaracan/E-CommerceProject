@@ -265,11 +265,11 @@ export default function CheckoutPage() {
                         className="object-cover"
                       />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-[10px] text-category-blue dark:text-neutral-400 font-bold uppercase tracking-widest">
+                    <div className="flex-1 min-w-0 pr-2">
+                      <p className="text-[10px] text-category-blue dark:text-neutral-400 font-bold uppercase tracking-widest truncate">
                         {item.category}
                       </p>
-                      <h3 className="text-sm font-bold text-spc-grey dark:text-neutral-200 leading-tight">
+                      <h3 className="text-sm font-bold text-spc-grey dark:text-neutral-200 leading-tight truncate">
                         {item.name}
                       </h3>
                       <div className="flex items-center gap-4 mt-3">
@@ -313,9 +313,9 @@ export default function CheckoutPage() {
                         </button>
                       </div>
                     </div>
-                    <div className="text-right max-w-[35%] shrink-0">
+                    <div className="text-right shrink-0 max-w-[30%]">
                       <p
-                        className="text-lg font-black text-spc-grey dark:text-white truncate"
+                        className="text-base md:text-lg font-black text-spc-grey dark:text-white truncate"
                         title={`$${(item.price * item.quantity).toFixed(2)}`}
                       >
                         ${(item.price * item.quantity).toFixed(2)}

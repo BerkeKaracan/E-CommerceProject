@@ -947,22 +947,22 @@ export default function ProfilePage() {
                               onClick={() => toggleOrderExpand(order.id)}
                               className="flex items-center justify-between p-4 md:p-5 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
                             >
-                              <div className="flex items-center gap-4 md:gap-6">
-                                <div className="px-3 md:px-4 h-12 md:h-14 bg-neutral-50 dark:bg-neutral-800 rounded-xl flex items-center justify-center text-sm md:text-base font-black text-neutral-400 dark:text-neutral-500 group-hover:text-btn-green dark:group-hover:text-btn-green transition-colors whitespace-nowrap">
-                                  Order ID: #{order.id}
+                              <div className="flex items-center gap-3 md:gap-6 flex-1 min-w-0">
+                                <div className="px-2 md:px-4 h-12 md:h-14 bg-neutral-50 dark:bg-neutral-800 rounded-xl flex items-center justify-center text-xs md:text-base font-black text-neutral-400 dark:text-neutral-500 group-hover:text-btn-green dark:group-hover:text-btn-green transition-colors shrink-0">
+                                  #{order.id}
                                 </div>
-                                <div className="text-left">
-                                  <p className="text-[9px] md:text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-0.5">
+                                <div className="text-left flex-1 min-w-0">
+                                  <p className="text-[9px] md:text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-0.5 truncate">
                                     {new Date(
                                       order.created_at,
                                     ).toLocaleDateString("en-US", {
                                       year: "numeric",
-                                      month: "long",
+                                      month: "short",
                                       day: "numeric",
                                     })}
                                   </p>
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-xs md:text-sm font-black text-spc-grey dark:text-white">
+                                  <div className="flex items-center gap-1 md:gap-2">
+                                    <p className="text-xs md:text-sm font-black text-spc-grey dark:text-white truncate">
                                       {order.status}
                                     </p>
                                     <svg
@@ -971,7 +971,7 @@ export default function ProfilePage() {
                                       viewBox="0 0 24 24"
                                       strokeWidth="3"
                                       stroke="currentColor"
-                                      className={`w-3 h-3 text-neutral-400 transition-transform duration-300 ${isExpanded ? "rotate-180 text-btn-green" : ""}`}
+                                      className={`w-3 h-3 shrink-0 text-neutral-400 transition-transform duration-300 ${isExpanded ? "rotate-180 text-btn-green" : ""}`}
                                     >
                                       <path
                                         strokeLinecap="round"
@@ -982,8 +982,11 @@ export default function ProfilePage() {
                                   </div>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <p className="text-base md:text-lg font-black text-btn-green">
+                              <div className="text-right shrink-0 max-w-[35%] pl-2">
+                                <p
+                                  className="text-sm md:text-lg font-black text-btn-green truncate"
+                                  title={`$${order.total_amount.toFixed(2)}`}
+                                >
                                   ${order.total_amount.toFixed(2)}
                                 </p>
                               </div>
