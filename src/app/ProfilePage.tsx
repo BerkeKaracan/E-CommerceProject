@@ -453,8 +453,8 @@ export default function ProfilePage() {
     }))
     .filter((group) => group.items.length > 0);
   return (
-    <div className="fixed inset-0 bg-white z-40 dark:bg-neutral-950 p-4 md:p-8 font-sans select-none text-spc-grey dark:text-neutral-200 overflow-hidden flex flex-col transition-colors duration-300">
-      <div className="max-w-[1200px] mx-auto w-full h-full flex flex-col relative">
+    <div className="w-full min-h-screen bg-white dark:bg-neutral-950 p-4 md:p-8 font-sans select-none text-spc-grey dark:text-neutral-200 flex flex-col transition-colors duration-300">
+      <div className="max-w-[1200px] mx-auto w-full flex-1 flex flex-col relative">
         {/* Top Section: Return and Sign Out */}
         <div className="flex items-center justify-between mb-3 md:mb-4 shrink-0">
           <Link
@@ -745,7 +745,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Maximized Context Area */}
-        <div className="flex-1 flex flex-col items-center border-2 border-neutral-50 dark:border-neutral-800/50 rounded-[24px] md:rounded-[32px] p-4 md:p-6 bg-neutral-50/10 dark:bg-neutral-900/50 overflow-hidden relative mb-2 md:mb-5 transition-colors">
+        <div className="flex-1 flex flex-col items-center border-2 border-neutral-50 dark:border-neutral-800/50 rounded-[24px] md:rounded-[32px] p-4 md:p-6 bg-neutral-50/10 dark:bg-neutral-900/50 relative mb-2 md:mb-5 transition-colors min-h-[60vh]">
           <div className="w-12 md:w-16 h-1 bg-neutral-100 dark:bg-neutral-800 mb-4 md:mb-6 rounded-full shrink-0" />
 
           {isAiOpen ? (
@@ -880,7 +880,7 @@ export default function ProfilePage() {
               </form>
             </div>
           ) : (
-            <div className="flex-1 w-full flex flex-col items-center overflow-y-auto relative">
+            <div className="flex-1 w-full flex flex-col items-center relative">
               {activeTab === "Orders" ? (
                 <div className="w-full max-w-3xl flex flex-col">
                   <div className="w-full flex justify-between items-center mb-4 mt-1 px-2 border-b border-neutral-100 dark:border-neutral-800 pb-4">
