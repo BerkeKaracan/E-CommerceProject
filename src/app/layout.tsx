@@ -23,8 +23,10 @@ export default function RootLayout({
       <body className={`${inter.className} flex flex-col min-h-screen`}>
         <Providers>
           <AuthProvider>
-            <div className="flex-1">{children}</div>
-            <Footer />
+            <div className="flex-1 relative z-10">{children}</div>
+            <div className="relative z-0">
+              <Footer />
+            </div>
           </AuthProvider>
         </Providers>
       </body>

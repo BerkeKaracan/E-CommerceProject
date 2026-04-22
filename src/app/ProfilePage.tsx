@@ -258,16 +258,22 @@ export default function ProfilePage() {
   const earnedPoints = redeemedCode ? rawPoints - 50 : rawPoints;
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
+      const target = event.target as Element;
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        !dropdownRef.current.contains(target) &&
+        !target.closest("#mobile-bottom-sheet")
       ) {
         setIsAllOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, []);
 
   const processedOrders = [...orders]
@@ -447,7 +453,7 @@ export default function ProfilePage() {
     }))
     .filter((group) => group.items.length > 0);
   return (
-    <div className="fixed inset-0 bg-white dark:bg-neutral-950 p-4 md:p-8 font-sans select-none text-spc-grey dark:text-neutral-200 overflow-hidden flex flex-col transition-colors duration-300">
+    <div className="fixed inset-0 bg-white z-40 dark:bg-neutral-950 p-4 md:p-8 font-sans select-none text-spc-grey dark:text-neutral-200 overflow-hidden flex flex-col transition-colors duration-300">
       <div className="max-w-[1200px] mx-auto w-full h-full flex flex-col relative">
         {/* Top Section: Return and Sign Out */}
         <div className="flex items-center justify-between mb-3 md:mb-4 shrink-0">
@@ -1868,7 +1874,10 @@ export default function ProfilePage() {
 
       {/* Dropdown Menu - Mobile Bottom Sheet */}
       {isAllOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end">
+        <div
+          id="mobile-bottom-sheet"
+          className="md:hidden fixed inset-0 z-999 flex flex-col justify-end"
+        >
           <div
             className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-in fade-in duration-200"
             onClick={() => setIsAllOpen(false)}

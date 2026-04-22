@@ -183,6 +183,10 @@ class CartItemAdd(BaseModel):
   product_id: int
   quantity: int
 
+class Login2FaVerifyRequest(BaseModel):
+    user_id: int
+    code: str
+
 class CartItemResponse(BaseModel):
   id: int
   product_id: int
@@ -287,6 +291,9 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
   if not pwd_context.verify(user.password, db_user.hashed_password):
     raise HTTPException(status_code=400, detail="Invalid email or password")
   
+  if db_user.is_2fa_enabled == 1:
+      return {"requires_2fa": True, "user_id": db_user.id, "message": "2FA kodu gerekli"}
+  
   access_token = create_access_token(data={"sub": str(db_user.id)})
   
   return {
@@ -298,6 +305,26 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
       "email": db_user.email
     }
   }
+
+@app.post("/api/login/verify-2fa")
+def login_verify_2fa(req: Login2FaVerifyRequest, db: Session = Depends(get_db)):
+    user = db.query(DBUser).filter(DBUser.id == req.user_id).first()
+    if not user or user.is_2fa_enabled == 0:
+        raise HTTPException(status_code=400, detail="Geçersiz işlem.")
+
+    totp = pyotp.TOTP(user.totp_secret)
+    if totp.verify(req.code):
+        access_token = create_access_token(data={"sub": str(user.id)})
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email
+            }
+        }
+    raise HTTPException(status_code=400, detail="Geçersiz 6 haneli kod!")
 
 @app.get("/api/me", response_model=UserStatsResponse)
 def get_me(db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):

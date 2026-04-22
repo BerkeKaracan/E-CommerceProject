@@ -16,7 +16,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [tempUserId, setTempUserId] = useState<number | null>(null);
+  const [twoFaCode, setTwoFaCode] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   // FORGOT PASSWORD STATES
@@ -84,6 +86,12 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           return;
         }
 
+        if (data.requires_2fa) {
+          setRequires2FA(true);
+          setTempUserId(data.user_id);
+          return;
+        }
+
         if (authContext) {
           authContext.login(data.access_token, data.user);
         }
@@ -95,6 +103,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         setIsForgotPassword(false);
         setResetMessage(null);
 
+        handleClose();
         router.push("/profile");
       } catch (err) {
         console.error("Server Connection Error:", err);
@@ -102,7 +111,37 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       }
     }
   };
+  const handle2FASubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
 
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/login/verify-2fa`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: tempUserId, code: twoFaCode }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.detail || "Invalid 2FA code.");
+        return;
+      }
+
+      if (authContext) {
+        authContext.login(data.access_token, data.user);
+      }
+
+      handleClose();
+      router.push("/profile");
+    } catch (err) {
+      setError("Cannot connect to the server.");
+    }
+  };
   // FORGOT PASSWORD HANDLER
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,6 +185,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   const handleClose = () => {
     setIsForgotPassword(false);
+    setRequires2FA(false);
+    setTwoFaCode("");
     setError(null);
     setResetMessage(null);
     onClose();
@@ -256,7 +297,52 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             </div>
           )}
 
-          {isForgotPassword ? (
+          {requires2FA ? (
+            <form
+              className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-300"
+              onSubmit={handle2FASubmit}
+            >
+              <div className="flex flex-col gap-1.5 items-center">
+                <div className="w-16 h-16 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center text-3xl mb-2">
+                  📱
+                </div>
+                <label className="text-[11px] font-bold text-spc-grey dark:text-neutral-300 uppercase tracking-widest text-center transition-colors">
+                  Enter Authenticator Code
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={twoFaCode}
+                  onChange={(e) =>
+                    setTwoFaCode(e.target.value.replace(/\D/g, ""))
+                  }
+                  placeholder="000000"
+                  autoFocus
+                  className="w-full text-center tracking-[0.5em] text-2xl font-black bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100/50 dark:hover:bg-neutral-700/50 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-4 text-spc-grey dark:text-white outline-none focus:border-btn-green focus:ring-1 focus:ring-btn-green transition-all"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={twoFaCode.length < 6}
+                className="w-full bg-btn-green hover:bg-green-600 text-white font-black uppercase tracking-wide text-sm rounded-xl py-3.5 mt-2 transition-all duration-300 shadow-md disabled:opacity-50 active:scale-[0.98]"
+              >
+                Verify & Sign In
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setRequires2FA(false);
+                  setTwoFaCode("");
+                  setError(null);
+                }}
+                className="text-xs font-bold text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-colors mt-2 text-center"
+              >
+                Cancel and Go Back
+              </button>
+            </form>
+          ) : isForgotPassword ? (
             <form
               className="flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300"
               onSubmit={handleForgotPassword}
