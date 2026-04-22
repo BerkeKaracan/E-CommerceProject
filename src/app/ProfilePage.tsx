@@ -1879,7 +1879,7 @@ export default function ProfilePage() {
       {isAllOpen && (
         <div
           id="mobile-bottom-sheet"
-          className="md:hidden fixed inset-0 z-999 flex flex-col justify-end"
+          className="md:hidden fixed inset-0 z-[999] flex flex-col justify-end"
         >
           <div
             className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-in fade-in duration-200"

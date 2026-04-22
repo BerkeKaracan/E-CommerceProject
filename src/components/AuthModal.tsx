@@ -96,13 +96,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           authContext.login(data.access_token, data.user);
         }
 
-        // Reset states on close
-        onClose();
-        setEmail("");
-        setPassword("");
-        setIsForgotPassword(false);
-        setResetMessage(null);
-
         handleClose();
         router.push("/profile");
       } catch (err) {
