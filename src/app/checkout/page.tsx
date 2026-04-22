@@ -313,8 +313,11 @@ export default function CheckoutPage() {
                         </button>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-lg font-black text-spc-grey dark:text-white">
+                    <div className="text-right max-w-[35%] shrink-0">
+                      <p
+                        className="text-lg font-black text-spc-grey dark:text-white truncate"
+                        title={`$${(item.price * item.quantity).toFixed(2)}`}
+                      >
                         ${(item.price * item.quantity).toFixed(2)}
                       </p>
                     </div>
@@ -362,9 +365,9 @@ export default function CheckoutPage() {
                   </div>
                 )}
                 <div className="w-full h-px bg-neutral-200 dark:bg-neutral-800 my-2" />
-                <div className="flex justify-between text-xl font-black text-spc-grey dark:text-white">
-                  <span>Total</span>
-                  <span className="text-btn-green">
+                <div className="flex justify-between items-end gap-4 text-xl font-black text-spc-grey dark:text-white">
+                  <span className="shrink-0">Total</span>
+                  <span className="text-btn-green text-right break-all leading-tight max-w-[65%]">
                     ${totalCost.toFixed(2)}
                   </span>
                 </div>

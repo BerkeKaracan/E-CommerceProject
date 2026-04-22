@@ -707,7 +707,7 @@ export default function ProfilePage() {
             </button>
 
             {isAllOpen && (
-              <div className="hidden md:block absolute top-[calc(100%+10px)] right-0 w-64 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl shadow-[0_20px_50px_-15px_rgba(0,0,0,0.15)] dark:shadow-none overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="hidden md:block absolute top-[calc(100%+10px)] right-0 w-64 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl shadow-[0_20px_50px_-15px_rgba(0,0,0,0.15)] dark:shadow-none overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
                 {filteredMenuOptions.length > 0 ? (
                   filteredMenuOptions.map((group, idx) => (
                     <div
@@ -889,7 +889,7 @@ export default function ProfilePage() {
                     </h2>
 
                     <div className="flex items-center gap-2 md:gap-3">
-                      <div className="relative group/filter z-50">
+                      <div className="relative group/filter z-30">
                         <button className="flex items-center gap-1.5 md:gap-2 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-700 px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-wider text-spc-grey dark:text-neutral-200 shadow-sm hover:border-btn-green dark:hover:border-btn-green transition-all">
                           <span>Filter: {orderFilter}</span>
                         </button>
@@ -910,7 +910,7 @@ export default function ProfilePage() {
                           )}
                         </div>
                       </div>
-                      <div className="relative group/sort z-40">
+                      <div className="relative group/sort z-20">
                         <button className="flex items-center gap-1.5 md:gap-2 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-700 px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-wider text-spc-grey dark:text-neutral-200 shadow-sm hover:border-btn-green dark:hover:border-btn-green transition-all">
                           Sort
                         </button>
