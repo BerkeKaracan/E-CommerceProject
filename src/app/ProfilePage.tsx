@@ -1879,7 +1879,7 @@ export default function ProfilePage() {
       {isAllOpen && (
         <div
           id="mobile-bottom-sheet"
-          className="md:hidden fixed inset-0 z-[999] flex flex-col justify-end"
+          className="md:hidden fixed inset-0 z-999 flex flex-col justify-end"
         >
           <div
             className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-in fade-in duration-200"
@@ -1888,28 +1888,34 @@ export default function ProfilePage() {
           <div className="relative bg-white dark:bg-neutral-950 w-full rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-full duration-300 pb-8">
             <div className="w-12 h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-full mx-auto mb-6" />
             <div className="max-h-[60vh] overflow-y-auto">
-              {profileMenuOptions.map((group, idx) => (
-                <div key={idx} className="mb-6 last:mb-0">
-                  <p className="text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-[0.2em] mb-4">
-                    {group.category}
-                  </p>
-                  <div className="flex flex-col gap-3">
-                    {group.items.map((item) => (
-                      <button
-                        key={item}
-                        onClick={() => {
-                          setIsAllOpen(false);
-                          setActiveTab(item);
-                        }}
-                        className="text-left text-sm font-bold text-spc-grey dark:text-neutral-300 hover:text-btn-green dark:hover:text-btn-green transition-colors flex items-center justify-between"
-                      >
-                        {item}
-                        <div className="w-1.5 h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700" />
-                      </button>
-                    ))}
+              {filteredMenuOptions.length > 0 ? (
+                filteredMenuOptions.map((group, idx) => (
+                  <div key={idx} className="mb-6 last:mb-0">
+                    <p className="text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-[0.2em] mb-4">
+                      {group.category}
+                    </p>
+                    <div className="flex flex-col gap-3">
+                      {group.items.map((item) => (
+                        <button
+                          key={item}
+                          onClick={() => {
+                            setIsAllOpen(false);
+                            setActiveTab(item);
+                          }}
+                          className="text-left text-sm font-bold text-spc-grey dark:text-neutral-300 hover:text-btn-green dark:hover:text-btn-green transition-colors flex items-center justify-between"
+                        >
+                          {item}
+                          <div className="w-1.5 h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700" />
+                        </button>
+                      ))}
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="p-10 text-center text-xs font-black text-neutral-400 uppercase tracking-[0.3em]">
+                  No Results Found
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
