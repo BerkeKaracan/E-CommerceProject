@@ -89,7 +89,10 @@ export default function Home() {
           headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",
         })
-          .then((res) => (res.ok ? res.json() : []))
+          .then((res) => {
+            if (!res.ok) throw new Error("API yanıt vermedi veya hata oluştu");
+            return res.json();
+          })
           .then((data) => {
             if (Array.isArray(data)) {
               const formattedCart = data.map((item: CartItemResponse) => ({
@@ -97,11 +100,11 @@ export default function Home() {
                 quantity: item.quantity,
               }));
               setCart(formattedCart);
-            } else {
-              setCart([]);
             }
           })
-          .catch((err) => console.error("Cart fetching error:", err));
+          .catch((err) => {
+            console.error("Cart fetching error (Focus):", err);
+          });
       } else {
         setCart([]);
       }
