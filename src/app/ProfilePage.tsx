@@ -106,6 +106,8 @@ export default function ProfilePage() {
     is_default: 0,
   });
 
+  const isSearchFocusedRef = useRef(false);
+
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [isAiOpen, setIsAiOpen] = useState(false);
@@ -646,15 +648,23 @@ export default function ProfilePage() {
 
           <div
             id="profile-search-container"
-            className="flex-[3.5] min-w-[180px] md:min-w-0 snap-start flex items-center border-r-2 border-neutral-100 dark:border-neutral-800 px-4 md:px-7 bg-white dark:bg-neutral-900 focus-within:bg-neutral-50/30 dark:focus-within:bg-neutral-800/50 transition-colors group"
+            className="flex-[3.5] min-w-[180px] md:min-w-0 snap-start flex items-center border-r-2 relative z-[1000] border-neutral-100 dark:border-neutral-800 px-4 md:px-7 bg-white dark:bg-neutral-900 focus-within:bg-neutral-50/30 dark:focus-within:bg-neutral-800/50 transition-colors group"
           >
             <input
-              type="text"
               id="profile-search-input"
+              type="text"
               value={profileSearch}
               onChange={(e) => {
                 setProfileSearch(e.target.value);
                 if (e.target.value.trim().length > 0) setIsAllOpen(true);
+              }}
+              onFocus={() => {
+                isSearchFocusedRef.current = true;
+              }}
+              onBlur={() => {
+                setTimeout(() => {
+                  isSearchFocusedRef.current = false;
+                }, 300);
               }}
               placeholder="SEARCH SETTINGS & MENUS..."
               className="w-full h-full outline-none text-[9px] md:text-[10px] font-black tracking-widest placeholder:text-neutral-300 dark:placeholder:text-neutral-600 text-spc-grey dark:text-neutral-200 uppercase bg-transparent"
@@ -1888,24 +1898,9 @@ export default function ProfilePage() {
         >
           <div
             className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-in fade-in duration-200"
-            onTouchStart={(e) => {
-              const searchInput = document.getElementById(
-                "profile-search-input",
-              );
-              if (searchInput && document.activeElement === searchInput) {
-                e.preventDefault();
-                searchInput.blur();
-              } else {
-                setIsAllOpen(false);
-              }
-            }}
-            onMouseDown={(e) => {
-              const searchInput = document.getElementById(
-                "profile-search-input",
-              );
-              if (searchInput && document.activeElement === searchInput) {
-                e.preventDefault();
-                searchInput.blur();
+            onClick={() => {
+              if (isSearchFocusedRef.current) {
+                document.getElementById("profile-search-input")?.blur();
               } else {
                 setIsAllOpen(false);
               }
