@@ -289,7 +289,7 @@ export default function Home() {
             </div>
 
             <div
-              className={`hidden md:block flex-1 w-full max-w-4xl px-2 lg:px-8 transition-all duration-300 ${isSearchFocused ? "relative z-50" : "relative z-10"}`}
+              className={`hidden md:block flex-1 w-full px-2 lg:px-8 transition-all duration-500 ease-out ${isSearchFocused ? "max-w-none relative z-50" : "max-w-4xl relative z-10"}`}
             >
               <div className="relative w-full flex items-center bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus-within:border-btn-green dark:focus-within:border-btn-green focus-within:ring-2 focus-within:ring-btn-green shadow-sm transition-all overflow-hidden h-12">
                 <select
@@ -427,7 +427,9 @@ export default function Home() {
               )}
             </div>
 
-            <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
+            <div
+              className={`items-center gap-1.5 sm:gap-4 shrink-0 ${isSearchFocused ? "hidden" : "flex animate-in fade-in duration-300"}`}
+            >
               <Link
                 href="/tracking"
                 className="hidden lg:block text-sm font-bold text-spc-grey dark:text-neutral-300 hover:text-btn-green px-2 py-2 transition-colors duration-200 whitespace-nowrap mr-2 select-none"
@@ -521,7 +523,7 @@ export default function Home() {
         </div>
       </nav>
 
-      <div className="flex-1 max-w-[1440px] mx-auto w-full px-6 sm:px-4 lg:px-4 py-6 flex flex-col lg:flex-row gap-6 lg:gap-8 overflow-hidden">
+      <div className="flex-1 max-w-[1440px] mx-auto w-full px-3 md:px-6 lg:px-4 py-6 flex flex-col lg:flex-row gap-6 lg:gap-8 overflow-hidden">
         <div
           onScroll={(e) => {
             const bottom =
@@ -697,7 +699,7 @@ export default function Home() {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4">
               {Array.from({ length: 12 }).map((_, n) => (
                 <div
                   key={n}
