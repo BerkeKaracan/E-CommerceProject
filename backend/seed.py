@@ -81,10 +81,10 @@ def seed_database():
             desc = "Crafted with precision and care. Add a touch of luxury to your life with this timeless piece."
             price = round(random.uniform(50.0, 499.0), 2)
 
-        # O kategoriye ait yerel resimlerden birini seç
         image = random.choice(images[category])
         sales = random.randint(0, 5000)
-
+        is_discounted = 1 if random.random() < 0.25 else 0
+        discount_rate = random.choice([10, 15, 20, 30, 50]) if is_discounted == 1 else 0
         products_to_add.append(
             DBProduct(
                 name=name,
@@ -92,7 +92,9 @@ def seed_database():
                 price=price,
                 image=image,
                 sales_count=sales,
-                description=desc
+                description=desc,
+                is_discounted=is_discounted,
+                discount_rate=discount_rate
             )
         )
 

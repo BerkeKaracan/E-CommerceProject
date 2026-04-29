@@ -49,7 +49,8 @@ class DBProduct(Base):
   sales_count = Column(Integer, default=0)
   view_count = Column(Integer, default=0)
   description = Column(String, default="Premium quality product from our exclusive collection. Guaranteed to elevate your style.")
-
+  is_discounted = Column(Integer, default=0)
+  discount_rate = Column(Integer, default=0)
 class DBUser(Base):
   __tablename__ = "User"
   id = Column(Integer, primary_key=True, index=True)
@@ -131,6 +132,8 @@ class ProductSchema(BaseModel):
   price: float
   image: str
   description: Optional[str] = None
+  is_discounted: Optional[int] = 0
+  discount_rate: Optional[int] = 0
   class Config:
     from_attributes = True
 
@@ -609,7 +612,17 @@ def fix_database(db: Session = Depends(get_db)):
             db.execute(text('ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS description VARCHAR DEFAULT \'Premium quality product.\';'))
         except:
             pass 
+
+        try:
+            db.execute(text('ALTER TABLE "Product" ADD COLUMN is_discounted INTEGER DEFAULT 0;'))
+        except:
+            pass
             
+        try:
+            db.execute(text('ALTER TABLE "Product" ADD COLUMN discount_rate INTEGER DEFAULT 0;'))
+        except:
+            pass
+        
         db.commit()
         return {"status": "success", "message": "Database schema updated successfully."}
     except Exception as e:

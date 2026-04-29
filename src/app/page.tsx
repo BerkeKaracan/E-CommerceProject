@@ -12,6 +12,9 @@ interface ApiProduct {
   category: string;
   price: number;
   image: string;
+  is_discounted?: number;
+  discount_rate?: number;
+  original_price?: number;
 }
 
 interface Product extends ApiProduct {
@@ -47,15 +50,23 @@ export default function Home() {
   const [isSortOpen, setIsSortOpen] = useState(false);
 
   const [visibleCount, setVisibleCount] = useState(12);
-
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
       .then((res) => res.json())
       .then((data: ApiProduct[]) => {
-        const formattedData: Product[] = data.map((p) => ({
-          ...p,
-          quantity: 1,
-        }));
+        const formattedData: Product[] = data.map((p) => {
+          const finalPrice =
+            p.is_discounted === 1 && p.discount_rate
+              ? p.price * (1 - p.discount_rate / 100)
+              : p.price;
+
+          return {
+            ...p,
+            original_price: p.price,
+            price: finalPrice,
+            quantity: 1,
+          };
+        });
         setProducts(formattedData);
         setIsLoading(false);
       })
@@ -221,7 +232,9 @@ export default function Home() {
       else if (priceFilter === "$20 - $50")
         matchesPrice = p.price >= 20 && p.price <= 50;
       else if (priceFilter === "Over $50") matchesPrice = p.price > 50;
-
+      else if (priceFilter === "Discounted Offers")
+        matchesPrice = p.is_discounted === 1;
+      
       return matchesSearch && matchesCategory && matchesPrice;
     })
     .sort((a, b) => {
@@ -555,9 +568,12 @@ export default function Home() {
                   Discover the new season with up to 50% off on selected premium
                   items. Elevate your style.
                 </p>
-                <button className="bg-white text-spc-grey px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-btn-green hover:text-white transition-colors shadow-lg active:scale-95">
+                <Link
+                  href="/sale"
+                  className="inline-block bg-white text-spc-grey px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-btn-green hover:text-white transition-colors shadow-lg active:scale-95 text-center"
+                >
                   Shop Now
-                </button>
+                </Link>
               </div>
             </div>
           )}
@@ -632,20 +648,24 @@ export default function Home() {
                   <div
                     className={`absolute right-0 top-full mt-2 w-44 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-xl shadow-xl transition-all p-2 flex flex-col gap-1 ${isFilterOpen ? "opacity-100 visible" : "opacity-0 invisible lg:group-hover/filter:opacity-100 lg:group-hover/filter:visible"}`}
                   >
-                    {["All Prices", "Under $20", "$20 - $50", "Over $50"].map(
-                      (pf) => (
-                        <button
-                          key={pf}
-                          onClick={() => {
-                            setPriceFilter(pf);
-                            setIsFilterOpen(false);
-                          }}
-                          className={`text-left px-3 py-2 text-[10px] font-bold rounded-md transition-colors ${priceFilter === pf ? "bg-btn-green/10 text-btn-green" : "text-spc-grey dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
-                        >
-                          {pf}
-                        </button>
-                      ),
-                    )}
+                    {[
+                      "All Prices",
+                      "Under $20",
+                      "$20 - $50",
+                      "Over $50",
+                      "Discounted Offers",
+                    ].map((pf) => (
+                      <button
+                        key={pf}
+                        onClick={() => {
+                          setPriceFilter(pf);
+                          setIsFilterOpen(false);
+                        }}
+                        className={`text-left px-3 py-2 text-[10px] font-bold rounded-md transition-colors ${priceFilter === pf ? "bg-btn-green/10 text-btn-green" : "text-spc-grey dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
+                      >
+                        {pf}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -730,6 +750,11 @@ export default function Home() {
                         className="w-full flex flex-col items-center flex-1 cursor-pointer group/link"
                       >
                         <div className="aspect-3/4 w-full bg-neutral-50/80 dark:bg-neutral-800 rounded-xl mb-4 shrink-0 flex items-center justify-center overflow-hidden relative group-hover:bg-neutral-100 dark:group-hover:bg-neutral-700 transition-colors">
+                          {product.is_discounted === 1 && (
+                            <div className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-black px-2.5 py-1 rounded-md z-20 shadow-md animate-pulse">
+                              -{product.discount_rate}%
+                            </div>
+                          )}
                           <Image
                             src={product.image}
                             alt={product.name}
@@ -747,9 +772,22 @@ export default function Home() {
                       </Link>
 
                       <div className="mt-auto w-full">
-                        <p className="text-lg font-black text-spc-grey dark:text-white mb-4 text-center">
-                          ${product.price.toFixed(2)}
-                        </p>
+                        <div className="flex flex-col items-center mb-4">
+                          {product.is_discounted === 1 ? (
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-bold text-neutral-400 line-through decoration-red-500/50">
+                                ${product.original_price?.toFixed(2)}
+                              </p>
+                              <p className="text-lg font-black text-red-500 dark:text-red-400">
+                                ${product.price.toFixed(2)}
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-lg font-black text-spc-grey dark:text-white">
+                              ${product.price.toFixed(2)}
+                            </p>
+                          )}
+                        </div>
                         <div className="relative w-full mb-3 group/qty">
                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[11px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest pointer-events-none">
                             Qty
@@ -887,9 +925,22 @@ export default function Home() {
                           </span>
                         </h3>
                       </Link>
-                      <p className="text-lg font-black text-spc-grey dark:text-white mb-4 text-center">
-                        ${item.price.toFixed(2)}
-                      </p>
+                      <div className="flex flex-col items-center mb-4">
+                        {item.is_discounted === 1 ? (
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-bold text-neutral-400 line-through decoration-red-500/50">
+                              ${item.original_price?.toFixed(2)}
+                            </p>
+                            <p className="text-lg font-black text-red-500 dark:text-red-400">
+                              ${item.price.toFixed(2)}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-lg font-black text-spc-grey dark:text-white">
+                            ${item.price.toFixed(2)}
+                          </p>
+                        )}
+                      </div>
 
                       <div className="w-full space-y-2 mt-2">
                         <div className="relative w-full mb-3 group/qty">
