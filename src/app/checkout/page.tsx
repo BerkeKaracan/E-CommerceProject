@@ -34,11 +34,24 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const [promoCode, setPromoCode] = useState("");
-  const [discount, setDiscount] = useState(0);
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromos, setAppliedPromos] = useState<
+    { code: string; amount: number }[]
+  >([]);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
+
+  const totalDiscount = appliedPromos.reduce((sum, p) => sum + p.amount, 0);
 
   const handleApplyPromo = async () => {
-    if (!promoCode.trim()) return;
+    if (!promoInput.trim()) return;
+    if (appliedPromos.some((p) => p.code === promoInput.toUpperCase())) {
+      setPromoError("This code has already been applied!");
+      return;
+    }
+
+    setIsApplying(true);
+    setPromoError(null);
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/promo/validate`,
@@ -48,25 +61,25 @@ export default function CheckoutPage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ code: promoCode }),
+          body: JSON.stringify({ code: promoInput }),
         },
       );
       const data = await res.json();
-      if (res.ok && data.valid) {
-        setDiscount(data.discount_amount);
-        setToastMessage(
-          `Discount code applied! (-$${data.discount_amount.toFixed(2)})`,
-        );
-        setTimeout(() => setToastMessage(null), 3000);
+
+      if (res.ok) {
+        setAppliedPromos([
+          ...appliedPromos,
+          { code: promoInput.toUpperCase(), amount: data.discount_amount },
+        ]);
+        setPromoInput("");
+        setToastMessage(`🎉 $${data.discount_amount} discount added!`);
       } else {
-        setToastMessage(
-          "❌ " + (data.detail || "Invalid or expired promo code."),
-        );
-        setTimeout(() => setToastMessage(null), 3000);
-        setDiscount(0);
+        setPromoError(data.detail || "Invalid code.");
       }
-    } catch (e) {
-      setToastMessage("Server error while validating code.");
+    } catch (err) {
+      setPromoError("Server error.");
+    } finally {
+      setIsApplying(false);
     }
   };
 
@@ -75,7 +88,7 @@ export default function CheckoutPage() {
     0,
   );
   const shippingCost = cart.length > 0 ? 1.0 : 0;
-  const totalCost = Math.max(0, productsCosts + shippingCost - discount);
+  const totalCost = Math.max(0, productsCosts + shippingCost - totalDiscount);
 
   useEffect(() => {
     if (authContext === undefined) return;
@@ -91,25 +104,17 @@ export default function CheckoutPage() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!res.ok) {
-        if (res.status === 401) {
-          router.push("/");
-          return;
-        }
-        throw new Error("Server error");
-      }
-      const data: CartItemResponse[] = await res.json();
-
+      const data = await res.json();
       if (Array.isArray(data)) {
-        const formattedCart = data.map((item) => ({
-          ...item.product,
-          quantity: item.quantity,
-        }));
-        setCart(formattedCart);
+        setCart(
+          data.map((item: CartItemResponse) => ({
+            ...item.product,
+            quantity: item.quantity,
+          })),
+        );
       }
     } catch (err) {
-      console.error("Cart fetch error:", err);
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -179,24 +184,21 @@ export default function CheckoutPage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ promo_code: discount > 0 ? promoCode : null }),
+          body: JSON.stringify({
+            promo_codes: appliedPromos.map((p) => p.code),
+          }),
         },
       );
 
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
-        setToastMessage(`Order placed! Tracking ID: #${data.order_id}`);
-        router.refresh();
-
-        setTimeout(() => {
-          router.push("/profile");
-        }, 2500);
+        setToastMessage("🎉 " + data.message);
+        setTimeout(() => router.push("/profile"), 2000);
       } else {
-        setToastMessage("Checkout failed. Please try again.");
+        setToastMessage("❌ " + (data.detail || "Checkout failed"));
       }
     } catch (err) {
-      console.error("Checkout error:", err);
-      setToastMessage("An error occurred during checkout.");
+      setToastMessage("❌ Server Error!");
     } finally {
       setIsProcessing(false);
     }
@@ -332,24 +334,56 @@ export default function CheckoutPage() {
                 Payment Details
               </h2>
 
-              <div className="mb-6 flex items-center gap-2">
-                <input
-                  type="text"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value)}
-                  placeholder="Promo Code"
-                  className="flex-1 bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-lg px-4 py-2 text-sm font-black uppercase text-spc-grey dark:text-neutral-200 outline-none focus:border-btn-green dark:focus:border-btn-green transition-colors placeholder:font-medium"
-                />
-                <button
-                  onClick={handleApplyPromo}
-                  disabled={!promoCode.trim() || cart.length === 0}
-                  className="bg-black dark:bg-neutral-800 hover:bg-neutral-800 dark:hover:bg-neutral-700 text-white disabled:bg-neutral-200 dark:disabled:bg-neutral-800/50 disabled:text-neutral-400 px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm active:scale-95"
-                >
-                  Apply
-                </button>
+              {/* Promo Code Input Area */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={promoInput}
+                    onChange={(e) =>
+                      setPromoInput(e.target.value.toUpperCase())
+                    }
+                    placeholder="REWARD-XXXXXX"
+                    className="flex-1 bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-lg px-4 py-3 text-sm font-black text-spc-grey dark:text-neutral-200 outline-none focus:border-btn-green transition-colors uppercase tracking-widest"
+                  />
+                  <button
+                    onClick={handleApplyPromo}
+                    disabled={
+                      isApplying || !promoInput.trim() || cart.length === 0
+                    }
+                    className="bg-black dark:bg-neutral-800 hover:bg-neutral-700 text-white disabled:bg-neutral-200 dark:disabled:bg-neutral-800/50 disabled:text-neutral-400 px-6 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm active:scale-95"
+                  >
+                    {isApplying ? "..." : "Add"}
+                  </button>
+                </div>
+                {promoError && (
+                  <p className="text-[10px] text-red-500 font-bold mt-2 ml-1">
+                    {promoError}
+                  </p>
+                )}
+
+                {/* UYGULANAN KODLARIN LİSTESİ (TAG OLARAK GÖRÜNÜR) */}
+                {appliedPromos.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {appliedPromos.map((promo, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-2 bg-btn-green/10 border border-btn-green/30 px-3 py-1.5 rounded-lg animate-in zoom-in"
+                      >
+                        <span className="text-[10px] font-black text-btn-green tracking-widest">
+                          {promo.code}
+                        </span>
+                        <span className="text-[10px] font-bold text-neutral-500">
+                          (-${promo.amount})
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div className="space-y-4 mb-8">
+              {/* Cost Calculation Area */}
+              <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-sm font-bold text-neutral-500 dark:text-neutral-400">
                   <span>Subtotal</span>
                   <span>${productsCosts.toFixed(2)}</span>
@@ -358,19 +392,37 @@ export default function CheckoutPage() {
                   <span>Shipping</span>
                   <span>${shippingCost.toFixed(2)}</span>
                 </div>
-                {discount > 0 && (
+                {totalDiscount > 0 && (
                   <div className="flex justify-between text-sm font-black text-btn-green animate-in slide-in-from-right-4 duration-300">
-                    <span>Discount (LOYALTY5)</span>
-                    <span>-${discount.toFixed(2)}</span>
+                    <span>Total Discount</span>
+                    <span>-${totalDiscount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="w-full h-px bg-neutral-200 dark:bg-neutral-800 my-2" />
                 <div className="flex justify-between items-end gap-4 text-xl font-black text-spc-grey dark:text-white">
                   <span className="shrink-0">Total</span>
                   <span className="text-btn-green text-right break-all leading-tight max-w-[65%]">
-                    ${totalCost.toFixed(2)}
+                    ${Math.max(0, totalCost - totalDiscount).toFixed(2)}
                   </span>
                 </div>
+              </div>
+
+              {/* Gamification: Future Points Indicator */}
+              <div className="bg-linear-to-r from-yellow-400/10 to-orange-500/10 border border-yellow-400/20 rounded-xl p-4 flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl drop-shadow-sm">💎</span>
+                  <div>
+                    <p className="text-[10px] font-black text-yellow-600 dark:text-yellow-500 uppercase tracking-widest mb-0.5">
+                      Premium Rewards
+                    </p>
+                    <p className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400">
+                      Points to earn from this order:
+                    </p>
+                  </div>
+                </div>
+                <span className="text-lg font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-500 to-orange-500 drop-shadow-sm">
+                  +{Math.floor(Math.max(0, totalCost - totalDiscount) / 10)} PTS
+                </span>
               </div>
               <div className="space-y-3 mb-8 opacity-50 pointer-events-none">
                 <input

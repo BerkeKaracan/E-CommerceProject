@@ -13,7 +13,19 @@ interface UserStats {
   name: string;
   order_count: number;
   joined_at: string;
+  points: number;
   is_2fa_enabled?: number;
+}
+
+interface RewardCode {
+  id: number;
+  code: string;
+  discount_amount: number;
+}
+
+interface RewardData {
+  points: number;
+  active_codes: RewardCode[];
 }
 
 interface SavedItem {
@@ -91,12 +103,17 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [orders, setOrders] = useState<ApiOrder[]>([]);
 
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
   const [twoFaSetup, setTwoFaSetup] = useState<{
     secret: string;
     uri: string;
   } | null>(null);
   const [twoFaCode, setTwoFaCode] = useState("");
   const [isVerifying2Fa, setIsVerifying2Fa] = useState(false);
+
+  const [rewardData, setRewardData] = useState<RewardData | null>(null);
+  const [isExchanging, setIsExchanging] = useState(false);
 
   const [addresses, setAddresses] = useState<ApiAddress[]>([]);
   const [isAddressFormOpen, setIsAddressFormOpen] = useState(false);
@@ -358,8 +375,67 @@ export default function ProfilePage() {
         if (Array.isArray(data)) setAddresses(data);
       })
       .catch(console.error);
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/rewards`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setRewardData(data);
+      })
+      .catch(console.error);
   }, [token, router]);
 
+  const handleExchangePoints = async (
+    pointsToSpend: number,
+    discountAmount: number,
+  ) => {
+    if (!rewardData || rewardData.points < pointsToSpend) return;
+    setIsExchanging(true);
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/user/exchange-points`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            points: pointsToSpend,
+            discount: discountAmount,
+          }),
+        },
+      );
+      const data = await res.json();
+
+      if (res.ok) {
+        setToastMessage("🎉 Reward claimed successfully!");
+        setRewardData((prev) =>
+          prev
+            ? {
+                points: prev.points - pointsToSpend,
+                active_codes: [
+                  ...prev.active_codes,
+                  {
+                    id: Date.now(),
+                    code: data.code,
+                    discount_amount: discountAmount,
+                  },
+                ],
+              }
+            : prev,
+        );
+      } else {
+        setToastMessage("❌ " + (data.detail || "Failed to exchange points."));
+      }
+    } catch (err) {
+      setToastMessage("❌ Server connection error!");
+    } finally {
+      setIsExchanging(false);
+      setTimeout(() => setToastMessage(null), 3000);
+    }
+  };
   useEffect(() => {
     if (isAiOpen) {
       chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -538,94 +614,25 @@ export default function ProfilePage() {
               </div>
             ) : (
               <div className="space-y-0.5 overflow-hidden group relative pr-8">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-xl md:text-2xl font-black text-spc-grey dark:text-white tracking-tighter leading-tight truncate">
-                    {user.name}
+                <div className="flex flex-col">
+                  <h1 className="text-2xl md:text-4xl font-black text-spc-grey dark:text-white uppercase tracking-tighter leading-none mb-2">
+                    {stats?.name || "Loading..."}
                   </h1>
-                  <button
-                    onClick={startEditing}
-                    className="text-neutral-300 dark:text-neutral-600 hover:text-btn-green dark:hover:text-btn-green transition-all hover:scale-110 shrink-0"
-                    title="Edit Profile"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="2.5"
-                      stroke="currentColor"
-                      className="w-5 h-5"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"
-                      />
-                    </svg>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 bg-yellow-400/10 dark:bg-yellow-400/5 px-3 py-1 rounded-lg border border-yellow-400/20 shadow-sm">
+                      <span className="text-[11px] font-black text-yellow-600 dark:text-yellow-400 uppercase tracking-widest">
+                        {stats?.points ?? 0} PTS
+                      </span>
+                    </div>
+                    <div className="h-1 w-1 rounded-full bg-neutral-300 dark:bg-neutral-700" />
+                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+                      Premium Rewards Member
+                    </span>
+                  </div>
                 </div>
                 <p className="text-[10px] md:text-xs font-medium text-neutral-400 dark:text-neutral-500 truncate">
                   {user.email}
                 </p>
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-col items-end">
-            <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-neutral-300 dark:text-neutral-600">
-              Points
-            </p>
-            <p className="text-lg md:text-xl font-black text-btn-green animate-in zoom-in duration-500">
-              {earnedPoints > 0 ? earnedPoints : 0}
-            </p>
-            {earnedPoints >= 50 && !redeemedCode && (
-              <button
-                onClick={async () => {
-                  try {
-                    const res = await fetch(
-                      `${process.env.NEXT_PUBLIC_API_URL}/api/promo/generate`,
-                      {
-                        method: "POST",
-                        headers: { Authorization: `Bearer ${token}` },
-                      },
-                    );
-                    if (res.ok) {
-                      const data = await res.json();
-                      setRedeemedCode(data.code);
-                    }
-                  } catch (e) {
-                    setToastMessage("Failed to generate code.");
-                  }
-                }}
-                className="mt-1 bg-btn-green text-white text-[9px] font-black px-2 py-1 rounded-md hover:bg-green-600 transition-colors uppercase tracking-widest shadow-sm active:scale-95"
-              >
-                Get $5 Code
-              </button>
-            )}
-            {redeemedCode && (
-              <div
-                onClick={() => {
-                  navigator.clipboard.writeText(redeemedCode);
-                  setToastMessage("Promo Code Copied: " + redeemedCode);
-                  setTimeout(() => setToastMessage(null), 3000);
-                }}
-                className="mt-1 flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-[10px] font-black text-spc-grey dark:text-white px-2 py-1.5 rounded-md uppercase tracking-widest cursor-pointer hover:border-btn-green dark:hover:border-btn-green transition-colors"
-                title="Click to copy"
-              >
-                {redeemedCode}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2.5"
-                  stroke="currentColor"
-                  className="w-3 h-3 text-neutral-400"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75"
-                  />
-                </svg>
               </div>
             )}
           </div>
@@ -685,7 +692,7 @@ export default function ProfilePage() {
             </svg>
           </div>
 
-          {["Saved", "Support"].map((tab) => (
+          {["Saved", "Rewards", "Support"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -1209,6 +1216,169 @@ export default function ProfilePage() {
                       </p>
                     </div>
                   )}
+                </div>
+              ) : activeTab === "Rewards" ? (
+                <div className="flex-1 w-full max-w-3xl flex flex-col mt-4 md:mt-6 animate-in fade-in zoom-in-95 duration-300 px-2 pb-20">
+                  {/* Header Info */}
+                  <div className="flex items-center justify-between mb-6 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-linear-to-tr from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg text-lg text-white">
+                        💎
+                      </div>
+                      <div>
+                        <h2 className="text-sm md:text-base font-black text-spc-grey dark:text-white uppercase tracking-wider">
+                          Premium Rewards
+                        </h2>
+                        <p className="text-[10px] font-bold text-neutral-400">
+                          Collect points and claim legendary discounts!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Current Balance Card */}
+                  <div className="relative overflow-hidden bg-linear-to-br from-neutral-900 to-black dark:from-black dark:to-neutral-900 border border-neutral-800 rounded-[2rem] p-6 shadow-2xl mb-8 group">
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-yellow-500/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none transition-transform group-hover:scale-110 duration-700"></div>
+
+                    <div className="relative z-10 text-center md:text-left flex flex-col md:flex-row justify-between items-center">
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-widest text-neutral-400 mb-1">
+                          Current Balance
+                        </p>
+                        <div className="flex items-baseline justify-center md:justify-start gap-2">
+                          <span className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-300 to-yellow-500 drop-shadow-sm">
+                            {rewardData?.points || 0}
+                          </span>
+                          <span className="text-sm font-bold text-yellow-500/80 uppercase tracking-widest">
+                            PTS
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Reward Options (Tiers) */}
+                  <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-4">
+                    Exchange Points
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    {/* Option 1: Basic */}
+                    <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-5 shadow-sm flex flex-col items-center text-center">
+                      <p className="text-sm font-black text-spc-grey dark:text-white uppercase mb-1">
+                        $10 Discount
+                      </p>
+                      <p className="text-[10px] font-bold text-neutral-400 mb-4">
+                        Minimum tier
+                      </p>
+                      <button
+                        onClick={() => handleExchangePoints(100, 10)}
+                        disabled={
+                          isExchanging || (rewardData?.points ?? 0) < 100
+                        }
+                        className="w-full mt-auto bg-neutral-100 dark:bg-neutral-800 text-spc-grey dark:text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all disabled:opacity-50"
+                      >
+                        100 PTS
+                      </button>
+                    </div>
+
+                    {/* Option 2: Standard (Highlighted) */}
+                    <div className="bg-white dark:bg-neutral-900 border-2 border-yellow-400 dark:border-yellow-500 rounded-2xl p-5 shadow-md flex flex-col items-center text-center relative transform md:-translate-y-2">
+                      <span className="absolute -top-3 bg-yellow-400 dark:bg-yellow-500 text-black text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+                        Most Popular
+                      </span>
+                      <p className="text-sm font-black text-spc-grey dark:text-white uppercase mb-1">
+                        $50 Discount
+                      </p>
+                      <p className="text-[10px] font-bold text-neutral-400 mb-4">
+                        Standard tier
+                      </p>
+                      <button
+                        onClick={() => handleExchangePoints(500, 50)}
+                        disabled={
+                          isExchanging || (rewardData?.points ?? 0) < 500
+                        }
+                        className="w-full mt-auto bg-linear-to-r from-yellow-400 to-orange-500 text-black px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-sm disabled:opacity-50 disabled:grayscale"
+                      >
+                        500 PTS
+                      </button>
+                    </div>
+
+                    {/* Option 3: Premium */}
+                    <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-5 shadow-sm flex flex-col items-center text-center">
+                      <p className="text-sm font-black text-spc-grey dark:text-white uppercase mb-1">
+                        $120 Discount
+                      </p>
+                      <p className="text-[10px] font-bold text-neutral-400 mb-4">
+                        Legendary tier
+                      </p>
+                      <button
+                        onClick={() => handleExchangePoints(1000, 120)}
+                        disabled={
+                          isExchanging || (rewardData?.points ?? 0) < 1000
+                        }
+                        className="w-full mt-auto bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-all disabled:opacity-50"
+                      >
+                        1000 PTS
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Active Codes Section */}
+                  <div>
+                    <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-4">
+                      Your Available Codes
+                    </h3>
+                    {rewardData?.active_codes &&
+                    rewardData.active_codes.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {rewardData.active_codes.map((item) => (
+                          <div
+                            key={item.id}
+                            className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-4 shadow-sm flex items-center justify-between hover:border-btn-green dark:hover:border-btn-green transition-colors"
+                          >
+                            <div>
+                              <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">
+                                ${item.discount_amount} Off
+                              </p>
+                              <p className="text-sm font-black text-spc-grey dark:text-white tracking-widest">
+                                {item.code}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(item.code);
+                                setToastMessage("Copied: " + item.code);
+                                setTimeout(() => setToastMessage(null), 3000);
+                              }}
+                              className="w-8 h-8 rounded-full bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center hover:bg-btn-green/10 text-neutral-400 hover:text-btn-green transition-colors"
+                              title="Copy Code"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={2.5}
+                                stroke="currentColor"
+                                className="w-4 h-4"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-8 text-center border-2 border-dashed border-neutral-100 dark:border-neutral-800 rounded-2xl">
+                        <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+                          No active codes available.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : activeTab === "Support" ? (
                 <div className="flex-1 w-full max-w-3xl flex flex-col items-center justify-center gap-4 mt-16 animate-in fade-in zoom-in-95 duration-300">
