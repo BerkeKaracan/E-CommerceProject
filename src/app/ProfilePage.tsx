@@ -650,6 +650,7 @@ export default function ProfilePage() {
           >
             <input
               type="text"
+              id="profile-search-input"
               value={profileSearch}
               onChange={(e) => {
                 setProfileSearch(e.target.value);
@@ -1888,19 +1889,23 @@ export default function ProfilePage() {
           <div
             className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-in fade-in duration-200"
             onTouchStart={(e) => {
-              const activeEl = document.activeElement as HTMLElement;
-              if (activeEl && activeEl.tagName === "INPUT") {
+              const searchInput = document.getElementById(
+                "profile-search-input",
+              );
+              if (searchInput && document.activeElement === searchInput) {
                 e.preventDefault();
-                activeEl.blur();
+                searchInput.blur();
               } else {
                 setIsAllOpen(false);
               }
             }}
             onMouseDown={(e) => {
-              const activeEl = document.activeElement as HTMLElement;
-              if (activeEl && activeEl.tagName === "INPUT") {
+              const searchInput = document.getElementById(
+                "profile-search-input",
+              );
+              if (searchInput && document.activeElement === searchInput) {
                 e.preventDefault();
-                activeEl.blur();
+                searchInput.blur();
               } else {
                 setIsAllOpen(false);
               }
