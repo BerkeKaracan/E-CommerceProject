@@ -54,6 +54,12 @@ export default function Home() {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
       .then((res) => res.json())
       .then((data: ApiProduct[]) => {
+        if (!Array.isArray(data)) {
+          console.error("API Hatası:", data);
+          setProducts([]);
+          setIsLoading(false);
+          return;
+        }
         const formattedData: Product[] = data.map((p) => {
           const finalPrice =
             p.is_discounted === 1 && p.discount_rate
@@ -234,7 +240,7 @@ export default function Home() {
       else if (priceFilter === "Over $50") matchesPrice = p.price > 50;
       else if (priceFilter === "Discounted Offers")
         matchesPrice = p.is_discounted === 1;
-      
+
       return matchesSearch && matchesCategory && matchesPrice;
     })
     .sort((a, b) => {
