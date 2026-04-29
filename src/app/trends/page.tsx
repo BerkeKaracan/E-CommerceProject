@@ -108,54 +108,112 @@ export default function TrendsPage() {
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-neutral-200 dark:border-neutral-800 border-t-btn-green dark:border-t-btn-green"></div>
           </div>
         ) : trendingProducts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {trendingProducts.map((product, index) => (
-              <div
-                key={product.id}
-                className="relative bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-3xl p-5 shadow-sm hover:shadow-xl dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.3)] hover:-translate-y-2 transition-all duration-300 flex flex-col group overflow-hidden"
-              >
+          <div className="flex flex-col gap-16">
+            {/* TIER 1: TOP 4 - ŞAMPİYONLAR (Büyük Kartlar) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {trendingProducts.slice(0, 4).map((product, index) => (
                 <div
-                  className={`absolute top-4 left-4 w-10 h-10 rounded-full flex items-center justify-center text-lg font-black z-10 shadow-md ${index === 0 ? "bg-yellow-400 text-white dark:text-neutral-900" : index === 1 ? "bg-neutral-300 dark:bg-neutral-600 text-white" : index === 2 ? "bg-orange-300 dark:bg-orange-700 text-white" : "bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500"}`}
+                  key={product.id}
+                  className="relative bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-3xl p-5 shadow-sm hover:shadow-xl dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.3)] hover:-translate-y-2 transition-all duration-300 flex flex-col group overflow-hidden"
                 >
-                  #{index + 1}
-                </div>
-                <Link
-                  href={`/product/${product.id}`}
-                  className="flex flex-col items-center flex-1 cursor-pointer group/link w-full"
-                >
-                  <div className="aspect-square w-full bg-neutral-50 dark:bg-neutral-800 rounded-2xl mb-5 shrink-0 flex items-center justify-center overflow-hidden relative group-hover:bg-neutral-100 dark:group-hover:bg-neutral-700 transition-colors">
-                    <Image
-                      src={product.image}
-                      alt={product.name}
-                      fill
-                      className="object-cover object-center group-hover:scale-110 transition-transform duration-700"
-                    />
+                  <div
+                    className={`absolute top-4 left-4 w-10 h-10 rounded-full flex items-center justify-center text-lg font-black z-10 shadow-md ${index === 0 ? "bg-yellow-400 text-white dark:text-neutral-900" : index === 1 ? "bg-neutral-300 dark:bg-neutral-600 text-white" : index === 2 ? "bg-orange-300 dark:bg-orange-700 text-white" : "bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500"}`}
+                  >
+                    #{index + 1}
                   </div>
+                  <Link
+                    href={`/product/${product.id}`}
+                    className="flex flex-col items-center flex-1 cursor-pointer group/link w-full"
+                  >
+                    <div className="aspect-square w-full bg-neutral-50 dark:bg-neutral-800 rounded-2xl mb-5 shrink-0 flex items-center justify-center overflow-hidden relative group-hover:bg-neutral-100 dark:group-hover:bg-neutral-700 transition-colors">
+                      <Image
+                        src={product.image}
+                        alt={product.name}
+                        fill
+                        className="object-cover object-center group-hover:scale-110 transition-transform duration-700"
+                      />
+                    </div>
 
+                    <div className="flex flex-col items-center flex-1">
+                      <p className="text-[10px] text-category-blue dark:text-neutral-400 font-bold uppercase tracking-widest mb-1.5 transition-colors">
+                        {product.category}
+                      </p>
+                      <h3 className="text-lg font-black text-spc-grey dark:text-neutral-200 mb-2 text-center leading-tight hover:text-green-400 dark:hover:text-btn-green transition-colors">
+                        {product.name}
+                      </h3>
+                    </div>
+                  </Link>
                   <div className="flex flex-col items-center flex-1">
-                    <p className="text-[10px] text-category-blue dark:text-neutral-400 font-bold uppercase tracking-widest mb-1.5 transition-colors">
-                      {product.category}
+                    <p className="text-xl font-black text-btn-green mt-auto">
+                      ${product.price.toFixed(2)}
                     </p>
-                    <h3 className="text-lg font-black text-spc-grey dark:text-neutral-200 mb-2 text-center leading-tight hover:text-green-400 dark:hover:text-btn-green transition-colors">
-                      {product.name}
-                    </h3>
                   </div>
-                </Link>
-                <div className="flex flex-col items-center flex-1">
-                  <p className="text-xl font-black text-btn-green mt-auto">
-                    ${product.price.toFixed(2)}
-                  </p>
+                  <div className="flex flex-col items-center flex-1">
+                    <div className="mt-4 w-full bg-orange-50 dark:bg-orange-900/20 rounded-xl py-2 flex items-center justify-center gap-2 transition-colors border border-transparent dark:border-orange-500/10">
+                      <span className="text-orange-500 text-xs">📈</span>
+                      <span className="text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider transition-colors">
+                        Purchased {product.sales_count || 0} times
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-col items-center flex-1">
-                  <div className="mt-4 w-full bg-orange-50 dark:bg-orange-900/20 rounded-xl py-2 flex items-center justify-center gap-2 transition-colors border border-transparent dark:border-orange-500/10">
-                    <span className="text-orange-500 text-xs">📈</span>
-                    <span className="text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider transition-colors">
-                      Purchased {product.sales_count || 0} times
-                    </span>
-                  </div>
+              ))}
+            </div>
+
+            {/* TIER 2: YÜKSELEN YILDIZLAR (5 ile 10 Arası - Kompakt Kartlar) */}
+            {trendingProducts.length > 4 && (
+              <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+                <div className="flex items-center gap-4 mb-6">
+                  <h2 className="text-xl md:text-2xl font-black text-spc-grey dark:text-white tracking-tighter shrink-0 flex items-center gap-2">
+                    Rising Stars <span className="text-lg">⭐</span>
+                  </h2>
+                  <div className="flex-1 h-px bg-neutral-200 dark:bg-neutral-800"></div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {trendingProducts.slice(4, 10).map((product, idx) => {
+                    const rank = idx + 5;
+                    return (
+                      <Link
+                        key={product.id}
+                        href={`/product/${product.id}`}
+                        className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-3 md:p-4 flex items-center gap-4 hover:shadow-md dark:hover:border-neutral-700 hover:-translate-y-1 transition-all duration-300 group"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 flex items-center justify-center text-xs font-black shrink-0 group-hover:bg-btn-green group-hover:text-white transition-colors">
+                          #{rank}
+                        </div>
+                        <div className="w-16 h-16 bg-neutral-50 dark:bg-neutral-800 rounded-xl overflow-hidden relative shrink-0">
+                          <Image
+                            src={product.image}
+                            alt={product.name}
+                            fill
+                            className="object-cover object-center group-hover:scale-110 transition-transform duration-500"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0 pr-2">
+                          <p className="text-[9px] text-category-blue dark:text-neutral-500 font-bold uppercase tracking-widest truncate mb-0.5">
+                            {product.category}
+                          </p>
+                          <h3 className="text-sm font-bold text-spc-grey dark:text-neutral-200 truncate group-hover:text-btn-green transition-colors">
+                            {product.name}
+                          </h3>
+                          <div className="flex items-center gap-3 mt-1.5">
+                            <span className="text-sm font-black text-spc-grey dark:text-white">
+                              ${product.price.toFixed(2)}
+                            </span>
+                            <div className="flex items-center gap-1 bg-orange-50 dark:bg-orange-900/30 px-2 py-0.5 rounded-full border border-orange-100 dark:border-orange-500/20">
+                              <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400">
+                                {product.sales_count || 0} Sold
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
-            ))}
+            )}
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-600 transition-colors">

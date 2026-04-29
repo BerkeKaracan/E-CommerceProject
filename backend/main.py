@@ -555,7 +555,7 @@ def track_order(order_id: int, db: Session = Depends(get_db), current_user: DBUs
     
 @app.get("/api/analytics/trending")
 def get_trending_products(db: Session = Depends(get_db)):
-    top_sellers = db.query(DBProduct).order_by(DBProduct.sales_count.desc()).limit(4).all()
+    top_sellers = db.query(DBProduct).order_by(DBProduct.sales_count.desc()).limit(10).all()
     return {
         "best_sellers": top_sellers,
         "message": "These are the most popular items based on our internal AI logic."
