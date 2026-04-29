@@ -1059,6 +1059,60 @@ export default function Home() {
                   </p>
                 </Link>
               )}
+              {user && (
+                <div className="flex flex-col gap-2">
+                  <p className="text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-2 px-1">
+                    My Account
+                  </p>
+                  <Link
+                    href="/profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="px-3 py-2.5 text-sm font-bold text-spc-grey dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 rounded-lg transition-colors flex items-center justify-between group"
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="text-lg grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
+                        👤
+                      </span>
+                      Profile Details
+                    </span>
+                  </Link>
+                  <Link
+                    href="/profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="px-3 py-2.5 text-sm font-bold text-spc-grey dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 rounded-lg transition-colors flex items-center justify-between group"
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="text-lg grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
+                        📦
+                      </span>
+                      My Orders
+                    </span>
+                  </Link>
+                  <Link
+                    href="/profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="px-3 py-2.5 text-sm font-bold text-spc-grey dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 rounded-lg transition-colors flex items-center justify-between group"
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="text-lg grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
+                        🔒
+                      </span>
+                      Security & Settings
+                    </span>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      if (logout) logout();
+                      setToastMessage("Logged out successfully!");
+                      setTimeout(() => setToastMessage(null), 2200);
+                    }}
+                    className="text-left px-3 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors flex items-center gap-3 mt-1"
+                  >
+                    <span className="text-lg">🚪</span> Sign Out
+                  </button>
+                </div>
+              )}
               <div className="flex flex-col gap-2">
                 <p className="text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-2 px-1">
                   Main Menu
