@@ -263,7 +263,8 @@ export default function ProfilePage() {
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(target) &&
-        !target.closest("#mobile-bottom-sheet")
+        !target.closest("#mobile-bottom-sheet") &&
+        !target.closest("#profile-search-container")
       ) {
         setIsAllOpen(false);
       }
@@ -643,7 +644,10 @@ export default function ProfilePage() {
             </button>
           ))}
 
-          <div className="flex-[3.5] min-w-[180px] md:min-w-0 snap-start flex items-center border-r-2 border-neutral-100 dark:border-neutral-800 px-4 md:px-7 bg-white dark:bg-neutral-900 focus-within:bg-neutral-50/30 dark:focus-within:bg-neutral-800/50 transition-colors group">
+          <div
+            id="profile-search-container"
+            className="flex-[3.5] min-w-[180px] md:min-w-0 snap-start flex items-center border-r-2 border-neutral-100 dark:border-neutral-800 px-4 md:px-7 bg-white dark:bg-neutral-900 focus-within:bg-neutral-50/30 dark:focus-within:bg-neutral-800/50 transition-colors group"
+          >
             <input
               type="text"
               value={profileSearch}
@@ -1867,7 +1871,7 @@ export default function ProfilePage() {
           {!isAiOpen && (
             <button
               onClick={() => setIsAiOpen(true)}
-              className="absolute bottom-4 right-4 md:bottom-6 md:right-6 z-10 bg-black dark:bg-neutral-800 hover:bg-neutral-800 dark:hover:bg-neutral-700 text-white px-8 py-3.5 md:px-12 md:py-4.5 rounded-full font-black text-[10px] md:text-xs uppercase tracking-widest shadow-[0_15px_60px_-10px_rgba(0,0,0,0.6)] dark:shadow-none border border-transparent dark:border-neutral-700 transition-all hover:-translate-y-1 active:scale-95"
+              className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 bg-black dark:bg-neutral-800 hover:bg-neutral-800 dark:hover:bg-neutral-700 text-white px-8 py-3.5 md:px-12 md:py-4.5 rounded-full font-black text-[10px] md:text-xs uppercase tracking-widest shadow-[0_15px_60px_-10px_rgba(0,0,0,0.6)] dark:shadow-none border border-transparent dark:border-neutral-700 transition-all hover:-translate-y-1 active:scale-95"
             >
               AI
             </button>
