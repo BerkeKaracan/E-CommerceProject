@@ -71,6 +71,8 @@ class DBUser(Base):
     totp_secret = Column(String, nullable=True)
     is_2fa_enabled = Column(Integer, default=0)
     points = Column(Integer, default=100)
+    phone = Column(String, nullable=True)
+    dob = Column(String, nullable=True)
 
 class DBPromoCode(Base):
     __tablename__ = "PromoCode"
@@ -177,6 +179,8 @@ class UserStatsResponse(BaseModel):
     order_count: int
     joined_at: str
     points: int
+    phone: Optional[str] = None
+    dob: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -194,6 +198,8 @@ class ResetPasswordRequest(BaseModel):
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
+    phone: Optional[str] = None
+    dob: Optional[str] = None
 
 class CartItemAdd(BaseModel):
     product_id: int
@@ -332,7 +338,8 @@ def get_me(db: Session = Depends(get_db), current_user: DBUser = Depends(get_cur
     joined_date = current_user.created_at.strftime("%B %Y") if current_user.created_at else "April 2026"
     return {
         "id": current_user.id, "email": current_user.email, "name": current_user.name,
-        "order_count": order_count, "joined_at": joined_date, "points": current_user.points
+        "order_count": order_count, "joined_at": joined_date, "points": current_user.points,
+        "phone": current_user.phone, "dob": current_user.dob
     }
 
 @app.put("/api/profile", response_model=UserResponse)
@@ -344,6 +351,9 @@ def update_profile(user_update: UserUpdate, db: Session = Depends(get_db), curre
         if db.query(DBUser).filter(DBUser.email == user_update.email).first():
             raise HTTPException(status_code=400, detail="Email already in use")
         current_user.email = user_update.email
+    
+    if user_update.phone is not None: current_user.phone = user_update.phone 
+    if user_update.dob is not None: current_user.dob = user_update.dob
 
     db.commit()
     db.refresh(current_user)
@@ -533,12 +543,13 @@ def get_trending_products(db: Session = Depends(get_db)):
 @app.get("/api/fix-db")
 def fix_database(db: Session = Depends(get_db)):
     try:
-        # Sadece User tablosuna zorla points ekliyoruz ve anında kaydediyoruz
         db.execute(text('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS points INTEGER DEFAULT 100;'))
+        db.execute(text('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS phone VARCHAR;'))
+        db.execute(text('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS dob VARCHAR;'))
         db.commit()
         return {"message": "SUCCESS! Points column added."}
     except Exception as e:
-        db.rollback() # Hata olursa kilitlenmeyi aç
+        db.rollback() 
         return {"error": f"An error occurred: {str(e)}"}
 
 @app.get("/api/products/{product_id}/comments")

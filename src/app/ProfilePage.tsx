@@ -15,6 +15,8 @@ interface UserStats {
   joined_at: string;
   points: number;
   is_2fa_enabled?: number;
+  phone?: string;
+  dob?: string;
 }
 
 interface RewardCode {
@@ -105,6 +107,9 @@ export default function ProfilePage() {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+  const [editPhone, setEditPhone] = useState("");
+  const [editDob, setEditDob] = useState("");
+
   const [twoFaSetup, setTwoFaSetup] = useState<{
     secret: string;
     uri: string;
@@ -131,6 +136,14 @@ export default function ProfilePage() {
   const [aiInput, setAiInput] = useState("");
   const [isAiTyping, setIsAiTyping] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const formatDob = (value: string) => {
+    const numbers = value.replace(/\D/g, "");
+    if (numbers.length <= 2) return numbers;
+    if (numbers.length <= 4)
+      return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+    return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`;
+  };
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -1410,42 +1423,127 @@ export default function ProfilePage() {
                         Personal Information
                       </h2>
                       <p className="text-[10px] font-bold text-neutral-400">
-                        Manage your basic profile details
+                        Update your profile details and preferences
                       </p>
                     </div>
                   </div>
+
                   <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-6 shadow-sm space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 block mb-2">
                           Full Name
                         </label>
-                        <div className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm font-bold text-spc-grey dark:text-white cursor-not-allowed">
-                          {user?.name}
-                        </div>
+                        <input
+                          type="text"
+                          defaultValue={user?.name}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm font-bold text-spc-grey dark:text-white outline-none focus:border-btn-green transition-colors"
+                        />
                       </div>
                       <div>
                         <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 block mb-2">
                           Email Address
                         </label>
-                        <div className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm font-bold text-spc-grey dark:text-white cursor-not-allowed">
-                          {user?.email}
-                        </div>
+                        <input
+                          type="email"
+                          defaultValue={user?.email}
+                          onChange={(e) => setEditEmail(e.target.value)}
+                          className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm font-bold text-spc-grey dark:text-white outline-none focus:border-btn-green transition-colors"
+                        />
+                      </div>
+
+                      {/* Detailed Information Fields */}
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 block mb-2">
+                          Phone Number (Optional)
+                        </label>
+                        <input
+                          type="tel"
+                          defaultValue={stats?.phone || ""}
+                          onChange={(e) => setEditPhone(e.target.value)}
+                          placeholder="+1 (555) 000-0000"
+                          className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm font-bold text-spc-grey dark:text-white outline-none focus:border-btn-green transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 block mb-2">
+                          Date of Birth
+                        </label>
+                        <input
+                          type="text"
+                          defaultValue={stats?.dob || ""}
+                          onChange={(e) =>
+                            setEditDob(formatDob(e.target.value))
+                          }
+                          placeholder="MM/DD/YYYY"
+                          className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm font-bold text-spc-grey dark:text-white outline-none focus:border-btn-green transition-colors"
+                        />
                       </div>
                     </div>
-                    <div className="border-t border-neutral-100 dark:border-neutral-800 pt-6 mt-4">
-                      <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-4">
-                        To securely edit your details, use the edit icon next to
-                        your name at the top of your profile dashboard.
+
+                    {updateError && (
+                      <p className="text-[10px] text-red-500 font-bold mt-2">
+                        {updateError}
                       </p>
+                    )}
+
+                    <div className="border-t border-neutral-100 dark:border-neutral-800 pt-6 mt-4 flex justify-end">
                       <button
-                        onClick={() => {
-                          setActiveTab("Orders");
-                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        onClick={async () => {
+                          const finalName = editName || user?.name || "";
+                          const finalEmail = editEmail || user?.email || "";
+                          const finalPhone = editPhone || stats?.phone || "";
+                          const finalDob = editDob || stats?.dob || "";
+                          setIsUpdating(true);
+                          setUpdateError(null);
+                          try {
+                            const res = await fetch(
+                              `${process.env.NEXT_PUBLIC_API_URL}/api/profile`,
+                              {
+                                method: "PUT",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                  Authorization: `Bearer ${token}`,
+                                },
+
+                                body: JSON.stringify({
+                                  name: finalName,
+                                  email: finalEmail,
+                                  phone: finalPhone,
+                                  dob: finalDob,
+                                }),
+                              },
+                            );
+                            const data = await res.json();
+                            if (!res.ok) {
+                              setUpdateError(data.detail || "Update failed.");
+                              return;
+                            }
+                            authContext?.updateUser(data);
+                            setStats((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    name: finalName,
+                                    email: finalEmail,
+                                    phone: finalPhone,
+                                    dob: finalDob,
+                                  }
+                                : null,
+                            );
+                            setToastMessage("✅ Profile successfully updated!");
+                            setTimeout(() => setToastMessage(null), 3000);
+                          } catch (err) {
+                            setUpdateError("Server error.");
+                          } finally {
+                            setIsUpdating(false);
+                          }
                         }}
-                        className="bg-black dark:bg-neutral-800 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-btn-green dark:hover:bg-btn-green transition-all active:scale-95"
+                        disabled={isUpdating}
+                        className="bg-black dark:bg-neutral-800 text-white px-8 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-btn-green transition-all active:scale-95 disabled:opacity-50"
                       >
-                        Go to top to Edit
+                        {isUpdating ? "Saving..." : "Save Changes"}
                       </button>
                     </div>
                   </div>
