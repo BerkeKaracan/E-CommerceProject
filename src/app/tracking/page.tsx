@@ -123,16 +123,16 @@ export default function TrackingPage() {
         {/* Search Box */}
         <form
           onSubmit={handleTrack}
-          className="flex items-center w-full bg-white dark:bg-neutral-900 border-2 border-neutral-100 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm hover:border-btn-green/50 dark:hover:border-btn-green/50 focus-within:border-btn-green dark:focus-within:border-btn-green transition-all mb-8 p-1"
+          className="flex items-center w-full bg-white dark:bg-neutral-900 border-2 border-neutral-100 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm hover:border-btn-green/50 dark:hover:border-btn-green/50 focus-within:border-btn-green dark:focus-within:border-btn-green transition-all mb-8 p-1 md:p-1.5"
         >
-          <div className="pl-6 text-neutral-300 dark:text-neutral-600">
+          <div className="pl-4 md:pl-6 text-neutral-300 dark:text-neutral-600 shrink-0">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth="3"
               stroke="currentColor"
-              className="w-6 h-6"
+              className="w-5 h-5 md:w-6 md:h-6"
             >
               <path
                 strokeLinecap="round"
@@ -146,14 +146,14 @@ export default function TrackingPage() {
             value={orderId}
             onChange={(e) => setOrderId(e.target.value)}
             placeholder="e.g. 104"
-            className="flex-1 bg-transparent px-4 py-4 md:py-5 outline-none font-black text-spc-grey dark:text-white text-lg placeholder:font-medium placeholder:text-neutral-300 dark:placeholder:text-neutral-600 transition-colors"
+            className="flex-1 w-full min-w-0 bg-transparent px-3 md:px-4 py-3 md:py-5 outline-none font-black text-spc-grey dark:text-white text-base md:text-lg placeholder:font-medium placeholder:text-neutral-300 dark:placeholder:text-neutral-600 transition-colors"
           />
           <button
             type="submit"
             disabled={isLoading || !orderId.trim()}
-            className="bg-black dark:bg-neutral-800 hover:bg-neutral-800 dark:hover:bg-neutral-700 disabled:bg-neutral-300 dark:disabled:bg-neutral-800 text-white dark:text-neutral-200 px-8 py-4 md:py-5 rounded-xl font-black uppercase tracking-widest text-xs transition-all active:scale-95"
+            className="bg-black dark:bg-neutral-800 hover:bg-neutral-800 dark:hover:bg-neutral-700 disabled:bg-neutral-300 dark:disabled:bg-neutral-800 text-white dark:text-neutral-200 px-4 md:px-8 py-3.5 md:py-4 rounded-xl font-black uppercase tracking-widest text-[10px] md:text-xs transition-all active:scale-95 shrink-0"
           >
-            {isLoading ? "Searching..." : "Track"}
+            {isLoading ? "Wait..." : "Track"}
           </button>
         </form>
 

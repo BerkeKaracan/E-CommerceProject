@@ -130,6 +130,9 @@ export default function ProfilePage() {
 
   const isSearchFocusedRef = useRef(false);
 
+  const [isOrderFilterOpen, setIsOrderFilterOpen] = useState(false);
+  const [isOrderSortOpen, setIsOrderSortOpen] = useState(false);
+
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [isAiOpen, setIsAiOpen] = useState(false);
@@ -924,47 +927,71 @@ export default function ProfilePage() {
                     </h2>
 
                     <div className="flex items-center gap-2 md:gap-3">
-                      <div className="relative group/filter z-30">
-                        <button className="flex items-center gap-1.5 md:gap-2 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-700 px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-wider text-spc-grey dark:text-neutral-200 shadow-sm hover:border-btn-green dark:hover:border-btn-green transition-all">
+                      <div className="relative z-30">
+                        <button
+                          onClick={() => {
+                            setIsOrderFilterOpen(!isOrderFilterOpen);
+                            setIsOrderSortOpen(false);
+                          }}
+                          className="flex items-center gap-1.5 md:gap-2 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-700 px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-wider text-spc-grey dark:text-neutral-200 shadow-sm hover:border-btn-green dark:hover:border-btn-green transition-all"
+                        >
                           <span>Filter: {orderFilter}</span>
                         </button>
-                        <div className="absolute right-0 top-full mt-2 w-40 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-xl shadow-xl opacity-0 invisible group-hover/filter:opacity-100 group-hover/filter:visible transition-all p-2 flex flex-col gap-1">
-                          <p className="text-[8px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest px-2 mb-1">
-                            Status
-                          </p>
-                          {["All", "Completed", "Pending", "Canceled"].map(
-                            (status) => (
-                              <button
-                                key={status}
-                                onClick={() => setOrderFilter(status)}
-                                className={`text-left px-2 py-1.5 text-[10px] font-bold rounded-md transition-colors ${orderFilter === status ? "bg-btn-green/10 text-btn-green" : "text-spc-grey dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
-                              >
-                                {status}
-                              </button>
-                            ),
-                          )}
-                        </div>
+
+                        {isOrderFilterOpen && (
+                          <div className="absolute right-0 top-full mt-2 w-40 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-xl shadow-xl transition-all p-2 flex flex-col gap-1">
+                            <p className="text-[8px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest px-2 mb-1">
+                              Status
+                            </p>
+                            {["All", "Completed", "Pending", "Canceled"].map(
+                              (status) => (
+                                <button
+                                  key={status}
+                                  onClick={() => {
+                                    setOrderFilter(status);
+                                    setIsOrderFilterOpen(false);
+                                  }}
+                                  className={`text-left px-2 py-1.5 text-[10px] font-bold rounded-md transition-colors ${orderFilter === status ? "bg-btn-green/10 text-btn-green" : "text-spc-grey dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
+                                >
+                                  {status}
+                                </button>
+                              ),
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <div className="relative group/sort z-20">
-                        <button className="flex items-center gap-1.5 md:gap-2 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-700 px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-wider text-spc-grey dark:text-neutral-200 shadow-sm hover:border-btn-green dark:hover:border-btn-green transition-all">
+                      <div className="relative z-20">
+                        <button
+                          onClick={() => {
+                            setIsOrderSortOpen(!isOrderSortOpen);
+                            setIsOrderFilterOpen(false);
+                          }}
+                          className="flex items-center gap-1.5 md:gap-2 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-700 px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-wider text-spc-grey dark:text-neutral-200 shadow-sm hover:border-btn-green dark:hover:border-btn-green transition-all"
+                        >
                           Sort
                         </button>
-                        <div className="absolute right-0 top-full mt-2 w-44 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-xl shadow-xl opacity-0 invisible group-hover/sort:opacity-100 group-hover/sort:visible transition-all p-2 flex flex-col gap-1">
-                          {[
-                            "Newest First",
-                            "Oldest First",
-                            "Price: High to Low",
-                            "Price: Low to High",
-                          ].map((sortOp) => (
-                            <button
-                              key={sortOp}
-                              onClick={() => setOrderSort(sortOp)}
-                              className={`text-left px-2 py-1.5 text-[10px] font-bold rounded-md transition-colors ${orderSort === sortOp ? "bg-btn-green/10 text-btn-green" : "text-spc-grey dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
-                            >
-                              {sortOp}
-                            </button>
-                          ))}
-                        </div>
+
+                        {isOrderSortOpen && (
+                          <div className="absolute right-0 top-full mt-2 w-44 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-xl shadow-xl transition-all p-2 flex flex-col gap-1">
+                            {[
+                              "Newest First",
+                              "Oldest First",
+                              "Price: High to Low",
+                              "Price: Low to High",
+                            ].map((sortOp) => (
+                              <button
+                                key={sortOp}
+                                onClick={() => {
+                                  setOrderSort(sortOp);
+                                  setIsOrderSortOpen(false);
+                                }}
+                                className={`text-left px-2 py-1.5 text-[10px] font-bold rounded-md transition-colors ${orderSort === sortOp ? "bg-btn-green/10 text-btn-green" : "text-spc-grey dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
+                              >
+                                {sortOp}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

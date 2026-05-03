@@ -147,6 +147,7 @@ class ProductSchema(BaseModel):
     description: Optional[str] = None
     is_discounted: Optional[int] = 0
     discount_rate: Optional[int] = 0
+    sales_count: Optional[int] = 0
     class Config:
         from_attributes = True
 

@@ -15,6 +15,7 @@ interface ApiProduct {
   is_discounted?: number;
   discount_rate?: number;
   original_price?: number;
+  sales_count?: number;
 }
 
 interface Product extends ApiProduct {
@@ -249,7 +250,11 @@ export default function Home() {
     .sort((a, b) => {
       if (sortOption === "Price: Low to High") return a.price - b.price;
       if (sortOption === "Price: High to Low") return b.price - a.price;
-      return 0;
+
+      const scoreA = (a.sales_count || 0) + (a.is_discounted === 1 ? 1000 : 0);
+      const scoreB = (b.sales_count || 0) + (b.is_discounted === 1 ? 1000 : 0);
+
+      return scoreB - scoreA;
     });
 
   const displayedProducts = filteredProducts.slice(0, visibleCount);
