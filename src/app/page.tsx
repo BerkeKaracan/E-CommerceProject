@@ -36,6 +36,7 @@ export default function Home() {
   const logout = authContext?.logout;
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [cart, setCart] = useState<Product[]>([]);
@@ -50,37 +51,31 @@ export default function Home() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
 
-  const [visibleCount, setVisibleCount] = useState(12);
-  useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
-      .then((res) => res.json())
-      .then((data: ApiProduct[]) => {
-        if (!Array.isArray(data)) {
-          console.error("API Hatası:", data);
-          setProducts([]);
-          setIsLoading(false);
-          return;
-        }
-        const formattedData: Product[] = data.map((p) => {
-          const finalPrice =
-            p.is_discounted === 1 && p.discount_rate
-              ? p.price * (1 - p.discount_rate / 100)
-              : p.price;
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-          return {
-            ...p,
-            original_price: p.price,
-            price: finalPrice,
-            quantity: 1,
-          };
-        });
-        setProducts(formattedData);
-        setIsLoading(false);
+  const [shopSelections, setShopSelections] = useState<Record<number, number>>(
+    {},
+  );
+  const [cartSelections, setCartSelections] = useState<Record<number, number>>(
+    {},
+  );
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  // Arama için Debounce Sistemi
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setCategories(data);
+        }
       })
-      .catch((err) => {
-        console.error("Data fetching error:", err);
-        setIsLoading(false);
-      });
+      .catch((err) => console.error("Kategoriler çekilemedi:", err));
   }, []);
 
   useEffect(() => {
@@ -91,7 +86,7 @@ export default function Home() {
           cache: "no-store",
         })
           .then((res) => {
-            if (!res.ok) throw new Error("API yanıt vermedi veya hata oluştu");
+            if (!res.ok) throw new Error("API is not replied");
             return res.json();
           })
           .then((data) => {
@@ -116,22 +111,79 @@ export default function Home() {
     return () => window.removeEventListener("focus", fetchCart);
   }, [token]);
 
-  const [shopSelections, setShopSelections] = useState<Record<number, number>>(
-    {},
-  );
-  const [cartSelections, setCartSelections] = useState<Record<number, number>>(
-    {},
-  );
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
-
+  // Arama kutusu geciktirici (Sadece metin yazarken çalışır)
   useEffect(() => {
-    if (visibleCount !== 12) {
-      setVisibleCount(12);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, selectedCategory, priceFilter, sortOption]);
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Ana Fetch Operasyonu (ESLint Hataları Temizlendi, Timeout Kaldırıldı)
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (selectedCategory !== "All") params.append("category", selectedCategory);
+    if (debouncedSearchQuery.trim())
+      params.append("search", debouncedSearchQuery.trim());
+    if (priceFilter !== "All Prices")
+      params.append("price_filter", priceFilter);
+    params.append("sort", sortOption);
+    params.append("limit", "12");
+    params.append("offset", ((page - 1) * 12).toString());
+
+    let isMounted = true;
+
+    fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/products?${params.toString()}`,
+    )
+      .then((res) => {
+        if (!res.ok) throw new Error("Network response was not ok");
+        return res.json();
+      })
+      .then((data: ApiProduct[]) => {
+        if (!isMounted) return;
+
+        if (!Array.isArray(data)) {
+          if (page === 1) setProducts([]);
+          setHasMore(false);
+          setIsLoading(false);
+          return;
+        }
+
+        const formattedData: Product[] = data.map((p) => {
+          const finalPrice =
+            p.is_discounted === 1 && p.discount_rate
+              ? p.price * (1 - p.discount_rate / 100)
+              : p.price;
+
+          return {
+            ...p,
+            original_price: p.price,
+            price: finalPrice,
+            quantity: 1,
+          };
+        });
+
+        if (page === 1) {
+          setProducts(formattedData);
+        } else {
+          setProducts((prev) => [...prev, ...formattedData]);
+        }
+
+        if (data.length < 12) {
+          setHasMore(false);
+        }
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error("Data fetching error:", err);
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [debouncedSearchQuery, selectedCategory, priceFilter, sortOption, page]);
 
   const handleShopSelect = (productId: number, val: number) => {
     setShopSelections({ ...shopSelections, [productId]: val });
@@ -213,52 +265,7 @@ export default function Home() {
   const totalCost = productsCosts + shippingCost;
   const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
 
-  const filteredProducts = products
-    .filter((p) => {
-      const query = searchQuery.toLowerCase().trim();
-      const productName = p.name.toLowerCase();
-      const productCategory = p.category.toLowerCase();
-
-      const smartKeywords =
-        (query.includes("summer") || query.includes("top wear")) &&
-        productCategory.includes("clothing")
-          ? true
-          : (query.includes("tech") || query.includes("gadget")) &&
-              productCategory.includes("electronics")
-            ? true
-            : query.includes("gift") && productCategory.includes("jewelry")
-              ? true
-              : false;
-
-      const matchesSearch =
-        productName.includes(query) ||
-        productCategory.includes(query) ||
-        smartKeywords;
-      const matchesCategory =
-        selectedCategory === "All" || p.category === selectedCategory;
-
-      let matchesPrice = true;
-      if (priceFilter === "Under $20") matchesPrice = p.price < 20;
-      else if (priceFilter === "$20 - $50")
-        matchesPrice = p.price >= 20 && p.price <= 50;
-      else if (priceFilter === "Over $50") matchesPrice = p.price > 50;
-      else if (priceFilter === "Discounted Offers")
-        matchesPrice = p.is_discounted === 1;
-
-      return matchesSearch && matchesCategory && matchesPrice;
-    })
-    .sort((a, b) => {
-      if (sortOption === "Price: Low to High") return a.price - b.price;
-      if (sortOption === "Price: High to Low") return b.price - a.price;
-
-      const scoreA = (a.sales_count || 0) + (a.is_discounted === 1 ? 1000 : 0);
-      const scoreB = (b.sales_count || 0) + (b.is_discounted === 1 ? 1000 : 0);
-
-      return scoreB - scoreA;
-    });
-
-  const displayedProducts = filteredProducts.slice(0, visibleCount);
-  const previewResults = filteredProducts.slice(0, 3);
+  const previewResults = products.slice(0, 3);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -302,6 +309,9 @@ export default function Home() {
                 onClick={() => {
                   setSearchQuery("");
                   setSelectedCategory("All");
+                  setPage(1);
+                  setHasMore(true);
+                  setIsLoading(true);
                 }}
                 className="text-2xl font-black tracking-tighter text-btn-green"
               >
@@ -321,17 +331,20 @@ export default function Home() {
               <div className="relative w-full flex items-center bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus-within:border-btn-green dark:focus-within:border-btn-green focus-within:ring-2 focus-within:ring-btn-green shadow-sm transition-all overflow-hidden h-12">
                 <select
                   value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedCategory(e.target.value);
+                    setPage(1);
+                    setHasMore(true);
+                    setIsLoading(true);
+                  }}
                   className="h-full max-w-[120px] lg:max-w-[180px] truncate shrink-0 bg-neutral-50/50 dark:bg-neutral-800 border-none text-sm font-bold text-spc-grey dark:text-neutral-200 outline-none cursor-pointer pl-4 pr-8 focus:ring-0 appearance-none hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors capitalize"
                 >
                   <option value="All">All Categories</option>
-                  {Array.from(new Set(products.map((p) => p.category))).map(
-                    (cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ),
-                  )}
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
                 </select>
 
                 <div className="w-px h-6 bg-neutral-200 dark:bg-neutral-700 mx-2"></div>
@@ -340,7 +353,12 @@ export default function Home() {
                   type="text"
                   placeholder="Search for products, brands and more..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setPage(1);
+                    setHasMore(true);
+                    setIsLoading(true);
+                  }}
                   onFocus={() => setIsSearchFocused(true)}
                   onKeyDown={handleKeyDown}
                   className="w-full h-full pl-2 pr-12 bg-transparent text-base text-neutral-800 dark:text-neutral-200 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none select-text cursor-text"
@@ -447,7 +465,7 @@ export default function Home() {
                       onClick={() => setIsSearchFocused(false)}
                       className="mt-3 mx-4 py-2.5 bg-neutral-50 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 text-xs font-bold rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-spc-grey dark:hover:text-white transition-colors border border-neutral-200 dark:border-neutral-700"
                     >
-                      Press Enter to see all {filteredProducts.length} results
+                      Press Enter to see results
                     </button>
                   )}
                 </div>
@@ -556,8 +574,10 @@ export default function Home() {
             const bottom =
               e.currentTarget.scrollHeight - e.currentTarget.scrollTop <=
               e.currentTarget.clientHeight + 150;
-            if (bottom && visibleCount < filteredProducts.length)
-              setVisibleCount((prev) => prev + 12);
+            if (bottom && hasMore && !isLoading) {
+              setIsLoading(true);
+              setPage((prev) => prev + 1);
+            }
           }}
           className="flex-1 h-full overflow-y-auto pr-2 pb-20 lg:pb-4 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-neutral-300 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700 [&::-webkit-scrollbar-thumb]:rounded-full"
         >
@@ -607,7 +627,12 @@ export default function Home() {
                   type="text"
                   placeholder="Search products..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setPage(1);
+                    setHasMore(true);
+                    setIsLoading(true);
+                  }}
                   className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 focus:border-btn-green dark:focus:border-btn-green rounded-xl px-4 py-2.5 text-xs font-bold text-spc-grey dark:text-neutral-200 outline-none transition-all shadow-sm"
                 />
                 <button
@@ -674,6 +699,9 @@ export default function Home() {
                         onClick={() => {
                           setPriceFilter(pf);
                           setIsFilterOpen(false);
+                          setPage(1);
+                          setHasMore(true);
+                          setIsLoading(true);
                         }}
                         className={`text-left px-3 py-2 text-[10px] font-bold rounded-md transition-colors ${priceFilter === pf ? "bg-btn-green/10 text-btn-green" : "text-spc-grey dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
                       >
@@ -720,6 +748,9 @@ export default function Home() {
                         onClick={() => {
                           setSortOption(opt);
                           setIsSortOpen(false);
+                          setPage(1);
+                          setHasMore(true);
+                          setIsLoading(true);
                         }}
                         className={`text-left px-3 py-2 text-[10px] font-bold rounded-md transition-colors ${sortOption === opt ? "bg-btn-green/10 text-btn-green" : "text-spc-grey dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
                       >
@@ -732,7 +763,7 @@ export default function Home() {
             </div>
           </div>
 
-          {isLoading ? (
+          {isLoading && page === 1 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4">
               {Array.from({ length: 12 }).map((_, n) => (
                 <div
@@ -752,7 +783,7 @@ export default function Home() {
           ) : (
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                {displayedProducts.map((product, index) => {
+                {products.map((product, index) => {
                   const currentStep = shopSelections[product.id] || 1;
                   return (
                     <div
@@ -851,13 +882,17 @@ export default function Home() {
                 })}
               </div>
 
-              {visibleCount < filteredProducts.length && (
+              {hasMore && products.length >= 12 && (
                 <div className="w-full flex justify-center mt-12 mb-8">
                   <button
-                    onClick={() => setVisibleCount((prev) => prev + 12)}
-                    className="bg-white dark:bg-neutral-900 border-2 border-neutral-200 dark:border-neutral-700 text-spc-grey dark:text-neutral-200 px-10 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:border-btn-green dark:hover:border-btn-green hover:text-btn-green dark:hover:text-btn-green transition-all active:scale-95 shadow-sm group flex items-center gap-2"
+                    onClick={() => {
+                      setIsLoading(true);
+                      setPage((prev) => prev + 1);
+                    }}
+                    disabled={isLoading}
+                    className="bg-white dark:bg-neutral-900 border-2 border-neutral-200 dark:border-neutral-700 text-spc-grey dark:text-neutral-200 px-10 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:border-btn-green dark:hover:border-btn-green hover:text-btn-green dark:hover:text-btn-green transition-all active:scale-95 shadow-sm group flex items-center gap-2 disabled:opacity-50"
                   >
-                    Load More Products
+                    {isLoading ? "Loading..." : "Load More Products"}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -1160,7 +1195,7 @@ export default function Home() {
                   >
                     <span className="flex items-center gap-3">
                       <span className="text-lg grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
-                        🔒
+                        🛡️
                       </span>
                       Security & Settings
                     </span>
@@ -1215,25 +1250,29 @@ export default function Home() {
                   onClick={() => {
                     setSelectedCategory("All");
                     setIsMenuOpen(false);
+                    setPage(1);
+                    setHasMore(true);
+                    setIsLoading(true);
                   }}
                   className={`text-left px-3 py-2.5 text-sm font-bold rounded-lg transition-colors capitalize ${selectedCategory === "All" ? "bg-btn-green/10 text-btn-green" : "text-spc-grey dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900"}`}
                 >
                   All Products
                 </button>
-                {Array.from(new Set(products.map((p) => p.category))).map(
-                  (cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => {
-                        setSelectedCategory(cat);
-                        setIsMenuOpen(false);
-                      }}
-                      className={`text-left px-3 py-2.5 text-sm font-bold rounded-lg transition-colors capitalize truncate w-full block ${selectedCategory === cat ? "bg-btn-green/10 text-btn-green" : "text-spc-grey dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900"}`}
-                    >
-                      {cat}
-                    </button>
-                  ),
-                )}
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => {
+                      setSelectedCategory(cat);
+                      setIsMenuOpen(false);
+                      setPage(1);
+                      setHasMore(true);
+                      setIsLoading(true);
+                    }}
+                    className={`text-left px-3 py-2.5 text-sm font-bold rounded-lg transition-colors capitalize truncate w-full block ${selectedCategory === cat ? "bg-btn-green/10 text-btn-green" : "text-spc-grey dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900"}`}
+                  >
+                    {cat}
+                  </button>
+                ))}
               </div>
               <div>
                 <h3 className="text-xs font-black uppercase tracking-widest text-spc-grey dark:text-white mb-6 transition-colors">

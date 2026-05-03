@@ -5,7 +5,7 @@ from jose import jwt, JWTError
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, DateTime, or_, desc, asc
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.sql import func
@@ -279,8 +279,53 @@ def health_check():
     return {"status": "online", "message": "Market Backend is running on FastAPI"}
 
 @app.get("/api/products", response_model=List[ProductSchema])
-def get_products(db: Session = Depends(get_db)):
-    return db.query(DBProduct).all()
+def get_products(
+    category: Optional[str] = None,
+    search: Optional[str] = None,
+    price_filter: Optional[str] = None,
+    sort: Optional[str] = "Recommended",
+    limit: int = 12,
+    offset: int = 0,
+    db: Session = Depends(get_db)
+):
+    query = db.query(DBProduct)
+
+    if category and category != "All":
+        query = query.filter(DBProduct.category == category)
+
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            or_(
+                DBProduct.name.ilike(search_term),
+                DBProduct.category.ilike(search_term)
+            )
+        )
+        
+    if price_filter:
+        if price_filter == "Under $20":
+            query = query.filter(DBProduct.price < 20)
+        elif price_filter == "$20 - $50":
+            query = query.filter(DBProduct.price >= 20, DBProduct.price <= 50)
+        elif price_filter == "Over $50":
+            query = query.filter(DBProduct.price > 50)
+        elif price_filter == "Discounted Offers":
+            query = query.filter(DBProduct.is_discounted == 1)
+            
+    if sort == "Price: Low to High":
+        query = query.order_by(asc(DBProduct.price), desc(DBProduct.id))
+    elif sort == "Price: High to Low":
+        query = query.order_by(desc(DBProduct.price), desc(DBProduct.id))
+    else: 
+        query = query.order_by(desc(DBProduct.is_discounted), desc(DBProduct.sales_count), desc(DBProduct.id))
+
+    products = query.offset(offset).limit(limit).all()
+    return products
+
+@app.get("/api/categories", response_model=List[str])
+def get_categories(db: Session = Depends(get_db)):
+    categories = db.query(DBProduct.category).distinct().order_by(DBProduct.category).all()
+    return [cat[0] for cat in categories if cat[0]]
 
 @app.get("/api/products/{product_id}", response_model=ProductSchema)
 def get_product(product_id: int, db: Session = Depends(get_db)):
