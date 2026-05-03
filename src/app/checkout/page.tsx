@@ -73,6 +73,7 @@ export default function CheckoutPage() {
         ]);
         setPromoInput("");
         setToastMessage(`🎉 $${data.discount_amount} discount added!`);
+        setTimeout(() => setToastMessage(null), 2200);
       } else {
         setPromoError(data.detail || "Invalid code.");
       }
@@ -196,9 +197,11 @@ export default function CheckoutPage() {
         setTimeout(() => router.push("/profile"), 2000);
       } else {
         setToastMessage("❌ " + (data.detail || "Checkout failed"));
+        setTimeout(() => setToastMessage(null), 2200);
       }
     } catch (err) {
       setToastMessage("❌ Server Error!");
+      setTimeout(() => setToastMessage(null), 2200);
     } finally {
       setIsProcessing(false);
     }
@@ -402,7 +405,7 @@ export default function CheckoutPage() {
                 <div className="flex justify-between items-end gap-4 text-xl font-black text-spc-grey dark:text-white">
                   <span className="shrink-0">Total</span>
                   <span className="text-btn-green text-right break-all leading-tight max-w-[65%]">
-                    ${Math.max(0, totalCost - totalDiscount).toFixed(2)}
+                    ${totalCost.toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -421,7 +424,7 @@ export default function CheckoutPage() {
                   </div>
                 </div>
                 <span className="text-lg font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-500 to-orange-500 drop-shadow-sm">
-                  +{Math.floor(Math.max(0, totalCost - totalDiscount) / 10)} PTS
+                  +{Math.floor(totalCost / 10)} PTS
                 </span>
               </div>
               <div className="space-y-3 mb-8 opacity-50 pointer-events-none">
