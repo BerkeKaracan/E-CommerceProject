@@ -89,6 +89,35 @@ const StarIcon = ({ filled }: StarIconProps) => (
   </svg>
 );
 
+const getLoyaltyTier = (points: number) => {
+  if (points < 500)
+    return {
+      title: "STARTER MEMBER",
+      color: "text-neutral-500",
+      bg: "bg-neutral-500/10",
+      border: "border-neutral-500/20",
+    };
+  if (points < 2000)
+    return {
+      title: "SILVER MEMBER",
+      color: "text-slate-400",
+      bg: "bg-slate-400/10",
+      border: "border-slate-400/20",
+    };
+  if (points < 5000)
+    return {
+      title: "GOLD MEMBER",
+      color: "text-yellow-600 dark:text-yellow-400",
+      bg: "bg-yellow-400/10",
+      border: "border-yellow-400/20",
+    };
+  return {
+    title: "PREMIUM REWARDS MEMBER",
+    color: "text-purple-600 dark:text-purple-400",
+    bg: "bg-purple-400/10",
+    border: "border-purple-400/20",
+  };
+};
 export default function ProfilePage() {
   const authContext = useContext(AuthContext);
   const user = authContext?.user;
@@ -539,6 +568,13 @@ export default function ProfilePage() {
     },
   ];
 
+  const lifetimePoints =
+    100 +
+    orders.reduce(
+      (total, order) => total + Math.floor(order.total_amount / 10),
+      0,
+    );
+
   const filteredMenuOptions = profileMenuOptions
     .map((group) => ({
       ...group,
@@ -635,14 +671,20 @@ export default function ProfilePage() {
                     {stats?.name || "Loading..."}
                   </h1>
                   <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5 bg-yellow-400/10 dark:bg-yellow-400/5 px-3 py-1 rounded-lg border border-yellow-400/20 shadow-sm">
-                      <span className="text-[11px] font-black text-yellow-600 dark:text-yellow-400 uppercase tracking-widest">
+                    <div
+                      className={`flex items-center gap-1.5 ${getLoyaltyTier(lifetimePoints).bg} px-3 py-1 rounded-lg border ${getLoyaltyTier(lifetimePoints).border} shadow-sm`}
+                    >
+                      <span
+                        className={`text-[11px] font-black uppercase tracking-widest ${getLoyaltyTier(lifetimePoints).color}`}
+                      >
                         {stats?.points ?? 0} PTS
                       </span>
                     </div>
                     <div className="h-1 w-1 rounded-full bg-neutral-300 dark:bg-neutral-700" />
-                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
-                      Premium Rewards Member
+                    <span
+                      className={`text-[10px] font-bold uppercase tracking-widest ${getLoyaltyTier(lifetimePoints).color}`}
+                    >
+                      {getLoyaltyTier(lifetimePoints).title}
                     </span>
                   </div>
                 </div>
