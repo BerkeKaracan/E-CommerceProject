@@ -20,7 +20,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import pyotp
 
-# --- 1. GÜVENLİ VERİTABANI BAĞLANTISI ---
+# --- 1. SECURE DATABASE CONNECTION ---
 load_dotenv()
 raw_url = os.getenv("DATABASE_URL")
 
@@ -34,17 +34,16 @@ else:
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# İŞTE EKSİK OLAN VE KRİTİK SATIR:
 Base = declarative_base() 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# --- 2. AYARLAR ---
+# --- 2. SETTINGS ---
 SECRET_KEY = "market-super-secret-key" 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 
 
-# --- 3. VERİTABANI MODELLERİ ---
+# --- 3. DATABASE MODELS ---
 class DBProduct(Base):
     __tablename__ = "Product"
     id = Column(Integer, primary_key=True, index=True)
@@ -120,7 +119,7 @@ class DBAddress(Base):
     full_address = Column(String, nullable=False)
     is_default = Column(Integer, default=0)
 
-# --- 4. PYDANTIC ŞEMALARI ---
+# --- 4. PYDANTIC SCHEMAS ---
 class ExchangePointsRequest(BaseModel):
     points: int
     discount: float
@@ -225,7 +224,7 @@ class ChatRequest(BaseModel):
     message: str
     history: list[ChatMessage] = []
 
-# --- 5. FASTAPI UYGULAMASI VE AYARLARI ---
+# --- 5. FASTAPI APP & CONFIGURATION ---
 app = FastAPI(title="Market Backend API")
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -273,7 +272,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise credentials_exception
     return user
 
-# --- 6. ENDPOINT'LER ---
+# --- 6. ENDPOINTS ---
 @app.get("/")
 def health_check():
     return {"status": "online", "message": "Market Backend is running on FastAPI"}
