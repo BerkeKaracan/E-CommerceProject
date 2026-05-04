@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react';
-import ProductClient from '@/app/product/[id]/ProductClient';
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import ProductClient from "@/app/product/[id]/ProductClient";
 
-jest.mock('next/navigation', () => ({
+jest.mock("next/navigation", () => ({
   useRouter() {
     return {
       push: jest.fn(),
@@ -12,7 +13,7 @@ jest.mock('next/navigation', () => ({
   },
   useParams() {
     return {
-      id: '1',
+      id: "1",
     };
   },
 }));
@@ -23,16 +24,16 @@ const mockProduct = {
   category: "Electronics",
   price: 299.99,
   image: "/watch.jpg",
-  description: "A high-end smartwatch for tech lovers."
+  description: "A high-end smartwatch for tech lovers.",
 };
 
-describe('ProductClient Component', () => {
+describe("ProductClient Component", () => {
   beforeEach(() => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
         ok: true,
         json: () => Promise.resolve([]),
-      })
+      }),
     ) as jest.Mock;
   });
 
@@ -40,7 +41,7 @@ describe('ProductClient Component', () => {
     jest.clearAllMocks();
   });
 
-  it('renders product information correctly', () => {
+  it("renders product information correctly", () => {
     render(<ProductClient initialProduct={mockProduct} />);
 
     const productName = screen.getByText(/Premium AI Watch/i);
@@ -48,5 +49,22 @@ describe('ProductClient Component', () => {
 
     const productPrice = screen.getByText(/\$299.99/i);
     expect(productPrice).toBeInTheDocument();
+  });
+
+  it("updates the quantity when increment and decrement buttons are clicked", async () => {
+    const user = userEvent.setup();
+    render(<ProductClient initialProduct={mockProduct} />);
+
+    const quantityDisplay = screen.getByText("1");
+    expect(quantityDisplay).toBeInTheDocument();
+
+    const incrementButton = screen.getByText("+");
+    const decrementButton = screen.getByText("-");
+
+    await user.click(incrementButton);
+    expect(screen.getByText("2")).toBeInTheDocument();
+
+    await user.click(decrementButton);
+    expect(screen.getByText("1")).toBeInTheDocument();
   });
 });
