@@ -21,15 +21,12 @@ export default function AdminPanel() {
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // SECURITY WALL: Only Admin (testuser) can access
+  // SECURITY WALL: Real-world RBAC implementation
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!user) {
         router.push("/");
-      } else if (
-        user.name !== "testuser" &&
-        user.email !== "testuser@gmail.com"
-      ) {
+      } else if (user.role !== "admin") {
         alert(
           "Access Denied: Only administrators can access this command center!",
         );
