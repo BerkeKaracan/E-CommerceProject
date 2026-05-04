@@ -97,12 +97,26 @@ export default function AdminPanel() {
     setSortDirection(direction);
 
     const sorted = [...products].sort((a, b) => {
-      const valA = a[key];
-      const valB = b[key];
+      let valA = a[key];
+      let valB = b[key];
+
+      // Veri null veya undefined ise en sona/başa atmak için sıfır veya boş string varsayalım
+      if (valA === null || valA === undefined)
+        valA = typeof valB === "string" ? "" : 0;
+      if (valB === null || valB === undefined)
+        valB = typeof valA === "string" ? "" : 0;
+
+      if (typeof valA === "string" && typeof valB === "string") {
+        return direction === "asc"
+          ? valA.localeCompare(valB)
+          : valB.localeCompare(valA);
+      }
+
       if (valA < valB) return direction === "asc" ? -1 : 1;
       if (valA > valB) return direction === "asc" ? 1 : -1;
       return 0;
     });
+
     setProducts(sorted);
   };
 
