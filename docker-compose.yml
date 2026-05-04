@@ -1,0 +1,36 @@
+# ==========================================
+# ENTERPRISE DOCKER COMPOSE CONFIGURATION
+# ==========================================
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: market-backend
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    volumes:
+      - ./backend:/app
+    environment:
+      - DATABASE_URL=sqlite:///./market.d
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: market-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    command: npm run dev

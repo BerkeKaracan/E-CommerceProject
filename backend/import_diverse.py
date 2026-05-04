@@ -6,16 +6,24 @@ from sqlalchemy.orm import sessionmaker
 from main import Base, DBProduct, DBCartItem, DBComment, DBSavedItem
 from dotenv import load_dotenv
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+load_dotenv()
+
+# Canlı veritabanına asla dokunmaması ve çökmemesi için güvenlik eklendi
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./market.db")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-DATABASE_URL = DATABASE_URL.replace("?pgbouncer=true", "").replace("&pgbouncer=true", "")
+if DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace("?pgbouncer=true", "").replace("&pgbouncer=true", "")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def import_diverse_products():
+    # 1. ADIM: TABLOLARI YARAT (İşte eksik olan ve çökmeye sebep olan kısım)
+    print("SYSTEM: Checking and creating database tables...")
+    Base.metadata.create_all(bind=engine)
+
     db = SessionLocal()
     
     print("SYSTEM: Purging old data...")

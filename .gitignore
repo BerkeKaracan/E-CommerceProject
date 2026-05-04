@@ -49,5 +49,6 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Sanal Ortam
 venv/
+
+backend/market.db
