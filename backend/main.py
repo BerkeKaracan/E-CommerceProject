@@ -6,10 +6,10 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, DateTime, or_, desc, asc
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.sql import func
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from dotenv import load_dotenv
 from passlib.context import CryptContext
 from google import genai
@@ -148,8 +148,7 @@ class ProductSchema(BaseModel):
     is_discounted: Optional[int] = 0
     discount_rate: Optional[int] = 0
     sales_count: Optional[int] = 0
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class CommentAdd(BaseModel):
     product_id: int
@@ -169,8 +168,7 @@ class UserResponse(BaseModel):
     id: int
     name: str
     email: str
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserStatsResponse(BaseModel):
     id: int
@@ -181,8 +179,7 @@ class UserStatsResponse(BaseModel):
     points: int
     phone: Optional[str] = None
     dob: Optional[str] = None
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserLogin(BaseModel):
     email: str
@@ -214,8 +211,7 @@ class CartItemResponse(BaseModel):
     product_id: int
     quantity: int
     product: ProductSchema 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ChatMessage(BaseModel):
     sender: str
