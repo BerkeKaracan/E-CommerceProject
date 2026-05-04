@@ -60,9 +60,10 @@ export default function ProductClient({
   const authContext = useContext(AuthContext);
   const token = authContext?.token;
 
+  // Kritik: isLoading false başlar çünkü initialProduct zaten elimizde[cite: 11]
   const [product, setProduct] = useState<ApiProduct | null>(initialProduct);
   const [relatedProducts, setRelatedProducts] = useState<ApiProduct[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -178,38 +179,25 @@ export default function ProductClient({
   };
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !product) return;
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Product not found");
-        return res.json();
-      })
-      .then((data) => {
-        setProduct(data);
-        setIsLoading(false);
-
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
-          .then((r) => r.json())
-          .then((allProducts: ApiProduct[]) => {
-            const related = allProducts
-              .filter((p) => p.category === data.category && p.id !== data.id)
-              .slice(0, 4);
-            setRelatedProducts(
-              related.length > 0 ? related : allProducts.slice(0, 4),
-            );
-          });
-      })
-      .catch((err) => {
-        console.error(err);
-        router.push("/");
+    // Sadece benzer ürünleri çekiyoruz, ana ürünü tekrar çekmiyoruz[cite: 11]
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
+      .then((r) => r.json())
+      .then((allProducts: ApiProduct[]) => {
+        const related = allProducts
+          .filter((p) => p.category === product.category && p.id !== product.id)
+          .slice(0, 4);
+        setRelatedProducts(
+          related.length > 0 ? related : allProducts.slice(0, 4),
+        );
       });
 
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}/comments`)
       .then((res) => res.json())
       .then((data) => setComments(data))
       .catch((err) => console.error("Comments error:", err));
-  }, [id, router]);
+  }, [id, product]);
 
   const submitComment = async () => {
     if (!token) return alert("Sign in to comment!");

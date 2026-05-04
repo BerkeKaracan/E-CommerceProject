@@ -2,26 +2,25 @@ import { Metadata } from "next";
 import ProductClient from "./ProductClient";
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-/**
- * Generates dynamic metadata for SEO based on the specific product data.
- */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/products/${params.id}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}`,
     );
-    const product = await response.json();
 
-    if (!product) return { title: "Product Not Found" };
+    if (!response.ok) return { title: "Product Not Found" };
+
+    const product = await response.json();
 
     return {
       title: product.name,
       description:
-        product.description ||
-        `Buy ${product.name} from our ${product.category} collection.`,
+        product.description || `Buy ${product.name} from our collection.`,
       openGraph: {
         title: product.name,
         description: product.description,
@@ -33,20 +32,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-/**
- * Server Component that fetches initial data and renders the Client Component.
- */
 export default async function ProductPage({ params }: Props) {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/products/${params.id}`,
-    {
-      cache: "no-store", // Ensure fresh data for each request
-    },
-  );
+  const { id } = await params;
 
-  if (!response.ok) return <div>Product not found</div>;
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+  const response = await fetch(`${apiUrl}/api/products/${id}`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    return (
+      <div className="h-screen flex items-center justify-center font-bold text-red-500">
+        Product not found (ID: {id})
+      </div>
+    );
+  }
 
   const product = await response.json();
-
   return <ProductClient initialProduct={product} />;
 }
