@@ -34,25 +34,25 @@ def client(db):
 # --- TESTS ---
 
 def test_health_check(client):
-    """Sistem ayakta mı?"""
+    """Is the system up and running?"""
     response = client.get("/")
     assert response.status_code == 200
     assert response.json()["status"] == "online"
 
 def test_get_categories(client):
-    """Kategoriler listesi geliyor mu?"""
+    """Is there a list of categories?"""
     response = client.get("/api/categories")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 def test_invalid_product_detail(client):
-    """Olmayan ürün 404 dönüyor mu?"""
+    """Does a missing product return a 404 error?"""
     response = client.get("/api/products/999999")
     assert response.status_code == 404
     assert "detail" in response.json()
 
 def test_register_and_login(client):
-    """Kullanıcı kayıt ve giriş akışını test eder."""
+    """Tests the user registration and login flow."""
     register_data = {
         "name": "Test User",
         "email": "test_auth@example.com",
