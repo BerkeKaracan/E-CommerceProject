@@ -151,6 +151,15 @@ class ProductSchema(BaseModel):
     sales_count: Optional[int] = 0
     model_config = ConfigDict(from_attributes=True)
 
+class ProductCreate(BaseModel):
+    name: str
+    category: str
+    price: float
+    image: str
+    description: Optional[str] = "Premium quality product from our exclusive collection."
+    is_discounted: Optional[int] = 0
+    discount_rate: Optional[int] = 0
+
 class CommentAdd(BaseModel):
     product_id: int
     text: str
@@ -328,6 +337,23 @@ def get_products(
 
     products = query.offset(offset).limit(limit).all()
     return products
+
+@app.post("/api/products", response_model=ProductSchema)
+def create_product(product: ProductCreate, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_admin)):
+    """Only Admin"""
+    new_product = DBProduct(
+        name=product.name,
+        category=product.category,
+        price=product.price,
+        image=product.image,
+        description=product.description,
+        is_discounted=product.is_discounted,
+        discount_rate=product.discount_rate
+    )
+    db.add(new_product)
+    db.commit()
+    db.refresh(new_product)
+    return new_product
 
 @app.get("/api/categories", response_model=List[str])
 def get_categories(db: Session = Depends(get_db)):
