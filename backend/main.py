@@ -72,6 +72,7 @@ class DBUser(Base):
     points = Column(Integer, default=100)
     phone = Column(String, nullable=True)
     dob = Column(String, nullable=True)
+    role = Column(String, default="user")
 
 class DBPromoCode(Base):
     __tablename__ = "PromoCode"
@@ -168,6 +169,7 @@ class UserResponse(BaseModel):
     id: int
     name: str
     email: str
+    role: str
     model_config = ConfigDict(from_attributes=True)
 
 class UserStatsResponse(BaseModel):
@@ -269,6 +271,15 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise credentials_exception
     return user
 
+def get_current_admin(current_user: DBUser = Depends(get_current_user)):
+    """RBAC Guard"""
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403, 
+            detail="Unauthorized: Only admins can perform this action."
+        )
+    return current_user
+
 # --- 6. ENDPOINTS ---
 @app.get("/")
 def health_check():
@@ -355,7 +366,7 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
     return {
         "access_token": access_token, 
         "token_type": "bearer",
-        "user": {"id": db_user.id, "name": db_user.name, "email": db_user.email}
+        "user": {"id": db_user.id, "name": db_user.name, "email": db_user.email, "role": db_user.role}
     }
 
 @app.post("/api/login/verify-2fa")
@@ -369,7 +380,7 @@ def login_verify_2fa(req: Login2FaVerifyRequest, db: Session = Depends(get_db)):
         return {
             "access_token": access_token,
             "token_type": "bearer",
-            "user": {"id": user.id, "name": user.name, "email": user.email}
+            "user": {"id": user.id, "name": user.name, "email": user.email, "role": user.role}
         }
     raise HTTPException(status_code=400, detail="Invalid 6-digit code!")
 
@@ -586,6 +597,7 @@ def fix_database(db: Session = Depends(get_db)):
     try:
         db.execute(text('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS points INTEGER DEFAULT 100;'))
         db.execute(text('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS phone VARCHAR;'))
+        db.execute(text('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS role VARCHAR DEFAULT \'user\';'))
         db.execute(text('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS dob VARCHAR;'))
         db.commit()
         return {"message": "SUCCESS! Points column added."}
@@ -664,16 +676,16 @@ def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db))
     return {"message": "Your password has been successfully reset. You can now sign in."}
 
 @app.delete("/api/products/{product_id}")
-async def delete_product(product_id: int, current_user: DBUser = Depends(get_current_user), db: Session = Depends(get_db)):
-    if current_user.email != "testuser@gmail.com":
-        raise HTTPException(status_code=403, detail="Unauthorized: Only admin can delete products")
+async def delete_product(product_id: int, current_user: DBUser = Depends(get_current_admin), db: Session = Depends(get_db)):
     product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
     if not product: raise HTTPException(status_code=404, detail="Product not found")
+    
     db.query(DBCartItem).filter(DBCartItem.product_id == product_id).delete()
     db.query(DBComment).filter(DBComment.product_id == product_id).delete()
     db.query(DBSavedItem).filter(DBSavedItem.product_id == product_id).delete()
     db.delete(product)
     db.commit()
+    
     return {"message": "Product successfully deleted"}
 
 @app.put("/api/comments/{comment_id}")
