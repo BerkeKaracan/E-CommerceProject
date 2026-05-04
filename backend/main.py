@@ -355,6 +355,11 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db), curren
     db.refresh(new_product)
     return new_product
 
+@app.get("/api/admin/products")
+def get_all_products_for_admin(db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_admin)):
+    products = db.query(DBProduct).all()
+    return products
+
 @app.get("/api/categories", response_model=List[str])
 def get_categories(db: Session = Depends(get_db)):
     categories = db.query(DBProduct.category).distinct().order_by(DBProduct.category).all()

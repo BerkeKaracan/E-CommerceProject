@@ -56,15 +56,24 @@ export default function AdminPanel() {
     return () => clearTimeout(timer);
   }, [user, router]);
 
-  // Fetch product data from API
+  // Fetch product data from secure admin API
   useEffect(() => {
-    if (activeTab === "Products") {
+    if (activeTab === "Products" && token) {
       const fetchProducts = async () => {
         setIsLoading(true);
         try {
+          // Changed endpoint to /api/admin/products and added Authorization header
           const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/products`,
+            `${process.env.NEXT_PUBLIC_API_URL}/api/admin/products`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
           );
+
+          if (!res.ok) throw new Error("Failed to fetch admin data");
+
           const data = await res.json();
           setProducts(data);
         } catch (err) {
@@ -76,7 +85,7 @@ export default function AdminPanel() {
 
       fetchProducts();
     }
-  }, [activeTab]);
+  }, [activeTab, token]); // Added token to dependency array
 
   // Handle data sorting based on column keys
   const handleSort = (key: keyof ApiProduct) => {
