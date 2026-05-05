@@ -1188,7 +1188,7 @@ export default function Home() {
       </div>
 
       {toastMessage && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-btn-green text-white px-6 py-4 rounded-xl shadow-2xl font-bold text-sm animate-in fade-in slide-in-from-bottom-8 flex items-center gap-3 whitespace-nowrap">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 dark:bg-emerald-700 text-white px-6 py-4 rounded-xl shadow-[0_10px_40px_-10px_rgba(4,120,87,0.5)] font-bold text-sm animate-in fade-in slide-in-from-bottom-8 flex items-center gap-3 whitespace-nowrap transition-colors">
           <div className="bg-white/20 rounded-full p-1 shrink-0">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -1196,7 +1196,7 @@ export default function Home() {
               viewBox="0 0 24 24"
               strokeWidth="3"
               stroke="currentColor"
-              className="w-4 h-4"
+              className="w-4 h-4 text-white"
             >
               <path
                 strokeLinecap="round"

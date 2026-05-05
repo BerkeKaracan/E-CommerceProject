@@ -2666,19 +2666,21 @@ export default function ProfilePage() {
         </div>
       )}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 bg-btn-green text-white px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-2xl animate-in slide-in-from-bottom-4 duration-300 z-50 flex items-center gap-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="w-4 h-4"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-              clipRule="evenodd"
-            />
-          </svg>
+        <div className="fixed bottom-6 right-6 z-50 bg-emerald-600 dark:bg-emerald-700 text-white px-5 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-[0_10px_40px_-10px_rgba(4,120,87,0.5)] animate-in slide-in-from-bottom-4 duration-300 flex items-center gap-3 transition-colors">
+          <div className="bg-white/20 rounded-full p-1 shrink-0">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="w-4 h-4 text-white"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
           {toastMessage}
         </div>
       )}
