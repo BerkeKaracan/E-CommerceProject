@@ -22,14 +22,15 @@ export default function SalePage() {
   const user = authContext?.user;
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
+    // 1. Fetch exactly the discounted items from backend with a higher limit
+    fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/products?price_filter=Discounted+Offers&limit=50`,
+    )
       .then((res) => res.json())
       .then((data: ApiProduct[]) => {
         if (Array.isArray(data)) {
-          const discounted = data.filter(
-            (p: ApiProduct) => p.is_discounted === 1,
-          );
-          setSaleProducts(discounted);
+          // 2. No need to filter on the frontend anymore, backend did the job
+          setSaleProducts(data);
         } else {
           console.error("API Error: Expected an array but got:", data);
           setSaleProducts([]);
