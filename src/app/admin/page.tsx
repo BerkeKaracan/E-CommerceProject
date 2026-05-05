@@ -155,9 +155,12 @@ export default function AdminPanel() {
               Exit to Store
             </Link>
             {activeTab === "Products" && (
-              <button className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-sm font-bold shadow-lg shadow-emerald-900/20 transition-all">
+              <Link
+                href="/admin/add-product"
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-sm font-bold shadow-lg shadow-emerald-900/20 transition-all"
+              >
                 + Add Product
-              </button>
+              </Link>
             )}
           </div>
         </header>
