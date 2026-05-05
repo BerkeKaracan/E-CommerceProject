@@ -216,8 +216,30 @@ export default function Home() {
       return;
     }
 
+    // 1. OPTIMISTIC UI: Backup current state
+    const previousCart = [...cart];
+    const existingItem = cart.find((item) => item.id === product.id);
+
+    // 2. OPTIMISTIC UI: Update state immediately without waiting for backend
+    if (existingItem) {
+      setCart(
+        cart.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + amount }
+            : item,
+        ),
+      );
+    } else {
+      setCart([...cart, { ...product, quantity: amount }]);
+    }
+
+    // 3. OPTIMISTIC UI: Show success message instantly
+    setToastMessage(`Added ${amount}x ${product.name} to cart!`);
+    setTimeout(() => setToastMessage(null), 2200);
+
+    // 4. BACKGROUND FETCH: Send data to server silently
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -226,30 +248,39 @@ export default function Home() {
         body: JSON.stringify({ product_id: product.id, quantity: amount }),
       });
 
-      const existingItem = cart.find((item) => item.id === product.id);
-      if (existingItem) {
-        setCart(
-          cart.map((item) =>
-            item.id === product.id
-              ? { ...item, quantity: item.quantity + amount }
-              : item,
-          ),
-        );
-      } else {
-        setCart([...cart, { ...product, quantity: amount }]);
-      }
-      setToastMessage(`Added ${amount}x ${product.name} to cart!`);
-      setTimeout(() => setToastMessage(null), 2200);
+      if (!res.ok) throw new Error("Server failed to process cart addition");
     } catch (error) {
       console.error("Add to cart error:", error);
+      // REVERT: If backend fails, return to previous state
+      setCart(previousCart);
+      setToastMessage("Sync failed. Reverting cart...");
+      setTimeout(() => setToastMessage(null), 2200);
     }
   };
 
   const removeFromCart = async (productId: number, amount: number = 1) => {
     if (!token) return;
 
+    // 1. OPTIMISTIC UI: Backup current state
+    const previousCart = [...cart];
+    const existingItem = cart.find((item) => item.id === productId);
+
+    // 2. OPTIMISTIC UI: Update state immediately
+    if (existingItem && existingItem.quantity > amount) {
+      setCart(
+        cart.map((item) =>
+          item.id === productId
+            ? { ...item, quantity: item.quantity - amount }
+            : item,
+        ),
+      );
+    } else {
+      setCart(cart.filter((item) => item.id !== productId));
+    }
+
+    // 3. BACKGROUND FETCH: Send deletion to server silently
     try {
-      await fetch(
+      const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/cart/${productId}?quantity=${amount}`,
         {
           method: "DELETE",
@@ -257,20 +288,13 @@ export default function Home() {
         },
       );
 
-      const existingItem = cart.find((item) => item.id === productId);
-      if (existingItem && existingItem.quantity > amount) {
-        setCart(
-          cart.map((item) =>
-            item.id === productId
-              ? { ...item, quantity: item.quantity - amount }
-              : item,
-          ),
-        );
-      } else {
-        setCart(cart.filter((item) => item.id !== productId));
-      }
+      if (!res.ok) throw new Error("Server failed to process cart removal");
     } catch (error) {
       console.error("Remove from cart error:", error);
+      // REVERT: If backend fails, return to previous state
+      setCart(previousCart);
+      setToastMessage("Sync failed. Reverting cart...");
+      setTimeout(() => setToastMessage(null), 2200);
     }
   };
 
