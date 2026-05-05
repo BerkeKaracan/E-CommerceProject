@@ -1,15 +1,23 @@
 "use client";
-
+import Image from "next/image";
 import Link from "next/link";
 import { useState, useContext } from "react";
 import { AuthContext } from "@/context/AuthContext";
 import ThemeToggle from "@/components/ThemeToggle";
+
+interface OrderItem {
+  name: string;
+  image: string;
+  quantity: number;
+  price: number;
+}
 
 interface TrackedOrder {
   id: number;
   status: string;
   total_amount: number;
   created_at: string;
+  items: OrderItem[];
 }
 
 export default function TrackingPage() {
@@ -260,6 +268,44 @@ export default function TrackingPage() {
               <span className="font-black text-2xl text-spc-grey dark:text-white transition-colors">
                 ${order.total_amount.toFixed(2)}
               </span>
+            </div>
+            {/* Order Items Section */}
+            <div className="mt-10 pt-6 border-t border-neutral-100 dark:border-neutral-800">
+              <h4 className="font-black text-xs uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-4 transition-colors">
+                Items in this Order
+              </h4>
+              <div className="space-y-4">
+                {order.items?.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-lg bg-neutral-100 dark:bg-neutral-800 p-1 shrink-0 overflow-hidden transition-colors">
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          width={48}
+                          height={48}
+                          className="w-full h-full object-contain"
+                          unoptimized
+                        />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-spc-grey dark:text-neutral-200 transition-colors">
+                          {item.name}
+                        </p>
+                        <p className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-tight">
+                          Qty: {item.quantity} × ${item.price.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-sm font-black text-spc-grey dark:text-neutral-200">
+                      ${(item.quantity * item.price).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

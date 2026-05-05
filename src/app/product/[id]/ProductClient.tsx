@@ -14,6 +14,7 @@ interface ApiProduct {
   image: string;
   sales_count?: number;
   description?: string;
+  stock: number;
 }
 
 interface StarIconProps {
@@ -347,9 +348,21 @@ export default function ProductClient({
               );
             })()}
 
-            <p className="text-2xl lg:text-4xl font-black text-btn-green mb-6">
+            <p className="text-2xl lg:text-4xl font-black text-btn-green ">
               ${product.price.toFixed(2)}
             </p>
+
+            <div className="mt-4 mb-2">
+              {product.stock > 0 ? (
+                <span className="text-sm font-medium text-spc-grey bg-gray-200  px-3 py-1 rounded-md">
+                  {product.stock} in stock
+                </span>
+              ) : (
+                <span className="text-sm font-bold text-spc-grey bg-gray-200 px-3 py-1 rounded-md">
+                  Out of Stock
+                </span>
+              )}
+            </div>
 
             <div className="w-full h-px bg-neutral-100 dark:bg-neutral-800 mb-6 transition-colors"></div>
 
@@ -370,18 +383,30 @@ export default function ProductClient({
                   {quantity}
                 </span>
                 <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white font-black text-xl transition-colors"
+                  onClick={() => {
+                    if (quantity < product.stock) {
+                      setQuantity(quantity + 1);
+                    }
+                  }}
+                  disabled={product.stock === 0}
+                  className="text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white font-black text-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   +
                 </button>
               </div>
+
               <button
                 onClick={addToCart}
-                className="flex-1 bg-btn-green hover:bg-green-600 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-colors shadow-sm active:scale-95"
+                disabled={product.stock === 0}
+                className={`flex-1 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-colors shadow-sm ${
+                  product.stock === 0
+                    ? "bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 cursor-not-allowed"
+                    : "bg-btn-green hover:bg-green-600 text-white active:scale-95"
+                }`}
               >
-                Add to Cart
+                {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
               </button>
+
               <button
                 onClick={toggleSave}
                 className={`w-14 h-14 shrink-0 flex items-center justify-center rounded-2xl border-2 transition-all duration-300 ${isSaved ? "border-red-500 bg-red-50 dark:bg-red-900/20 text-red-500" : "border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 hover:border-red-500 dark:hover:border-red-500 hover:text-red-500 dark:hover:text-red-500"}`}

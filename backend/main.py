@@ -9,7 +9,7 @@ from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.sql import func
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from dotenv import load_dotenv
 from passlib.context import CryptContext
 from google import genai
@@ -56,6 +56,7 @@ class DBProduct(Base):
     description = Column(String, default="Premium quality product from our exclusive collection. Guaranteed to elevate your style.")
     is_discounted = Column(Integer, default=0)
     discount_rate = Column(Integer, default=0)
+    stock = Column(Integer, default=50)
 
 class CheckoutRequest(BaseModel):
     promo_codes: list[str] = []
@@ -96,6 +97,14 @@ class DBOrder(Base):
     total_amount = Column(Float)
     status = Column(String, default="Completed")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class DBOrderItem(Base):
+    __tablename__ = "OrderItem"
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(Integer, ForeignKey("Order.id"))
+    product_id = Column(Integer, ForeignKey("Product.id"))
+    quantity = Column(Integer)
+    price = Column(Float)
 
 class DBComment(Base):
     __tablename__ = "Comment"
@@ -150,6 +159,7 @@ class ProductSchema(BaseModel):
     discount_rate: Optional[int] = 0
     sales_count: Optional[int] = 0
     model_config = ConfigDict(from_attributes=True)
+    stock: Optional[int] = 50
 
 class ProductCreate(BaseModel):
     name: str
@@ -159,6 +169,7 @@ class ProductCreate(BaseModel):
     description: Optional[str] = "Premium quality product from our exclusive collection."
     is_discounted: Optional[int] = 0
     discount_rate: Optional[int] = 0
+    stock: Optional[int] = 50
 
 class CommentAdd(BaseModel):
     product_id: int
@@ -211,7 +222,7 @@ class UserUpdate(BaseModel):
 
 class CartItemAdd(BaseModel):
     product_id: int
-    quantity: int
+    quantity: int = Field(..., gt=0, description="Quantity must be bigger than 0")
 
 class Login2FaVerifyRequest(BaseModel):
     user_id: int
@@ -454,9 +465,19 @@ def get_cart(db: Session = Depends(get_db), current_user: DBUser = Depends(get_c
 
 @app.post("/api/cart")
 def add_to_cart(item: CartItemAdd, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    product = db.query(DBProduct).filter(DBProduct.id == item.product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    if product.stock < item.quantity:
+        raise HTTPException(status_code=400, detail=f"Not enough stock! Only {product.stock} items left.")
+
     existing_item = db.query(DBCartItem).filter(
         DBCartItem.user_id == current_user.id, DBCartItem.product_id == item.product_id
     ).first()
+
+    if existing_item and (existing_item.quantity + item.quantity) > product.stock:
+        raise HTTPException(status_code=400, detail=f"Cannot add more. Stock limit is {product.stock}.")
 
     if existing_item:
         existing_item.quantity += item.quantity
@@ -512,10 +533,11 @@ def validate_promo(req: PromoValidateRequest, db: Session = Depends(get_db), cur
 @app.post("/api/checkout")
 def process_checkout(req: CheckoutRequest, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
     cart_items = db.query(DBCartItem).filter(DBCartItem.user_id == current_user.id).all()
-    if not cart_items: raise HTTPException(status_code=400, detail="Cart is empty")
+    if not cart_items: 
+        raise HTTPException(status_code=400, detail="Cart is empty")
 
     total = sum((db.query(DBProduct).filter(DBProduct.id == i.product_id).first().price * i.quantity) for i in cart_items)
-    
+
     total_discount = 0.0
     for code_in in req.promo_codes:
         code_str = code_in.strip().upper()
@@ -528,12 +550,31 @@ def process_checkout(req: CheckoutRequest, db: Session = Depends(get_db), curren
 
     final_total = max(0, total + 1.0 - total_discount)
 
-    db.add(DBOrder(user_id=current_user.id, total_amount=final_total))
+    new_order = DBOrder(user_id=current_user.id, total_amount=final_total)
+    db.add(new_order)
+    db.flush() 
+
+    for item in cart_items:
+        product = db.query(DBProduct).filter(DBProduct.id == item.product_id).first()
+        if product:
+            product.stock -= item.quantity
+            product.sales_count += item.quantity
+            
+            purchased_price = product.price * (1 - (product.discount_rate / 100)) if product.is_discounted else product.price
+
+            order_item = DBOrderItem(
+                order_id=new_order.id,
+                product_id=product.id,
+                quantity=item.quantity,
+                price=purchased_price
+            )
+            db.add(order_item)
+
     db.query(DBCartItem).filter(DBCartItem.user_id == current_user.id).delete()
     current_user.points += int(final_total // 10)
     
     db.commit()
-    return {"message": "Order completed successfully", "final_total": final_total}
+    return {"message": "Order completed successfully", "final_total": final_total, "order_id": new_order.id}
 
 @app.get("/api/orders")
 def get_user_orders(db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
@@ -604,16 +645,30 @@ async def chat_with_ai(request: ChatRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="The AI encountered a tactical error.")
 
 @app.get("/api/track/{order_id}")
-def track_order(order_id: int, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
-    order = db.query(DBOrder).filter(DBOrder.id == order_id).first()
+def get_order_tracking(order_id: int, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    order = db.query(DBOrder).filter(DBOrder.id == order_id, DBOrder.user_id == current_user.id).first()
     if not order:
-        raise HTTPException(status_code=404, detail="Order not found in our records.")
-    if order.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Top Secret: You are not authorized to view this order.")
-    
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    items = db.query(DBOrderItem, DBProduct.name, DBProduct.image).join(
+        DBProduct, DBOrderItem.product_id == DBProduct.id
+    ).filter(DBOrderItem.order_id == order.id).all()
+
+    product_list = []
+    for item, p_name, p_image in items:
+        product_list.append({
+            "name": p_name,
+            "image": p_image,
+            "quantity": item.quantity,
+            "price": item.price
+        })
+
     return {
-        "id": order.id, "status": order.status, "total_amount": order.total_amount,
-        "created_at": order.order_date if hasattr(order, 'order_date') else order.created_at 
+        "id": order.id,
+        "status": order.status,
+        "total_amount": order.total_amount,
+        "created_at": order.created_at,
+        "items": product_list
     }
     
 @app.get("/api/analytics/trending")
@@ -626,15 +681,25 @@ def get_trending_products(db: Session = Depends(get_db)):
 @app.get("/api/fix-db")
 def fix_database(db: Session = Depends(get_db)):
     try:
-        db.execute(text('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS points INTEGER DEFAULT 100;'))
-        db.execute(text('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS phone VARCHAR;'))
-        db.execute(text('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS role VARCHAR DEFAULT \'user\';'))
-        db.execute(text('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS dob VARCHAR;'))
+        # 1. Add missing stock column to Product table
+        db.execute(text('ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 50;'))
+        
+        # 2. Create the missing OrderItem table explicitly for PostgreSQL
+        db.execute(text('''
+            CREATE TABLE IF NOT EXISTS "OrderItem" (
+                id SERIAL PRIMARY KEY,
+                order_id INTEGER REFERENCES "Order"(id) ON DELETE CASCADE,
+                product_id INTEGER REFERENCES "Product"(id) ON DELETE CASCADE,
+                quantity INTEGER,
+                price FLOAT
+            );
+        '''))
+        
         db.commit()
-        return {"message": "SUCCESS! Points column added."}
+        return {"message": "SUCCESS! Database fixed: stock column and OrderItem table have been created successfully."}
     except Exception as e:
-        db.rollback() 
-        return {"error": f"An error occurred: {str(e)}"}
+        db.rollback()
+        return {"error": f"Database fix failed: {str(e)}"}
 
 @app.get("/api/products/{product_id}/comments")
 def get_comments(product_id: int, db: Session = Depends(get_db)):
