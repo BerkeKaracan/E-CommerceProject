@@ -51,6 +51,8 @@ export default function Home() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
 
+  const [fetchError, setFetchError] = useState(false);
+
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
@@ -117,6 +119,7 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Main Fetch Operation with Auto-Retry Logic
   useEffect(() => {
     const params = new URLSearchParams();
     if (selectedCategory !== "All") params.append("category", selectedCategory);
@@ -130,14 +133,19 @@ export default function Home() {
 
     let isMounted = true;
 
-    fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/products?${params.toString()}`,
-    )
-      .then((res) => {
+    // We wrap the fetch in a function to allow recursive retries
+    const fetchProducts = async (retryCount = 0) => {
+      if (page === 1) setFetchError(false);
+
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/products?${params.toString()}`,
+        );
+
         if (!res.ok) throw new Error("Network response was not ok");
-        return res.json();
-      })
-      .then((data: ApiProduct[]) => {
+
+        const data: ApiProduct[] = await res.json();
+
         if (!isMounted) return;
 
         if (!Array.isArray(data)) {
@@ -167,15 +175,27 @@ export default function Home() {
           setProducts((prev) => [...prev, ...formattedData]);
         }
 
-        if (data.length < 12) {
-          setHasMore(false);
-        }
+        if (data.length < 12) setHasMore(false);
         setIsLoading(false);
-      })
-      .catch((err) => {
+        setFetchError(false);
+      } catch (err) {
         console.error("Data fetching error:", err);
-        if (isMounted) setIsLoading(false);
-      });
+        // Auto-retry logic: try up to 2 more times
+        if (retryCount < 2) {
+          console.log(`Retrying fetch... Attempt ${retryCount + 1}`);
+          setTimeout(() => {
+            if (isMounted) fetchProducts(retryCount + 1);
+          }, 1500); // Wait 1.5 seconds before retrying
+        } else {
+          if (isMounted) {
+            setIsLoading(false);
+            if (page === 1) setFetchError(true);
+          }
+        }
+      }
+    };
+
+    fetchProducts();
 
     return () => {
       isMounted = false;
@@ -759,8 +779,58 @@ export default function Home() {
               </div>
             </div>
           </div>
-
-          {isLoading && page === 1 ? (
+          {fetchError ? (
+            <div className="w-full flex flex-col items-center justify-center py-20 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl shadow-sm">
+              <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2.5"
+                  stroke="currentColor"
+                  className="w-8 h-8 text-red-500"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-black text-spc-grey dark:text-white uppercase tracking-widest mb-2">
+                Connection Lost
+              </h3>
+              <p className="text-xs font-bold text-neutral-400 dark:text-neutral-500 mb-6 text-center max-w-sm">
+                We couldn&apos;t load the products from the server. Please check
+                your connection and try again.
+              </p>
+              <button
+                onClick={() => {
+                  setIsLoading(true);
+                  setFetchError(false);
+                  setPage(1);
+                  // This state update triggers the useEffect to run again
+                }}
+                className="bg-black dark:bg-neutral-800 hover:bg-btn-green dark:hover:bg-btn-green text-white px-8 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-md flex items-center gap-2"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="3"
+                  stroke="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+                  />
+                </svg>
+                Try Again
+              </button>
+            </div>
+          ) : isLoading && page === 1 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4">
               {Array.from({ length: 12 }).map((_, n) => (
                 <div
