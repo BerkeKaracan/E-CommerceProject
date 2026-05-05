@@ -62,7 +62,6 @@ export default function Home() {
   );
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-  // Arama için Debounce Sistemi
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -111,7 +110,6 @@ export default function Home() {
     return () => window.removeEventListener("focus", fetchCart);
   }, [token]);
 
-  // Arama kutusu geciktirici (Sadece metin yazarken çalışır)
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -119,7 +117,6 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Ana Fetch Operasyonu (ESLint Hataları Temizlendi, Timeout Kaldırıldı)
   useEffect(() => {
     const params = new URLSearchParams();
     if (selectedCategory !== "All") params.append("category", selectedCategory);
@@ -1170,9 +1167,6 @@ export default function Home() {
                     className="px-3 py-2.5 text-sm font-bold text-spc-grey dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 rounded-lg transition-colors flex items-center justify-between group"
                   >
                     <span className="flex items-center gap-3">
-                      <span className="text-lg grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
-                        👤
-                      </span>
                       Profile Details
                     </span>
                   </Link>
@@ -1181,12 +1175,7 @@ export default function Home() {
                     onClick={() => setIsMenuOpen(false)}
                     className="px-3 py-2.5 text-sm font-bold text-spc-grey dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 rounded-lg transition-colors flex items-center justify-between group"
                   >
-                    <span className="flex items-center gap-3">
-                      <span className="text-lg grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
-                        📦
-                      </span>
-                      My Orders
-                    </span>
+                    <span className="flex items-center gap-3">My Orders</span>
                   </Link>
                   <Link
                     href="/profile"
@@ -1194,9 +1183,6 @@ export default function Home() {
                     className="px-3 py-2.5 text-sm font-bold text-spc-grey dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 rounded-lg transition-colors flex items-center justify-between group"
                   >
                     <span className="flex items-center gap-3">
-                      <span className="text-lg grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
-                        🛡️
-                      </span>
                       Security & Settings
                     </span>
                   </Link>
@@ -1209,7 +1195,8 @@ export default function Home() {
                     }}
                     className="text-left px-3 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors flex items-center gap-3 mt-1"
                   >
-                    <span className="text-lg">🚪</span> Sign Out
+                    {" "}
+                    Sign Out
                   </button>
                 </div>
               )}
@@ -1241,38 +1228,6 @@ export default function Home() {
                 >
                   Track Order
                 </Link>
-              </div>
-              <div className="flex flex-col gap-2">
-                <p className="text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-2 px-1">
-                  Categories
-                </p>
-                <button
-                  onClick={() => {
-                    setSelectedCategory("All");
-                    setIsMenuOpen(false);
-                    setPage(1);
-                    setHasMore(true);
-                    setIsLoading(true);
-                  }}
-                  className={`text-left px-3 py-2.5 text-sm font-bold rounded-lg transition-colors capitalize ${selectedCategory === "All" ? "bg-btn-green/10 text-btn-green" : "text-spc-grey dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900"}`}
-                >
-                  All Products
-                </button>
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => {
-                      setSelectedCategory(cat);
-                      setIsMenuOpen(false);
-                      setPage(1);
-                      setHasMore(true);
-                      setIsLoading(true);
-                    }}
-                    className={`text-left px-3 py-2.5 text-sm font-bold rounded-lg transition-colors capitalize truncate w-full block ${selectedCategory === cat ? "bg-btn-green/10 text-btn-green" : "text-spc-grey dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900"}`}
-                  >
-                    {cat}
-                  </button>
-                ))}
               </div>
               <div>
                 <h3 className="text-xs font-black uppercase tracking-widest text-spc-grey dark:text-white mb-6 transition-colors">

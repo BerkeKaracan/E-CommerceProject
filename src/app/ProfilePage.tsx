@@ -134,6 +134,13 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [orders, setOrders] = useState<ApiOrder[]>([]);
 
+  const [notifSettings, setNotifSettings] = useState({
+    orderUpdates: true,
+    promotions: false,
+    securityAlerts: true,
+  });
+  const [isSavingNotifs, setIsSavingNotifs] = useState(false);
+
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const [editPhone, setEditPhone] = useState("");
@@ -168,6 +175,29 @@ export default function ProfilePage() {
   const [aiInput, setAiInput] = useState("");
   const [isAiTyping, setIsAiTyping] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const faqs = [
+    {
+      q: "How long does shipping take?",
+      a: "Standard shipping takes 3-5 business days. Premium members enjoy 1-2 day expedited delivery.",
+    },
+    {
+      q: "What is your return policy?",
+      a: "You can return any item within 30 days of purchase. Items must be in their original packaging and unused condition.",
+    },
+    {
+      q: "Do you ship internationally?",
+      a: "Yes, we ship to over 50 countries. Shipping costs and delivery times vary by location.",
+    },
+  ];
+
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  const [langSettings, setLangSettings] = useState({
+    language: "en",
+    region: "US",
+  });
+  const [isSavingLang, setIsSavingLang] = useState(false);
 
   const formatDob = (value: string) => {
     const numbers = value.replace(/\D/g, "");
@@ -282,7 +312,7 @@ export default function ProfilePage() {
         setAddresses(await updated.json());
       }
     } catch (err) {
-      setToastMessage("❌ Failed to save address.");
+      setToastMessage(" Failed to save address.");
       setTimeout(() => setToastMessage(null), 3000);
     }
   };
@@ -455,7 +485,7 @@ export default function ProfilePage() {
       const data = await res.json();
 
       if (res.ok) {
-        setToastMessage("🎉 Reward claimed successfully!");
+        setToastMessage("Reward claimed successfully!");
         setRewardData((prev) =>
           prev
             ? {
@@ -472,10 +502,10 @@ export default function ProfilePage() {
             : prev,
         );
       } else {
-        setToastMessage("❌ " + (data.detail || "Failed to exchange points."));
+        setToastMessage(data.detail || "Failed to exchange points.");
       }
     } catch (err) {
-      setToastMessage("❌ Server connection error!");
+      setToastMessage("Server connection error!");
     } finally {
       setIsExchanging(false);
       setTimeout(() => setToastMessage(null), 3000);
@@ -622,82 +652,112 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Header Section */}
-        <div className="flex items-center justify-between mb-4 md:mb-5 shrink-0">
-          <div className="flex items-center gap-4 md:gap-6">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 flex items-center justify-center text-2xl md:text-3xl font-black text-neutral-300 dark:text-neutral-600 shadow-sm shrink-0 transition-colors">
+        {/* Modern Split-Tag Header Section */}
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6 mb-4 shrink-0">
+          {/* Avatar with Subtle Glow */}
+          <div className="relative shrink-0">
+            <div className="absolute -inset-0.5 bg-btn-green/30 rounded-full blur-sm"></div>
+            <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex items-center justify-center text-3xl font-black text-neutral-300 dark:text-neutral-600 transition-colors">
               {user.name.charAt(0).toUpperCase()}
             </div>
+          </div>
 
-            {isEditing ? (
-              <div className="flex flex-col gap-2 animate-in fade-in zoom-in-95 duration-200">
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="text-lg md:text-xl font-black bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-spc-grey dark:text-white rounded-lg px-3 py-1 outline-none focus:border-btn-green dark:focus:border-btn-green transition-colors"
-                />
-                <input
-                  type="email"
-                  value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
-                  className="text-[10px] md:text-xs font-medium text-spc-grey dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg px-3 py-1 outline-none focus:border-btn-green dark:focus:border-btn-green transition-colors"
-                />
-                {updateError && (
-                  <p className="text-[9px] text-red-500 font-bold">
-                    {updateError}
-                  </p>
-                )}
-                <div className="flex items-center gap-2 mt-1">
-                  <button
-                    onClick={handleUpdateProfile}
-                    disabled={isUpdating}
-                    className="text-[9px] md:text-[10px] bg-btn-green hover:bg-green-600 text-white px-4 py-1.5 rounded-md font-black uppercase tracking-widest transition-colors disabled:opacity-50"
-                  >
-                    {isUpdating ? "Saving..." : "Save"}
-                  </button>
-                  <button
-                    onClick={() => setIsEditing(false)}
-                    className="text-[9px] md:text-[10px] bg-neutral-200 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700 text-spc-grey dark:text-neutral-300 px-4 py-1.5 rounded-md font-black uppercase tracking-widest transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
+          {isEditing ? (
+            /* Editing Mode Logic */
+            <div className="flex flex-col gap-2 flex-1 w-full max-w-sm">
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="text-lg font-black bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg px-3 py-1.5 outline-none focus:ring-1 focus:ring-btn-green"
+              />
+              <input
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                className="text-xs font-medium bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg px-3 py-1.5 outline-none focus:ring-1 focus:ring-btn-green"
+              />
+              <div className="flex gap-2 mt-1">
+                <button
+                  onClick={handleUpdateProfile}
+                  className="bg-btn-green text-white px-4 py-1.5 rounded-md font-black text-[9px] uppercase tracking-widest hover:brightness-110 transition-all"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="bg-neutral-100 dark:bg-neutral-800 text-spc-grey dark:text-white px-4 py-1.5 rounded-md font-black text-[9px] uppercase tracking-widest"
+                >
+                  Cancel
+                </button>
               </div>
-            ) : (
-              <div className="space-y-0.5 overflow-hidden group relative pr-8">
-                <div className="flex flex-col">
-                  <h1 className="text-2xl md:text-4xl font-black text-spc-grey dark:text-white uppercase tracking-tighter leading-none mb-2">
-                    {stats?.name || "Loading..."}
-                  </h1>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`flex items-center gap-1.5 ${getLoyaltyTier(lifetimePoints).bg} px-3 py-1 rounded-lg border ${getLoyaltyTier(lifetimePoints).border} shadow-sm`}
-                    >
-                      <span
-                        className={`text-[11px] font-black uppercase tracking-widest ${getLoyaltyTier(lifetimePoints).color}`}
-                      >
-                        {stats?.points ?? 0} PTS
-                      </span>
-                    </div>
-                    <div className="h-1 w-1 rounded-full bg-neutral-300 dark:bg-neutral-700" />
+            </div>
+          ) : (
+            /* View Mode - Enhanced Badge Shapes */
+            <div className="flex flex-col items-center md:items-start text-center md:text-left pt-1">
+              <h1 className="text-2xl md:text-3xl font-black text-spc-grey dark:text-white uppercase tracking-tighter leading-none mb-3">
+                {stats?.name || "Loading..."}
+              </h1>
+
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-3">
+                {/* Points Split-Badge */}
+                <div className="flex items-stretch h-6 rounded-md overflow-hidden border border-neutral-900 dark:border-neutral-700 shadow-sm">
+                  <div className="bg-neutral-900 dark:bg-neutral-700 flex items-center px-4">
+                    <span className="text-[12px] font-black text-white uppercase tracking-tighter">
+                      POINTS
+                    </span>
+                  </div>
+                  <div className="bg-white dark:bg-neutral-800 flex items-center px-4">
+                    <span className="text-[13px] font-blue text-blue-900 dark:text-white">
+                      {stats?.points ?? 0}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Tier Split-Badge */}
+                <div
+                  className={`flex items-stretch h-6 rounded-md overflow-hidden border shadow-sm ${getLoyaltyTier(lifetimePoints).border}`}
+                >
+                  <div
+                    className={`${getLoyaltyTier(lifetimePoints).bg} flex items-center px-2 border-r ${getLoyaltyTier(lifetimePoints).border}`}
+                  >
+                    <span className="text-[14px]">💎</span>
+                  </div>
+                  <div className="bg-white dark:bg-neutral-900 flex items-center px-2.5">
                     <span
-                      className={`text-[10px] font-bold uppercase tracking-widest ${getLoyaltyTier(lifetimePoints).color}`}
+                      className={`text-[9px] font-black tracking-widest ${getLoyaltyTier(lifetimePoints).color}`}
                     >
                       {getLoyaltyTier(lifetimePoints).title}
                     </span>
                   </div>
                 </div>
-                <p className="text-[10px] md:text-xs font-medium text-neutral-400 dark:text-neutral-500 truncate">
-                  {user.email}
-                </p>
               </div>
-            )}
-          </div>
+
+              <div className="flex items-center gap-1.5 text-neutral-400 dark:text-neutral-500">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2.5"
+                  stroke="currentColor"
+                  className="w-3.5 h-3.5 text-btn-green"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
+                  />
+                </svg>
+                <span className="text-[11px] font-bold tracking-tight">
+                  {user.email}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Separator Line */}
-        <div className="w-full h-px bg-red-500/10 dark:bg-neutral-800 mb-4 md:mb-5 shrink-0 transition-colors" />
+        {/* Separator Line  */}
+        <div className="w-full h-px bg-neutral-200 dark:bg-neutral-800/60 mb-5 shrink-0" />
 
         {/* The Segmented Bar */}
         <div className="w-full flex items-stretch border-2 border-neutral-100 dark:border-neutral-800 rounded-xl shadow-sm h-12 md:h-14 mb-4 md:mb-5 bg-white dark:bg-neutral-900 shrink-0 relative overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-0.5 md:pb-0 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-neutral-200 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700 [&::-webkit-scrollbar-thumb]:rounded-full transition-colors">
@@ -1463,23 +1523,105 @@ export default function ProfilePage() {
                   </div>
                 </div>
               ) : activeTab === "Support" ? (
-                <div className="flex-1 w-full max-w-3xl flex flex-col items-center justify-center gap-4 mt-16 animate-in fade-in zoom-in-95 duration-300">
-                  <div className="w-16 h-16 bg-neutral-50 dark:bg-neutral-800 rounded-full flex items-center justify-center text-2xl mb-2 shadow-sm border border-neutral-100 dark:border-neutral-700">
-                    🎧
+                <div className="flex-1 w-full max-w-3xl flex flex-col gap-8 mt-4 animate-in fade-in zoom-in-95 duration-300 px-2 pb-20">
+                  {/* Header Info[cite: 13] */}
+                  <div className="flex items-center gap-3 mb-2 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+                    <div className="w-10 h-10 bg-white dark:bg-neutral-800 rounded-xl flex items-center justify-center shadow-sm border border-neutral-100 dark:border-neutral-700 text-lg">
+                      🎧
+                    </div>
+                    <div>
+                      <h2 className="text-sm md:text-base font-black text-spc-grey dark:text-white uppercase tracking-wider">
+                        Help Center
+                      </h2>
+                      <p className="text-[10px] font-bold text-neutral-400">
+                        Find answers or reach out to our team
+                      </p>
+                    </div>
                   </div>
-                  <h3 className="text-lg font-black text-spc-grey dark:text-white uppercase tracking-widest">
-                    How can we help?
-                  </h3>
-                  <p className="text-xs font-bold text-neutral-400 text-center max-w-xs">
-                    Access our full Help Center, FAQ, and contact forms from our
-                    dedicated support portal.
-                  </p>
-                  <Link
-                    href="/support"
-                    className="mt-4 bg-btn-green text-white px-8 py-3.5 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-green-600 transition-colors shadow-sm active:scale-95"
-                  >
-                    Open Help Center
-                  </Link>
+
+                  {/* FAQ Section[cite: 13] */}
+                  <div className="space-y-3">
+                    <h3 className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-2 ml-1">
+                      Frequently Asked Questions
+                    </h3>
+                    {faqs.map((faq, index) => (
+                      <div
+                        key={index}
+                        className="border border-neutral-100 dark:border-neutral-800 rounded-2xl overflow-hidden bg-white dark:bg-neutral-900 shadow-sm transition-colors"
+                      >
+                        <button
+                          onClick={() =>
+                            setOpenFaq(openFaq === index ? null : index)
+                          }
+                          className="w-full flex items-center justify-between p-5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
+                        >
+                          <span className="text-xs font-bold text-spc-grey dark:text-neutral-200 leading-snug">
+                            {faq.q}
+                          </span>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="3"
+                            stroke="currentColor"
+                            className={`w-3.5 h-3.5 text-btn-green transition-transform duration-300 ${openFaq === index ? "rotate-180" : ""}`}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+                            />
+                          </svg>
+                        </button>
+                        {openFaq === index && (
+                          <div className="px-5 pb-5 text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed animate-in slide-in-from-top-2 duration-300 font-medium">
+                            {faq.a}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="bg-neutral-900 dark:bg-neutral-800 p-6 md:p-8 rounded-3xl shadow-xl mt-4 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-btn-green/10 rounded-full -mr-10 -mt-10 blur-2xl pointer-events-none"></div>
+
+                    <h3 className="text-base font-black text-white mb-1 uppercase tracking-tight">
+                      Send us a message
+                    </h3>
+                    <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-6">
+                      Our team typically responds within 24 hours
+                    </p>
+
+                    <form
+                      className="space-y-4"
+                      onSubmit={(e) => e.preventDefault()}
+                    >
+                      <div>
+                        <label className="text-[9px] font-black uppercase text-neutral-500 tracking-widest ml-1">
+                          Email Address
+                        </label>
+                        <input
+                          type="email"
+                          defaultValue={user?.email}
+                          className="w-full mt-1.5 bg-neutral-800 dark:bg-neutral-950 border border-neutral-700 rounded-xl px-4 py-3 text-sm text-white placeholder:text-neutral-600 outline-none focus:border-btn-green transition-all"
+                          placeholder="your@email.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-black uppercase text-neutral-500 tracking-widest ml-1">
+                          How can we help?
+                        </label>
+                        <textarea
+                          rows={4}
+                          className="w-full mt-1.5 bg-neutral-800 dark:border-neutral-950 border border-neutral-700 rounded-xl px-4 py-3 text-sm text-white placeholder:text-neutral-600 outline-none focus:border-btn-green transition-all resize-none"
+                          placeholder="Describe your issue..."
+                        />
+                      </div>
+                      <button className="w-full bg-btn-green text-white font-black uppercase text-[10px] tracking-widest py-4 rounded-xl hover:brightness-110 transition-all shadow-lg active:scale-[0.98]">
+                        Send Support Ticket
+                      </button>
+                    </form>
+                  </div>
                 </div>
               ) : activeTab === "Personal Information" ? (
                 <div className="flex-1 w-full max-w-3xl flex flex-col mt-4 md:mt-6 animate-in fade-in zoom-in-95 duration-300 px-2 pb-20">
@@ -1886,13 +2028,11 @@ export default function ProfilePage() {
                       </p>
                     </div>
                   </div>
-
-                  {/* GERÇEK VE İŞLEVLİ ŞİFRE FORMU */}
                   <form
                     onSubmit={async (e) => {
                       e.preventDefault();
                       if (newPassword !== confirmPassword) {
-                        setToastMessage("❌ Passwords do not match!");
+                        setToastMessage(" Passwords do not match!");
                         setTimeout(() => setToastMessage(null), 3000);
                         return;
                       }
@@ -1914,17 +2054,15 @@ export default function ProfilePage() {
                         );
                         const data = await res.json();
                         if (res.ok) {
-                          setToastMessage("🔒 " + data.message);
+                          setToastMessage(data.message);
                           setCurrentPassword("");
                           setNewPassword("");
                           setConfirmPassword("");
                         } else {
-                          setToastMessage(
-                            "❌ " + (data.detail || "Failed to update."),
-                          );
+                          setToastMessage(data.detail || "Failed to update.");
                         }
                       } catch (err) {
-                        setToastMessage("❌ Server Error!");
+                        setToastMessage(" Server Error!");
                       } finally {
                         setIsPasswordChanging(false);
                         setTimeout(() => setToastMessage(null), 3000);
@@ -2041,9 +2179,8 @@ export default function ProfilePage() {
                                   setTwoFaSetup(data);
                                 } else {
                                   setToastMessage(
-                                    "❌ " +
-                                      (data.detail ||
-                                        "2FA is already enabled or server error."),
+                                    data.detail ||
+                                      "2FA is already enabled or server error.",
                                   );
                                   setTimeout(() => setToastMessage(null), 3000);
                                 }
@@ -2080,7 +2217,7 @@ export default function ProfilePage() {
                                     "🛡️ 2FA Successfully Enabled!",
                                   );
                                 } else {
-                                  setToastMessage("❌ Invalid 6-digit code!");
+                                  setToastMessage(" Invalid 6-digit code!");
                                 }
                               } catch (err) {
                               } finally {
@@ -2165,6 +2302,256 @@ export default function ProfilePage() {
                     >
                       Setup
                     </button>
+                  </div>
+                </div>
+              ) : activeTab === "Notification Settings" ? (
+                <div className="flex-1 w-full max-w-3xl flex flex-col mt-4 md:mt-6 animate-in fade-in zoom-in-95 duration-300 px-2 pb-20">
+                  <div className="flex items-center gap-3 mb-6 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+                    <div className="w-10 h-10 bg-white dark:bg-neutral-800 rounded-xl flex items-center justify-center shadow-sm border border-neutral-100 dark:border-neutral-700 text-lg">
+                      🔔
+                    </div>
+                    <div>
+                      <h2 className="text-sm md:text-base font-black text-spc-grey dark:text-white uppercase tracking-wider">
+                        Notification Settings
+                      </h2>
+                      <p className="text-[10px] font-bold text-neutral-400">
+                        Manage how we communicate with you
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
+                    {/* Order Updates Toggle */}
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-spc-grey dark:text-white">
+                          Order Updates
+                        </h3>
+                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
+                          Receive important updates about your order status and
+                          shipping details.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() =>
+                          setNotifSettings({
+                            ...notifSettings,
+                            orderUpdates: !notifSettings.orderUpdates,
+                          })
+                        }
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${notifSettings.orderUpdates ? "bg-btn-green" : "bg-neutral-200 dark:bg-neutral-700"}`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${notifSettings.orderUpdates ? "translate-x-5" : "translate-x-0"}`}
+                        />
+                      </button>
+                    </div>
+
+                    <div className="w-full h-px bg-neutral-100 dark:bg-neutral-800/60" />
+
+                    {/* Exclusive Promotions Toggle */}
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-spc-grey dark:text-white">
+                          Exclusive Promotions
+                        </h3>
+                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
+                          Get early access to sales, new arrivals, and
+                          personalized discount codes.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() =>
+                          setNotifSettings({
+                            ...notifSettings,
+                            promotions: !notifSettings.promotions,
+                          })
+                        }
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${notifSettings.promotions ? "bg-btn-green" : "bg-neutral-200 dark:bg-neutral-700"}`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${notifSettings.promotions ? "translate-x-5" : "translate-x-0"}`}
+                        />
+                      </button>
+                    </div>
+
+                    <div className="w-full h-px bg-neutral-100 dark:bg-neutral-800/60" />
+
+                    {/* Security Alerts Toggle */}
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-spc-grey dark:text-white">
+                          Security Alerts
+                        </h3>
+                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
+                          Critical notifications about your account security and
+                          new logins.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() =>
+                          setNotifSettings({
+                            ...notifSettings,
+                            securityAlerts: !notifSettings.securityAlerts,
+                          })
+                        }
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${notifSettings.securityAlerts ? "bg-btn-green" : "bg-neutral-200 dark:bg-neutral-700"}`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${notifSettings.securityAlerts ? "translate-x-5" : "translate-x-0"}`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Save Button with mock delay */}
+                    <div className="border-t border-neutral-100 dark:border-neutral-800 pt-6 mt-4 flex justify-end">
+                      <button
+                        onClick={() => {
+                          setIsSavingNotifs(true);
+                          setTimeout(() => {
+                            setIsSavingNotifs(false);
+                            setToastMessage(
+                              "Preferences successfully updated!",
+                            );
+                            setTimeout(() => setToastMessage(null), 3000);
+                          }, 800); // 800ms loading simulation
+                        }}
+                        disabled={isSavingNotifs}
+                        className="bg-black dark:bg-neutral-800 text-white px-8 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-btn-green transition-all active:scale-95 disabled:opacity-50"
+                      >
+                        {isSavingNotifs ? "Saving..." : "Save Preferences"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : activeTab === "Language & Region" ? (
+                <div className="flex-1 w-full max-w-3xl flex flex-col mt-4 md:mt-6 animate-in fade-in zoom-in-95 duration-300 px-2 pb-20">
+                  <div className="flex items-center gap-3 mb-6 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+                    <div className="w-10 h-10 bg-white dark:bg-neutral-800 rounded-xl flex items-center justify-center shadow-sm border border-neutral-100 dark:border-neutral-700 text-lg">
+                      🌍
+                    </div>
+                    <div>
+                      <h2 className="text-sm md:text-base font-black text-spc-grey dark:text-white uppercase tracking-wider">
+                        Language & Region
+                      </h2>
+                      <p className="text-[10px] font-bold text-neutral-400">
+                        Customize your browsing experience
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
+                    {/* Language Selection */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
+                        Display Language
+                      </label>
+                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mb-2">
+                        Select the primary language for the user interface and
+                        product descriptions.
+                      </p>
+                      <div className="relative">
+                        <select
+                          value={langSettings.language}
+                          onChange={(e) =>
+                            setLangSettings({
+                              ...langSettings,
+                              language: e.target.value,
+                            })
+                          }
+                          className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3.5 text-sm font-bold text-spc-grey dark:text-white outline-none focus:border-btn-green transition-colors appearance-none cursor-pointer"
+                        >
+                          <option value="en">English (US)</option>
+                          <option value="en-gb">English (UK)</option>
+                          <option value="fr">Deutsch</option>
+                          <option value="fr">Français</option>
+                          <option value="es">Español</option>
+                          <option value="tr">Türkçe</option>
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="2.5"
+                            stroke="currentColor"
+                            className="w-4 h-4"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="w-full h-px bg-neutral-100 dark:bg-neutral-800/60 my-2" />
+
+                    {/* Region and Currency Selection */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
+                        Region & Currency
+                      </label>
+                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mb-2">
+                        This affects product availability, shipping costs, and
+                        currency formatting.
+                      </p>
+                      <div className="relative">
+                        <select
+                          value={langSettings.region}
+                          onChange={(e) =>
+                            setLangSettings({
+                              ...langSettings,
+                              region: e.target.value,
+                            })
+                          }
+                          className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3.5 text-sm font-bold text-spc-grey dark:text-white outline-none focus:border-btn-green transition-colors appearance-none cursor-pointer"
+                        >
+                          <option value="US">United States (USD $)</option>
+                          <option value="UK">United Kingdom (GBP £)</option>
+                          <option value="EU">European Union (EUR €)</option>
+                          <option value="TR">Turkey (TRY ₺)</option>
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="2.5"
+                            stroke="currentColor"
+                            className="w-4 h-4"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Save Button */}
+                    <div className="border-t border-neutral-100 dark:border-neutral-800 pt-6 mt-4 flex justify-end">
+                      <button
+                        onClick={() => {
+                          setIsSavingLang(true);
+                          setTimeout(() => {
+                            setIsSavingLang(false);
+                            setToastMessage(
+                              "Language & Region updated successfully!",
+                            );
+                            setTimeout(() => setToastMessage(null), 3000);
+                          }, 800);
+                        }}
+                        disabled={isSavingLang}
+                        className="bg-black dark:bg-neutral-800 text-white px-8 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-btn-green transition-all active:scale-95 disabled:opacity-50"
+                      >
+                        {isSavingLang ? "Saving..." : "Save Preferences"}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : (

@@ -11,12 +11,15 @@ interface ApiProduct {
   category: string;
   price: number;
   image: string;
-  sales_count?: number; // Sales count from backend
+  sales_count?: number;
 }
 
 export default function TrendsPage() {
   const [trendingProducts, setTrendingProducts] = useState<ApiProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [showMore, setShowMore] = useState(false);
+
   const authContext = useContext(AuthContext);
   const user = authContext?.user;
 
@@ -108,8 +111,7 @@ export default function TrendsPage() {
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-neutral-200 dark:border-neutral-800 border-t-btn-green dark:border-t-btn-green"></div>
           </div>
         ) : trendingProducts.length > 0 ? (
-          <div className="flex flex-col gap-16">
-            {/* TIER 1: TOP 4 - ŞAMPİYONLAR (Büyük Kartlar) */}
+          <div className="flex flex-col gap-12 pb-20">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {trendingProducts.slice(0, 4).map((product, index) => (
                 <div
@@ -212,6 +214,87 @@ export default function TrendsPage() {
                     );
                   })}
                 </div>
+              </div>
+            )}
+            {trendingProducts.length > 10 && (
+              <div className="mt-8 flex flex-col items-center">
+                {!showMore ? (
+                  <button
+                    onClick={() => setShowMore(true)}
+                    className="bg-black dark:bg-neutral-800 text-white px-10 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-btn-green dark:hover:bg-btn-green transition-all active:scale-95 shadow-md flex items-center gap-3"
+                  >
+                    Load More Trends
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="3"
+                      stroke="currentColor"
+                      className="w-4 h-4"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+                      />
+                    </svg>
+                  </button>
+                ) : (
+                  <div className="w-full flex flex-col gap-3 animate-in fade-in slide-in-from-top-8 duration-700">
+                    <div className="flex items-center gap-4 mb-4">
+                      <h2 className="text-xl md:text-2xl font-black text-spc-grey dark:text-white tracking-tighter shrink-0">
+                        Other Popular Items
+                      </h2>
+                      <div className="flex-1 h-px bg-neutral-200 dark:bg-neutral-800"></div>
+                    </div>
+
+                    {trendingProducts.slice(10).map((product, idx) => {
+                      const rank = idx + 11;
+                      return (
+                        <Link
+                          key={product.id}
+                          href={`/product/${product.id}`}
+                          className="w-full bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-3 md:p-4 flex items-center gap-4 md:gap-6 hover:border-btn-green dark:hover:border-btn-green hover:shadow-md transition-all duration-300 group"
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 flex items-center justify-center text-sm font-black shrink-0 group-hover:bg-btn-green group-hover:text-white transition-colors">
+                            #{rank}
+                          </div>
+
+                          <div className="w-16 h-16 md:w-20 md:h-20 bg-neutral-50 dark:bg-neutral-800 rounded-xl overflow-hidden relative shrink-0 border border-neutral-100 dark:border-neutral-700">
+                            <Image
+                              src={product.image}
+                              alt={product.name}
+                              fill
+                              className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                            />
+                          </div>
+
+                          <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center justify-between gap-2">
+                            <div>
+                              <p className="text-[10px] text-category-blue dark:text-neutral-500 font-bold uppercase tracking-widest truncate mb-0.5">
+                                {product.category}
+                              </p>
+                              <h3 className="text-sm md:text-base font-bold text-spc-grey dark:text-neutral-200 truncate group-hover:text-btn-green transition-colors">
+                                {product.name}
+                              </h3>
+                            </div>
+
+                            <div className="flex items-center gap-4 shrink-0">
+                              <div className="hidden md:flex items-center gap-1 bg-neutral-50 dark:bg-neutral-800 px-3 py-1.5 rounded-lg border border-neutral-100 dark:border-neutral-700">
+                                <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
+                                  {product.sales_count || 0} Sold
+                                </span>
+                              </div>
+                              <span className="text-base md:text-lg font-black text-spc-grey dark:text-white w-20 text-right">
+                                ${product.price.toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>

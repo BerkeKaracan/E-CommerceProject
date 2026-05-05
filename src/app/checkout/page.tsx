@@ -72,7 +72,7 @@ export default function CheckoutPage() {
           { code: promoInput.toUpperCase(), amount: data.discount_amount },
         ]);
         setPromoInput("");
-        setToastMessage(`🎉 $${data.discount_amount} discount added!`);
+        setToastMessage(` $${data.discount_amount} discount added!`);
         setTimeout(() => setToastMessage(null), 2200);
       } else {
         setPromoError(data.detail || "Invalid code.");
@@ -193,14 +193,14 @@ export default function CheckoutPage() {
 
       const data = await res.json();
       if (res.ok) {
-        setToastMessage("🎉 " + data.message);
+        setToastMessage(data.message);
         setTimeout(() => router.push("/profile"), 2000);
       } else {
-        setToastMessage("❌ " + (data.detail || "Checkout failed"));
+        setToastMessage((data.detail || "Checkout failed"));
         setTimeout(() => setToastMessage(null), 2200);
       }
     } catch (err) {
-      setToastMessage("❌ Server Error!");
+      setToastMessage("Server Error!");
       setTimeout(() => setToastMessage(null), 2200);
     } finally {
       setIsProcessing(false);
