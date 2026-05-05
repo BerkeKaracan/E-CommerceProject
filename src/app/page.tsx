@@ -900,27 +900,16 @@ export default function Home() {
                             </p>
                           )}
                         </div>
-                        <div className="relative w-full mb-3 group/qty">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[11px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest pointer-events-none">
-                            Qty
-                          </span>
-                          <select
-                            value={currentStep}
-                            onChange={(e) =>
+                        <div className="flex items-center justify-between w-full mb-3 bg-neutral-100/50 dark:bg-neutral-800 rounded-xl p-1 border border-transparent dark:border-neutral-700 shadow-sm">
+                          <button
+                            onClick={() =>
                               handleShopSelect(
                                 product.id,
-                                parseInt(e.target.value),
+                                Math.max(1, currentStep - 1),
                               )
                             }
-                            className="w-full bg-neutral-100/50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 border-none text-sm font-bold text-spc-grey dark:text-neutral-200 rounded-xl py-2.5 pl-14 pr-8 outline-none focus:ring-2 focus:ring-btn-green/30 transition-all cursor-pointer appearance-none"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
                           >
-                            {[1, 2, 3, 4, 5].map((num) => (
-                              <option key={num} value={num}>
-                                {num}
-                              </option>
-                            ))}
-                          </select>
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400 dark:text-neutral-500 group-hover/qty:text-spc-grey dark:group-hover/qty:text-neutral-300 transition-colors">
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               fill="none"
@@ -932,10 +921,41 @@ export default function Home() {
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                                d="M19.5 12h-15"
                               />
                             </svg>
+                          </button>
+
+                          <div className="flex flex-col items-center justify-center">
+                            <span className="text-[9px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest leading-none mb-0.5">
+                              Qty
+                            </span>
+                            <span className="text-sm font-bold text-spc-grey dark:text-white leading-none">
+                              {currentStep}
+                            </span>
                           </div>
+
+                          <button
+                            onClick={() =>
+                              handleShopSelect(product.id, currentStep + 1)
+                            }
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth="2.5"
+                              stroke="currentColor"
+                              className="w-4 h-4"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M12 4.5v15m7.5-7.5h-15"
+                              />
+                            </svg>
+                          </button>
                         </div>
                         <button
                           onClick={() => addToCart(product, currentStep)}
@@ -1059,42 +1079,62 @@ export default function Home() {
                       </div>
 
                       <div className="w-full space-y-2 mt-2">
-                        <div className="relative w-full mb-3 group/qty">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[11px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest pointer-events-none">
-                            Qty
-                          </span>
-                          <select
-                            value={currentStep}
-                            onChange={(e) =>
+                        <div className="flex items-center justify-between w-full mb-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg p-1 border border-neutral-200 dark:border-neutral-700 shadow-sm">
+                          <button
+                            onClick={() =>
                               handleCartSelect(
                                 item.id,
-                                parseInt(e.target.value),
+                                Math.max(1, currentStep - 1),
                               )
                             }
-                            className="w-full bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700 text-sm font-black text-spc-grey dark:text-neutral-200 rounded-lg py-2.5 pl-12 pr-8 outline-none focus:border-btn-green focus:ring-1 focus:ring-btn-green transition-all cursor-pointer appearance-none shadow-sm"
+                            className="w-7 h-7 flex items-center justify-center rounded bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
                           >
-                            {[1, 2, 3, 4, 5].map((num) => (
-                              <option key={num} value={num}>
-                                {num}
-                              </option>
-                            ))}
-                          </select>
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400 dark:text-neutral-500 group-hover:text-spc-grey dark:group-hover:text-neutral-300 transition-colors">
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               fill="none"
                               viewBox="0 0 24 24"
                               strokeWidth="2.5"
                               stroke="currentColor"
-                              className="w-4 h-4"
+                              className="w-3 h-3"
                             >
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                                d="M19.5 12h-15"
                               />
                             </svg>
+                          </button>
+
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
+                              Qty
+                            </span>
+                            <span className="text-sm font-bold text-spc-grey dark:text-white">
+                              {currentStep}
+                            </span>
                           </div>
+
+                          <button
+                            onClick={() =>
+                              handleCartSelect(item.id, currentStep + 1)
+                            }
+                            className="w-7 h-7 flex items-center justify-center rounded bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth="2.5"
+                              stroke="currentColor"
+                              className="w-3 h-3"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M12 4.5v15m7.5-7.5h-15"
+                              />
+                            </svg>
+                          </button>
                         </div>
                         <button
                           onClick={() => addToCart(item, currentStep)}
