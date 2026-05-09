@@ -191,7 +191,7 @@ export default function Home() {
             const getScore = (item: Product) => {
               let score = 0;
               // 1. MASSIVE BOOST for Non-Discounted Items: Keeps premium untouched items at the very top
-              if (item.is_discounted !== 1) score += 10000;
+              if (item.is_discounted !== 1) score += 0;
 
               // 2. High Sales Count is highly rewarded
               score += (item.sales_count || 0) * 100;
@@ -433,8 +433,13 @@ export default function Home() {
                   {previewResults.length > 0 ? (
                     <div className="px-2 space-y-1">
                       {previewResults.map((product) => (
-                        <div
+                        <Link
                           key={product.id}
+                          href={`/product/${product.id}`}
+                          onClick={() => {
+                            setIsSearchFocused(false);
+                            setSearchQuery("");
+                          }}
                           className="group flex items-center justify-between p-3 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer transition-all border border-transparent hover:border-neutral-200 dark:hover:border-neutral-700"
                         >
                           <div className="flex items-center gap-4">
@@ -462,7 +467,8 @@ export default function Home() {
                             </span>
                             <button
                               onClick={(e) => {
-                                e.stopPropagation();
+                                e.preventDefault(); // Prevents the Link from triggering
+                                e.stopPropagation(); // Stops the click from reaching the Link
                                 addToCart(product, 1);
                                 setIsSearchFocused(false);
                                 setSearchQuery("");
@@ -472,7 +478,7 @@ export default function Home() {
                               + ADD
                             </button>
                           </div>
-                        </div>
+                        </Link>
                       ))}
                     </div>
                   ) : (
