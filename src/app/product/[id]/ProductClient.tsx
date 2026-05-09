@@ -508,7 +508,7 @@ export default function ProductClient({
                   className="bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-100 dark:border-neutral-800 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] dark:shadow-none relative group transition-colors"
                 >
                   {isOwner && !isEditingThis && (
-                    <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute top-4 right-4 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
                       <button
                         onClick={() => {
                           setEditingCommentId(c.id);
