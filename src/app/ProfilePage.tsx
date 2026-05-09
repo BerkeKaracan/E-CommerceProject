@@ -89,6 +89,39 @@ const StarIcon = ({ filled }: StarIconProps) => (
   </svg>
 );
 
+interface ToggleSwitchProps {
+  title: string;
+  description: string;
+  isActive: boolean;
+  onToggle: () => void;
+}
+
+const ToggleSwitch = ({
+  title,
+  description,
+  isActive,
+  onToggle,
+}: ToggleSwitchProps) => (
+  <div className="flex items-center justify-between gap-4 w-full">
+    <div>
+      <h3 className="text-sm font-bold text-spc-grey dark:text-white">
+        {title}
+      </h3>
+      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
+        {description}
+      </p>
+    </div>
+    <button
+      onClick={onToggle}
+      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isActive ? "bg-btn-green" : "bg-neutral-200 dark:bg-neutral-700"}`}
+    >
+      <span
+        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${isActive ? "translate-x-5" : "translate-x-0"}`}
+      />
+    </button>
+  </div>
+);
+
 const getLoyaltyTier = (points: number) => {
   if (points < 500)
     return {
@@ -2305,123 +2338,63 @@ export default function ProfilePage() {
                   </div>
                 </div>
               ) : activeTab === "Notification Settings" ? (
-                <div className="flex-1 w-full max-w-3xl flex flex-col mt-4 md:mt-6 animate-in fade-in zoom-in-95 duration-300 px-2 pb-20">
-                  <div className="flex items-center gap-3 mb-6 border-b border-neutral-100 dark:border-neutral-800 pb-4">
-                    <div className="w-10 h-10 bg-white dark:bg-neutral-800 rounded-xl flex items-center justify-center shadow-sm border border-neutral-100 dark:border-neutral-700 text-lg">
-                      🔔
-                    </div>
-                    <div>
-                      <h2 className="text-sm md:text-base font-black text-spc-grey dark:text-white uppercase tracking-wider">
-                        Notification Settings
-                      </h2>
-                      <p className="text-[10px] font-bold text-neutral-400">
-                        Manage how we communicate with you
-                      </p>
-                    </div>
-                  </div>
+                <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
+                  <ToggleSwitch
+                    title="Order Updates"
+                    description="Receive important updates about your order status and shipping details."
+                    isActive={notifSettings.orderUpdates}
+                    onToggle={() =>
+                      setNotifSettings({
+                        ...notifSettings,
+                        orderUpdates: !notifSettings.orderUpdates,
+                      })
+                    }
+                  />
 
-                  <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
-                    {/* Order Updates Toggle */}
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <h3 className="text-sm font-bold text-spc-grey dark:text-white">
-                          Order Updates
-                        </h3>
-                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
-                          Receive important updates about your order status and
-                          shipping details.
-                        </p>
-                      </div>
-                      <button
-                        onClick={() =>
-                          setNotifSettings({
-                            ...notifSettings,
-                            orderUpdates: !notifSettings.orderUpdates,
-                          })
-                        }
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${notifSettings.orderUpdates ? "bg-btn-green" : "bg-neutral-200 dark:bg-neutral-700"}`}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${notifSettings.orderUpdates ? "translate-x-5" : "translate-x-0"}`}
-                        />
-                      </button>
-                    </div>
+                  <div className="w-full h-px bg-neutral-100 dark:bg-neutral-800/60" />
 
-                    <div className="w-full h-px bg-neutral-100 dark:bg-neutral-800/60" />
+                  <ToggleSwitch
+                    title="Exclusive Promotions"
+                    description="Get early access to sales, new arrivals, and personalized discount codes."
+                    isActive={notifSettings.promotions}
+                    onToggle={() =>
+                      setNotifSettings({
+                        ...notifSettings,
+                        promotions: !notifSettings.promotions,
+                      })
+                    }
+                  />
 
-                    {/* Exclusive Promotions Toggle */}
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <h3 className="text-sm font-bold text-spc-grey dark:text-white">
-                          Exclusive Promotions
-                        </h3>
-                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
-                          Get early access to sales, new arrivals, and
-                          personalized discount codes.
-                        </p>
-                      </div>
-                      <button
-                        onClick={() =>
-                          setNotifSettings({
-                            ...notifSettings,
-                            promotions: !notifSettings.promotions,
-                          })
-                        }
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${notifSettings.promotions ? "bg-btn-green" : "bg-neutral-200 dark:bg-neutral-700"}`}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${notifSettings.promotions ? "translate-x-5" : "translate-x-0"}`}
-                        />
-                      </button>
-                    </div>
+                  <div className="w-full h-px bg-neutral-100 dark:bg-neutral-800/60" />
 
-                    <div className="w-full h-px bg-neutral-100 dark:bg-neutral-800/60" />
+                  <ToggleSwitch
+                    title="Security Alerts"
+                    description="Critical notifications about your account security and new logins."
+                    isActive={notifSettings.securityAlerts}
+                    onToggle={() =>
+                      setNotifSettings({
+                        ...notifSettings,
+                        securityAlerts: !notifSettings.securityAlerts,
+                      })
+                    }
+                  />
 
-                    {/* Security Alerts Toggle */}
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <h3 className="text-sm font-bold text-spc-grey dark:text-white">
-                          Security Alerts
-                        </h3>
-                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
-                          Critical notifications about your account security and
-                          new logins.
-                        </p>
-                      </div>
-                      <button
-                        onClick={() =>
-                          setNotifSettings({
-                            ...notifSettings,
-                            securityAlerts: !notifSettings.securityAlerts,
-                          })
-                        }
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${notifSettings.securityAlerts ? "bg-btn-green" : "bg-neutral-200 dark:bg-neutral-700"}`}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${notifSettings.securityAlerts ? "translate-x-5" : "translate-x-0"}`}
-                        />
-                      </button>
-                    </div>
-
-                    {/* Save Button with mock delay */}
-                    <div className="border-t border-neutral-100 dark:border-neutral-800 pt-6 mt-4 flex justify-end">
-                      <button
-                        onClick={() => {
-                          setIsSavingNotifs(true);
-                          setTimeout(() => {
-                            setIsSavingNotifs(false);
-                            setToastMessage(
-                              "Preferences successfully updated!",
-                            );
-                            setTimeout(() => setToastMessage(null), 3000);
-                          }, 800); // 800ms loading simulation
-                        }}
-                        disabled={isSavingNotifs}
-                        className="bg-black dark:bg-neutral-800 text-white px-8 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-btn-green transition-all active:scale-95 disabled:opacity-50"
-                      >
-                        {isSavingNotifs ? "Saving..." : "Save Preferences"}
-                      </button>
-                    </div>
+                  {/* Save Button with mock delay */}
+                  <div className="border-t border-neutral-100 dark:border-neutral-800 pt-6 mt-4 flex justify-end">
+                    <button
+                      onClick={() => {
+                        setIsSavingNotifs(true);
+                        setTimeout(() => {
+                          setIsSavingNotifs(false);
+                          setToastMessage("Preferences successfully updated!");
+                          setTimeout(() => setToastMessage(null), 3000);
+                        }, 800);
+                      }}
+                      disabled={isSavingNotifs}
+                      className="bg-black dark:bg-neutral-800 text-white px-8 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-btn-green transition-all active:scale-95 disabled:opacity-50"
+                    >
+                      {isSavingNotifs ? "Saving..." : "Save Preferences"}
+                    </button>
                   </div>
                 </div>
               ) : activeTab === "Language & Region" ? (

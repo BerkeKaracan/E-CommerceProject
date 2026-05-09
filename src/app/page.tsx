@@ -5,6 +5,23 @@ import { useState, useEffect, useContext } from "react";
 import AuthModal from "@/components/AuthModal";
 import { AuthContext } from "@/context/AuthContext";
 import ThemeToggle from "@/components/ThemeToggle";
+import ProductCard from "@/components/ProductCart";
+import {
+  SearchIcon,
+  MenuIcon,
+  CloseIcon,
+  MinusIcon,
+  PlusIcon,
+  FilterIcon,
+  SortIcon,
+  CheckIcon,
+  SignOutIcon,
+  UserIcon,
+  ErrorIcon,
+  LoadMoreIcon,
+  EmptyCartIcon,
+  RefreshIcon,
+} from "@/components/Icons";
 
 interface ApiProduct {
   id: number;
@@ -76,7 +93,7 @@ export default function Home() {
           setCategories(data);
         }
       })
-      .catch((err) => console.error("Kategoriler çekilemedi:", err));
+      .catch((err) => console.error("Category fetch error:", err));
   }, []);
 
   useEffect(() => {
@@ -133,7 +150,6 @@ export default function Home() {
 
     let isMounted = true;
 
-    // We wrap the fetch in a function to allow recursive retries
     const fetchProducts = async (retryCount = 0) => {
       if (page === 1) setFetchError(false);
 
@@ -180,12 +196,11 @@ export default function Home() {
         setFetchError(false);
       } catch (err) {
         console.error("Data fetching error:", err);
-        // Auto-retry logic: try up to 2 more times
         if (retryCount < 2) {
           console.log(`Retrying fetch... Attempt ${retryCount + 1}`);
           setTimeout(() => {
             if (isMounted) fetchProducts(retryCount + 1);
-          }, 1500); // Wait 1.5 seconds before retrying
+          }, 1500);
         } else {
           if (isMounted) {
             setIsLoading(false);
@@ -216,11 +231,9 @@ export default function Home() {
       return;
     }
 
-    // 1. OPTIMISTIC UI: Backup current state
     const previousCart = [...cart];
     const existingItem = cart.find((item) => item.id === product.id);
 
-    // 2. OPTIMISTIC UI: Update state immediately without waiting for backend
     if (existingItem) {
       setCart(
         cart.map((item) =>
@@ -233,11 +246,9 @@ export default function Home() {
       setCart([...cart, { ...product, quantity: amount }]);
     }
 
-    // 3. OPTIMISTIC UI: Show success message instantly
     setToastMessage(`Added ${amount}x ${product.name} to cart!`);
     setTimeout(() => setToastMessage(null), 2200);
 
-    // 4. BACKGROUND FETCH: Send data to server silently
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
         method: "POST",
@@ -251,7 +262,6 @@ export default function Home() {
       if (!res.ok) throw new Error("Server failed to process cart addition");
     } catch (error) {
       console.error("Add to cart error:", error);
-      // REVERT: If backend fails, return to previous state
       setCart(previousCart);
       setToastMessage("Sync failed. Reverting cart...");
       setTimeout(() => setToastMessage(null), 2200);
@@ -261,11 +271,9 @@ export default function Home() {
   const removeFromCart = async (productId: number, amount: number = 1) => {
     if (!token) return;
 
-    // 1. OPTIMISTIC UI: Backup current state
     const previousCart = [...cart];
     const existingItem = cart.find((item) => item.id === productId);
 
-    // 2. OPTIMISTIC UI: Update state immediately
     if (existingItem && existingItem.quantity > amount) {
       setCart(
         cart.map((item) =>
@@ -278,7 +286,6 @@ export default function Home() {
       setCart(cart.filter((item) => item.id !== productId));
     }
 
-    // 3. BACKGROUND FETCH: Send deletion to server silently
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/cart/${productId}?quantity=${amount}`,
@@ -291,7 +298,6 @@ export default function Home() {
       if (!res.ok) throw new Error("Server failed to process cart removal");
     } catch (error) {
       console.error("Remove from cart error:", error);
-      // REVERT: If backend fails, return to previous state
       setCart(previousCart);
       setToastMessage("Sync failed. Reverting cart...");
       setTimeout(() => setToastMessage(null), 2200);
@@ -309,9 +315,7 @@ export default function Home() {
   const previewResults = products.slice(0, 3);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      setIsSearchFocused(false);
-    }
+    if (e.key === "Enter") setIsSearchFocused(false);
   };
 
   return (
@@ -330,20 +334,7 @@ export default function Home() {
                 onClick={() => setIsMenuOpen(true)}
                 className="p-2 -ml-2 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-300 dark:focus:ring-neutral-700"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="w-6 h-6 text-spc-grey dark:text-neutral-200"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                  />
-                </svg>
+                <MenuIcon className="w-6 h-6 text-spc-grey dark:text-neutral-200" />
               </button>
               <Link
                 href="/"
@@ -408,20 +399,7 @@ export default function Home() {
                   onClick={() => setIsSearchFocused(false)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 dark:text-neutral-500 hover:text-btn-green transition-colors"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2.5"
-                    stroke="currentColor"
-                    className="h-5 w-5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-                    />
-                  </svg>
+                  <SearchIcon className="h-5 w-5" />
                 </button>
               </div>
 
@@ -478,20 +456,7 @@ export default function Home() {
                     </div>
                   ) : (
                     <div className="px-4 py-8 flex flex-col items-center justify-center text-center">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                        stroke="currentColor"
-                        className="w-8 h-8 text-neutral-300 dark:text-neutral-600 mb-3"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-                        />
-                      </svg>
+                      <SearchIcon className="w-8 h-8 text-neutral-300 dark:text-neutral-600 mb-3" />
                       <p className="text-sm font-bold text-spc-grey dark:text-neutral-200">
                         No results found
                       </p>
@@ -546,44 +511,18 @@ export default function Home() {
                       setToastMessage("Logged out successfully!");
                       setTimeout(() => setToastMessage(null), 2200);
                     }}
-                    className="text-[10px] sm:text-xs font-black text-red-500 hover:text-red-600 transition-colors uppercase tracking-wider shrink-0 p-1 sm:p-0"
+                    className="text-[10px] sm:text-xs font-black text-red-500 hover:text-red-600 transition-colors uppercase tracking-wider shrink-0 p-1 sm:p-0 flex items-center gap-1"
                   >
                     <span className="hidden sm:inline">Sign Out</span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="2.5"
-                      stroke="currentColor"
-                      className="w-4 h-4 sm:hidden"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"
-                      />
-                    </svg>
+                    <SignOutIcon className="w-4 h-4 sm:hidden" />
                   </button>
                 </div>
               ) : (
                 <button
-                  className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition-colors focus:outline-none"
                   onClick={() => setIsAuthOpen(true)}
+                  className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition-colors focus:outline-none"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="w-8 h-8 text-spc-grey dark:text-neutral-200"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
+                  <UserIcon className="w-8 h-8 text-spc-grey dark:text-neutral-200" />
                 </button>
               )}
 
@@ -680,20 +619,7 @@ export default function Home() {
                   onClick={() => setIsSearchFocused(false)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500 group-focus-within:text-btn-green transition-colors"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2.5"
-                    stroke="currentColor"
-                    className="w-4 h-4"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-                    />
-                  </svg>
+                  <SearchIcon className="w-4 h-4" />
                 </button>
               </div>
 
@@ -706,20 +632,7 @@ export default function Home() {
                     }}
                     className="flex items-center gap-1.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 hover:border-btn-green dark:hover:border-btn-green px-4 py-2 rounded-xl text-[10px] md:text-xs font-black text-spc-grey dark:text-neutral-200 uppercase tracking-widest transition-all shadow-sm active:scale-95"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="2.5"
-                      stroke="currentColor"
-                      className="w-4 h-4"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"
-                      />
-                    </svg>
+                    <FilterIcon className="w-4 h-4" />
                     <span>
                       Filter:{" "}
                       {priceFilter === "All Prices" ? "All" : priceFilter}
@@ -760,20 +673,7 @@ export default function Home() {
                     }}
                     className="flex items-center gap-1.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 hover:border-btn-green dark:hover:border-btn-green px-4 py-2 rounded-xl text-[10px] md:text-xs font-black text-spc-grey dark:text-neutral-200 uppercase tracking-widest transition-all shadow-sm active:scale-95"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="2.5"
-                      stroke="currentColor"
-                      className="w-4 h-4"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5"
-                      />
-                    </svg>
+                    <SortIcon className="w-4 h-4" />
                     Sort
                   </button>
                   <div
@@ -803,23 +703,11 @@ export default function Home() {
               </div>
             </div>
           </div>
+
           {fetchError ? (
             <div className="w-full flex flex-col items-center justify-center py-20 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl shadow-sm">
               <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2.5"
-                  stroke="currentColor"
-                  className="w-8 h-8 text-red-500"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
+                <ErrorIcon className="w-8 h-8 text-red-500" />
               </div>
               <h3 className="text-lg font-black text-spc-grey dark:text-white uppercase tracking-widest mb-2">
                 Connection Lost
@@ -833,24 +721,10 @@ export default function Home() {
                   setIsLoading(true);
                   setFetchError(false);
                   setPage(1);
-                  // This state update triggers the useEffect to run again
                 }}
                 className="bg-black dark:bg-neutral-800 hover:bg-btn-green dark:hover:bg-btn-green text-white px-8 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-md flex items-center gap-2"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="3"
-                  stroke="currentColor"
-                  className="w-4 h-4"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
-                  />
-                </svg>
+                <RefreshIcon className="w-4 h-4" />
                 Try Again
               </button>
             </div>
@@ -874,121 +748,49 @@ export default function Home() {
           ) : (
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                {products.map((product, index) => {
+                {products.map((product) => {
                   const currentStep = shopSelections[product.id] || 1;
                   return (
-                    <div
-                      key={product.id}
-                      className="bg-white dark:bg-neutral-900 border border-neutral-100/60 dark:border-neutral-800/60 rounded-2xl p-4 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] dark:shadow-none dark:hover:border-neutral-600 hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group"
-                    >
-                      <Link
-                        href={`/product/${product.id}`}
-                        className="w-full flex flex-col items-center flex-1 cursor-pointer group/link"
-                      >
-                        <div className="aspect-3/4 w-full bg-neutral-50/80 dark:bg-neutral-800 rounded-xl mb-4 shrink-0 flex items-center justify-center overflow-hidden relative group-hover:bg-neutral-100 dark:group-hover:bg-neutral-700 transition-colors">
-                          {product.is_discounted === 1 && (
-                            <div className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-black px-2.5 py-1 rounded-md z-20 shadow-md animate-pulse">
-                              -{product.discount_rate}%
-                            </div>
-                          )}
-                          <Image
-                            src={product.image}
-                            alt={product.name}
-                            priority={index < 8}
-                            fill
-                            className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                          />
-                        </div>
-                        <p className="text-[10px] text-category-blue dark:text-neutral-400 font-bold uppercase tracking-widest mb-1.5 text-center">
-                          {product.category}
-                        </p>
-                        <h3 className="text-base font-bold text-spc-grey dark:text-neutral-200 mb-3 text-center leading-tight group-hover/link:text-btn-green transition-colors">
-                          {product.name}
-                        </h3>
-                      </Link>
-
-                      <div className="mt-auto w-full">
-                        <div className="flex flex-col items-center mb-4">
-                          {product.is_discounted === 1 ? (
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-bold text-neutral-400 line-through decoration-red-500/50">
-                                ${product.original_price?.toFixed(2)}
-                              </p>
-                              <p className="text-lg font-black text-red-500 dark:text-red-400">
-                                ${product.price.toFixed(2)}
-                              </p>
-                            </div>
-                          ) : (
-                            <p className="text-lg font-black text-spc-grey dark:text-white">
-                              ${product.price.toFixed(2)}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between w-full mb-3 bg-neutral-100/50 dark:bg-neutral-800 rounded-xl p-1 border border-transparent dark:border-neutral-700 shadow-sm">
-                          <button
-                            onClick={() =>
-                              handleShopSelect(
-                                product.id,
-                                Math.max(1, currentStep - 1),
-                              )
-                            }
-                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth="2.5"
-                              stroke="currentColor"
-                              className="w-4 h-4"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M19.5 12h-15"
-                              />
-                            </svg>
-                          </button>
-
-                          <div className="flex flex-col items-center justify-center">
-                            <span className="text-[9px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest leading-none mb-0.5">
-                              Qty
-                            </span>
-                            <span className="text-sm font-bold text-spc-grey dark:text-white leading-none">
-                              {currentStep}
-                            </span>
-                          </div>
-
-                          <button
-                            onClick={() =>
-                              handleShopSelect(product.id, currentStep + 1)
-                            }
-                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth="2.5"
-                              stroke="currentColor"
-                              className="w-4 h-4"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M12 4.5v15m7.5-7.5h-15"
-                              />
-                            </svg>
-                          </button>
-                        </div>
+                    <ProductCard key={product.id} product={product}>
+                      <div className="flex items-center justify-between w-full mb-3 bg-neutral-100/50 dark:bg-neutral-800 rounded-xl p-1 border border-transparent dark:border-neutral-700 shadow-sm">
                         <button
-                          onClick={() => addToCart(product, currentStep)}
-                          className="w-full bg-btn-green text-white py-2.5 rounded-xl text-sm font-bold hover:brightness-95 transition-all active:scale-95 shadow-sm hover:shadow-md"
+                          onClick={() =>
+                            handleShopSelect(
+                              product.id,
+                              Math.max(1, currentStep - 1),
+                            )
+                          }
+                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
                         >
-                          Add to Cart +{currentStep}
+                          <MinusIcon className="w-4 h-4" />
+                        </button>
+
+                        <div className="flex flex-col items-center justify-center">
+                          <span className="text-[9px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest leading-none mb-0.5">
+                            Qty
+                          </span>
+                          <span className="text-sm font-bold text-spc-grey dark:text-white leading-none">
+                            {currentStep}
+                          </span>
+                        </div>
+
+                        <button
+                          onClick={() =>
+                            handleShopSelect(product.id, currentStep + 1)
+                          }
+                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
+                        >
+                          <PlusIcon className="w-4 h-4" />
                         </button>
                       </div>
-                    </div>
+
+                      <button
+                        onClick={() => addToCart(product, currentStep)}
+                        className="w-full bg-btn-green text-white py-2.5 rounded-xl text-sm font-bold hover:brightness-95 transition-all active:scale-95 shadow-sm hover:shadow-md"
+                      >
+                        Add to Cart +{currentStep}
+                      </button>
+                    </ProductCard>
                   );
                 })}
               </div>
@@ -1004,20 +806,7 @@ export default function Home() {
                     className="bg-white dark:bg-neutral-900 border-2 border-neutral-200 dark:border-neutral-700 text-spc-grey dark:text-neutral-200 px-10 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:border-btn-green dark:hover:border-btn-green hover:text-btn-green dark:hover:text-btn-green transition-all active:scale-95 shadow-sm group flex items-center gap-2 disabled:opacity-50"
                   >
                     {isLoading ? "Loading..." : "Load More Products"}
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="3"
-                      stroke="currentColor"
-                      className="w-4 h-4 group-hover:translate-y-0.5 transition-transform"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-                      />
-                    </svg>
+                    <LoadMoreIcon className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
                   </button>
                 </div>
               )}
@@ -1034,20 +823,7 @@ export default function Home() {
             <div className="flex-1 overflow-y-auto pr-2 space-y-6 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-neutral-200 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700 [&::-webkit-scrollbar-thumb]:rounded-full">
               {cart.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-600 space-y-2 py-20">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="w-12 h-12 opacity-20"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
-                    />
-                  </svg>
+                  <EmptyCartIcon className="w-12 h-12 opacity-20" />
                   <p className="text-xs font-bold uppercase tracking-widest opacity-50">
                     Your cart is empty
                   </p>
@@ -1113,20 +889,7 @@ export default function Home() {
                             }
                             className="w-7 h-7 flex items-center justify-center rounded bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth="2.5"
-                              stroke="currentColor"
-                              className="w-3 h-3"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M19.5 12h-15"
-                              />
-                            </svg>
+                            <MinusIcon className="w-3 h-3" />
                           </button>
 
                           <div className="flex items-center gap-1.5">
@@ -1144,20 +907,7 @@ export default function Home() {
                             }
                             className="w-7 h-7 flex items-center justify-center rounded bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth="2.5"
-                              stroke="currentColor"
-                              className="w-3 h-3"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M12 4.5v15m7.5-7.5h-15"
-                              />
-                            </svg>
+                            <PlusIcon className="w-3 h-3" />
                           </button>
                         </div>
                         <button
@@ -1214,20 +964,7 @@ export default function Home() {
       {toastMessage && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 dark:bg-emerald-700 text-white px-6 py-4 rounded-xl shadow-[0_10px_40px_-10px_rgba(4,120,87,0.5)] font-bold text-sm animate-in fade-in slide-in-from-bottom-8 flex items-center gap-3 whitespace-nowrap transition-colors">
           <div className="bg-white/20 rounded-full p-1 shrink-0">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="3"
-              stroke="currentColor"
-              className="w-4 h-4 text-white"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="m4.5 12.75 6 6 9-13.5"
-              />
-            </svg>
+            <CheckIcon className="w-4 h-4 text-white" />
           </div>
           {toastMessage}
         </div>
@@ -1249,20 +986,7 @@ export default function Home() {
                 onClick={() => setIsMenuOpen(false)}
                 className="p-2 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-full text-spc-grey dark:text-neutral-200 transition-colors"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2.5"
-                  stroke="currentColor"
-                  className="w-5 h-5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <CloseIcon className="w-5 h-5" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto py-5 px-5 flex flex-col gap-8">
@@ -1329,7 +1053,6 @@ export default function Home() {
                     }}
                     className="text-left px-3 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors flex items-center gap-3 mt-1"
                   >
-                    {" "}
                     Sign Out
                   </button>
                 </div>
