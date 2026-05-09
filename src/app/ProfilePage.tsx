@@ -6,6 +6,20 @@ import Link from "next/link";
 import { AuthContext } from "@/context/AuthContext";
 import ThemeToggle from "@/components/ThemeToggle";
 import { QRCodeSVG } from "qrcode.react";
+import {
+  SearchIcon,
+  CheckIcon,
+  ReturnIcon,
+  MailIcon,
+  ChevronDownIcon,
+  TrashIcon,
+  CloseIcon,
+  SendIcon,
+  ArrowRightIcon,
+  CopyIcon,
+  CogIcon,
+  StarIcon,
+} from "@/components/Icons";
 
 interface UserStats {
   id: number;
@@ -67,27 +81,6 @@ interface ChatMessage {
   sender: "user" | "ai";
   text: string;
 }
-
-interface StarIconProps {
-  filled: boolean;
-}
-
-const StarIcon = ({ filled }: StarIconProps) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill={filled ? "currentColor" : "none"}
-    stroke="currentColor"
-    strokeWidth="2"
-    className={`w-4 h-4 shrink-0 transition-all ${filled ? "text-[#FFC107] drop-shadow-sm" : "text-neutral-300 dark:text-neutral-700"}`}
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.114.477-.41.856-.84.621L12 17.152a.562.562 0 00-.54 0l-4.793 2.62c-.43.235-.954-.144-.84-.62l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-    />
-  </svg>
-);
 
 interface ToggleSwitchProps {
   title: string;
@@ -151,6 +144,7 @@ const getLoyaltyTier = (points: number) => {
     border: "border-purple-400/20",
   };
 };
+
 export default function ProfilePage() {
   const authContext = useContext(AuthContext);
   const user = authContext?.user;
@@ -475,6 +469,7 @@ export default function ProfilePage() {
         if (Array.isArray(data)) setSavedItems(data);
       })
       .catch(console.error);
+
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/addresses`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -483,6 +478,7 @@ export default function ProfilePage() {
         if (Array.isArray(data)) setAddresses(data);
       })
       .catch(console.error);
+
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/rewards`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -544,6 +540,7 @@ export default function ProfilePage() {
       setTimeout(() => setToastMessage(null), 3000);
     }
   };
+
   useEffect(() => {
     if (isAiOpen) {
       chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -646,29 +643,16 @@ export default function ProfilePage() {
       ),
     }))
     .filter((group) => group.items.length > 0);
+
   return (
     <div className="w-full min-h-screen bg-white dark:bg-neutral-950 p-4 md:p-8 font-sans select-none text-spc-grey dark:text-neutral-200 flex flex-col transition-colors duration-300">
       <div className="max-w-[1200px] mx-auto w-full flex-1 flex flex-col relative">
-        {/* Top Section: Return and Sign Out */}
         <div className="flex items-center justify-between mb-3 md:mb-4 shrink-0">
           <Link
             href="/"
             className="flex items-center gap-2 w-fit text-neutral-400 hover:text-spc-grey dark:text-neutral-500 dark:hover:text-neutral-300 transition-colors group"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="3"
-              stroke="currentColor"
-              className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
-              />
-            </svg>
+            <ReturnIcon className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
             <span className="text-[10px] font-black uppercase tracking-widest">
               Return Main Page
             </span>
@@ -685,9 +669,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Modern Split-Tag Header Section */}
         <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6 mb-4 shrink-0">
-          {/* Avatar with Subtle Glow */}
           <div className="relative shrink-0">
             <div className="absolute -inset-0.5 bg-btn-green/30 rounded-full blur-sm"></div>
             <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex items-center justify-center text-3xl font-black text-neutral-300 dark:text-neutral-600 transition-colors">
@@ -696,7 +678,6 @@ export default function ProfilePage() {
           </div>
 
           {isEditing ? (
-            /* Editing Mode Logic */
             <div className="flex flex-col gap-2 flex-1 w-full max-w-sm">
               <input
                 type="text"
@@ -726,14 +707,12 @@ export default function ProfilePage() {
               </div>
             </div>
           ) : (
-            /* View Mode - Enhanced Badge Shapes */
             <div className="flex flex-col items-center md:items-start text-center md:text-left pt-1">
               <h1 className="text-2xl md:text-3xl font-black text-spc-grey dark:text-white uppercase tracking-tighter leading-none mb-3">
                 {stats?.name || "Loading..."}
               </h1>
 
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-3">
-                {/* Points Split-Badge */}
                 <div className="flex items-stretch h-6 rounded-md overflow-hidden border border-neutral-900 dark:border-neutral-700 shadow-sm">
                   <div className="bg-neutral-900 dark:bg-neutral-700 flex items-center px-4">
                     <span className="text-[12px] font-black text-white uppercase tracking-tighter">
@@ -747,7 +726,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Tier Split-Badge */}
                 <div
                   className={`flex items-stretch h-6 rounded-md overflow-hidden border shadow-sm ${getLoyaltyTier(lifetimePoints).border}`}
                 >
@@ -767,20 +745,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="flex items-center gap-1.5 text-neutral-400 dark:text-neutral-500">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2.5"
-                  stroke="currentColor"
-                  className="w-3.5 h-3.5 text-btn-green"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
-                  />
-                </svg>
+                <MailIcon className="w-3.5 h-3.5 text-btn-green" />
                 <span className="text-[11px] font-bold tracking-tight">
                   {user.email}
                 </span>
@@ -789,10 +754,8 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Separator Line  */}
         <div className="w-full h-px bg-neutral-200 dark:bg-neutral-800/60 mb-5 shrink-0" />
 
-        {/* The Segmented Bar */}
         <div className="w-full flex items-stretch border-2 border-neutral-100 dark:border-neutral-800 rounded-xl shadow-sm h-12 md:h-14 mb-4 md:mb-5 bg-white dark:bg-neutral-900 shrink-0 relative overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-0.5 md:pb-0 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-neutral-200 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700 [&::-webkit-scrollbar-thumb]:rounded-full transition-colors">
           {["Orders", "Comments"].map((tab) => (
             <button
@@ -827,20 +790,7 @@ export default function ProfilePage() {
               placeholder="SEARCH SETTINGS & MENUS..."
               className="w-full h-full outline-none text-[9px] md:text-[10px] font-black tracking-widest placeholder:text-neutral-300 dark:placeholder:text-neutral-600 text-spc-grey dark:text-neutral-200 uppercase bg-transparent"
             />
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="4"
-              stroke="currentColor"
-              className="w-3.5 h-3.5 md:w-4 md:h-4 text-neutral-300 dark:text-neutral-600 group-focus-within:text-btn-green dark:group-focus-within:text-btn-green transition-colors shrink-0 ml-2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-              />
-            </svg>
+            <SearchIcon className="w-3.5 h-3.5 md:w-4 md:h-4 text-neutral-300 dark:text-neutral-600 group-focus-within:text-btn-green dark:group-focus-within:text-btn-green transition-colors shrink-0 ml-2" />
           </div>
 
           {["Saved", "Rewards", "Support"].map((tab) => (
@@ -853,7 +803,6 @@ export default function ProfilePage() {
             </button>
           ))}
 
-          {/* ALL Selector */}
           <div
             className="flex-1 min-w-[90px] md:min-w-0 snap-start relative"
             ref={dropdownRef}
@@ -863,20 +812,9 @@ export default function ProfilePage() {
               className={`w-full h-full px-4 md:px-5 flex items-center justify-center gap-2 rounded-r-[9px] bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 font-black text-[9px] md:text-[10px] uppercase tracking-wider transition-all ${isAllOpen ? "text-btn-green" : "text-spc-grey dark:text-neutral-300"}`}
             >
               All
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="4"
-                stroke="currentColor"
+              <ChevronDownIcon
                 className={`w-2.5 h-2.5 md:w-3 md:h-3 transition-transform duration-300 ${isAllOpen ? "rotate-180 text-btn-green" : "text-spc-grey dark:text-neutral-400"}`}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m19.5 8.25-7.5 7.5-7.5-7.5"
-                />
-              </svg>
+              />
             </button>
 
             {isAllOpen && (
@@ -917,13 +855,11 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Maximized Context Area */}
         <div className="flex-1 flex flex-col items-center border-2 border-neutral-50 dark:border-neutral-800/50 rounded-[24px] md:rounded-[32px] p-4 md:p-6 bg-neutral-50/10 dark:bg-neutral-900/50 relative mb-2 md:mb-5 transition-colors min-h-[60vh]">
           <div className="w-12 md:w-16 h-1 bg-neutral-100 dark:bg-neutral-800 mb-4 md:mb-6 rounded-full shrink-0" />
 
           {isAiOpen ? (
             <div className="absolute inset-0 z-20 bg-white dark:bg-neutral-900 m-4 rounded-2xl md:rounded-3xl shadow-lg border border-neutral-100 dark:border-neutral-800 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-              {/* Chat Header */}
               <div className="bg-neutral-50 dark:bg-neutral-800 border-b border-neutral-100 dark:border-neutral-700 p-4 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-black text-[10px]">
@@ -957,44 +893,17 @@ export default function ProfilePage() {
                     className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 text-neutral-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                     title="Clear History"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="2.5"
-                      stroke="currentColor"
-                      className="w-4 h-4"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                      />
-                    </svg>
+                    <TrashIcon className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setIsAiOpen(false)}
                     className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-colors"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="3"
-                      stroke="currentColor"
-                      className="w-4 h-4"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M6 18 18 6M6 6l12 12"
-                      />
-                    </svg>
+                    <CloseIcon className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              {/* Chat Messages */}
               <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4 bg-neutral-50/30 dark:bg-neutral-950/50">
                 {chatHistory.map((msg) => (
                   <div
@@ -1035,20 +944,7 @@ export default function ProfilePage() {
                   disabled={!aiInput.trim() || isAiTyping}
                   className="bg-black dark:bg-neutral-700 hover:bg-neutral-800 dark:hover:bg-neutral-600 disabled:bg-neutral-300 dark:disabled:bg-neutral-800 text-white w-12 h-12 flex items-center justify-center rounded-xl transition-colors shrink-0"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2.5"
-                    stroke="currentColor"
-                    className="w-5 h-5 ml-0.5 text-white dark:text-neutral-200"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"
-                    />
-                  </svg>
+                  <SendIcon className="w-5 h-5 ml-0.5 text-white dark:text-neutral-200" />
                 </button>
               </form>
             </div>
@@ -1162,20 +1058,9 @@ export default function ProfilePage() {
                                     <p className="text-xs md:text-sm font-black text-spc-grey dark:text-white truncate">
                                       {order.status}
                                     </p>
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      strokeWidth="3"
-                                      stroke="currentColor"
+                                    <ChevronDownIcon
                                       className={`w-3 h-3 shrink-0 text-neutral-400 transition-transform duration-300 ${isExpanded ? "rotate-180 text-btn-green" : ""}`}
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="m19.5 8.25-7.5 7.5-7.5-7.5"
-                                      />
-                                    </svg>
+                                    />
                                   </div>
                                 </div>
                               </div>
@@ -1248,20 +1133,7 @@ export default function ProfilePage() {
                                     className="bg-black dark:bg-neutral-700 hover:bg-neutral-800 dark:hover:bg-neutral-600 text-white px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-colors flex items-center gap-2 shadow-sm"
                                   >
                                     Track Package
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      strokeWidth="3"
-                                      stroke="currentColor"
-                                      className="w-3 h-3"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="m8.25 4.5 7.5 7.5-7.5 7.5"
-                                      />
-                                    </svg>
+                                    <ArrowRightIcon className="w-3 h-3" />
                                   </Link>
                                 </div>
                               </div>
@@ -1394,7 +1266,6 @@ export default function ProfilePage() {
                 </div>
               ) : activeTab === "Rewards" ? (
                 <div className="flex-1 w-full max-w-3xl flex flex-col mt-4 md:mt-6 animate-in fade-in zoom-in-95 duration-300 px-2 pb-20">
-                  {/* Header Info */}
                   <div className="flex items-center justify-between mb-6 border-b border-neutral-100 dark:border-neutral-800 pb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-linear-to-tr from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg text-lg text-white">
@@ -1411,7 +1282,6 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  {/* Current Balance Card */}
                   <div className="relative overflow-hidden bg-linear-to-br from-neutral-900 to-black dark:from-black dark:to-neutral-900 border border-neutral-800 rounded-[2rem] p-6 shadow-2xl mb-8 group">
                     <div className="absolute top-0 right-0 w-48 h-48 bg-yellow-500/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none transition-transform group-hover:scale-110 duration-700"></div>
 
@@ -1432,12 +1302,10 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  {/* Reward Options (Tiers) */}
                   <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-4">
                     Exchange Points
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    {/* Option 1: Basic */}
                     <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-5 shadow-sm flex flex-col items-center text-center">
                       <p className="text-sm font-black text-spc-grey dark:text-white uppercase mb-1">
                         $10 Discount
@@ -1456,7 +1324,6 @@ export default function ProfilePage() {
                       </button>
                     </div>
 
-                    {/* Option 2: Standard (Highlighted) */}
                     <div className="bg-white dark:bg-neutral-900 border-2 border-yellow-400 dark:border-yellow-500 rounded-2xl p-5 shadow-md flex flex-col items-center text-center relative transform md:-translate-y-2">
                       <span className="absolute -top-3 bg-yellow-400 dark:bg-yellow-500 text-black text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
                         Most Popular
@@ -1478,7 +1345,6 @@ export default function ProfilePage() {
                       </button>
                     </div>
 
-                    {/* Option 3: Premium */}
                     <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-5 shadow-sm flex flex-col items-center text-center">
                       <p className="text-sm font-black text-spc-grey dark:text-white uppercase mb-1">
                         $120 Discount
@@ -1498,7 +1364,6 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  {/* Active Codes Section */}
                   <div>
                     <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-4">
                       Your Available Codes
@@ -1528,20 +1393,7 @@ export default function ProfilePage() {
                               className="w-8 h-8 rounded-full bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center hover:bg-btn-green/10 text-neutral-400 hover:text-btn-green transition-colors"
                               title="Copy Code"
                             >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth={2.5}
-                                stroke="currentColor"
-                                className="w-4 h-4"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75"
-                                />
-                              </svg>
+                              <CopyIcon className="w-4 h-4" />
                             </button>
                           </div>
                         ))}
@@ -1557,7 +1409,6 @@ export default function ProfilePage() {
                 </div>
               ) : activeTab === "Support" ? (
                 <div className="flex-1 w-full max-w-3xl flex flex-col gap-8 mt-4 animate-in fade-in zoom-in-95 duration-300 px-2 pb-20">
-                  {/* Header Info[cite: 13] */}
                   <div className="flex items-center gap-3 mb-2 border-b border-neutral-100 dark:border-neutral-800 pb-4">
                     <div className="w-10 h-10 bg-white dark:bg-neutral-800 rounded-xl flex items-center justify-center shadow-sm border border-neutral-100 dark:border-neutral-700 text-lg">
                       🎧
@@ -1572,7 +1423,6 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  {/* FAQ Section[cite: 13] */}
                   <div className="space-y-3">
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-2 ml-1">
                       Frequently Asked Questions
@@ -1591,20 +1441,9 @@ export default function ProfilePage() {
                           <span className="text-xs font-bold text-spc-grey dark:text-neutral-200 leading-snug">
                             {faq.q}
                           </span>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="3"
-                            stroke="currentColor"
+                          <ChevronDownIcon
                             className={`w-3.5 h-3.5 text-btn-green transition-transform duration-300 ${openFaq === index ? "rotate-180" : ""}`}
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-                            />
-                          </svg>
+                          />
                         </button>
                         {openFaq === index && (
                           <div className="px-5 pb-5 text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed animate-in slide-in-from-top-2 duration-300 font-medium">
@@ -1697,7 +1536,6 @@ export default function ProfilePage() {
                         />
                       </div>
 
-                      {/* Detailed Information Fields */}
                       <div>
                         <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 block mb-2">
                           Phone Number (Optional)
@@ -1948,7 +1786,6 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {/* Primary Card (Mastercard) */}
                     <div className="relative overflow-hidden bg-spc-grey dark:bg-black border-2 border-btn-green rounded-2xl p-6 shadow-lg hover:-translate-y-1 transition-transform cursor-pointer group">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-10 -mt-10 blur-2xl pointer-events-none"></div>
                       <div className="absolute bottom-0 left-0 w-24 h-24 bg-btn-green/20 rounded-full -ml-8 -mb-8 blur-xl pointer-events-none"></div>
@@ -1988,7 +1825,6 @@ export default function ProfilePage() {
                         </div>
                       </div>
 
-                      {/* Hover Actions (Glassmorphism) */}
                       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 z-20">
                         <button className="bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-neutral-200 transition-colors shadow-sm">
                           Edit
@@ -1999,11 +1835,9 @@ export default function ProfilePage() {
                       </div>
                     </div>
 
-                    {/* Secondary Card (Visa) */}
                     <div className="relative overflow-hidden bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl p-6 shadow-sm hover:-translate-y-1 transition-transform cursor-pointer group">
                       <div className="relative z-10 flex justify-between items-start mb-8">
                         <div className="w-6 h-4 bg-transparent"></div>{" "}
-                        {/* Placeholder for alignment */}
                         <div className="text-xl font-black text-blue-800 dark:text-blue-400 italic tracking-tighter">
                           VISA
                         </div>
@@ -2034,7 +1868,6 @@ export default function ProfilePage() {
                         </div>
                       </div>
 
-                      {/* Hover Actions (Glassmorphism) */}
                       <div className="absolute inset-0 bg-white/80 dark:bg-black/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 z-20">
                         <button className="bg-spc-grey dark:bg-white text-white dark:text-black w-32 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:brightness-90 transition-colors shadow-sm">
                           Make Default
@@ -2309,7 +2142,6 @@ export default function ProfilePage() {
                     </div>
                   )}
 
-                  {/* SMS Recovery Section */}
                   <div className="mt-4 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="w-8 h-8 rounded-full bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center text-sm border border-neutral-100 dark:border-neutral-700">
@@ -2379,7 +2211,6 @@ export default function ProfilePage() {
                     }
                   />
 
-                  {/* Save Button with mock delay */}
                   <div className="border-t border-neutral-100 dark:border-neutral-800 pt-6 mt-4 flex justify-end">
                     <button
                       onClick={() => {
@@ -2414,7 +2245,6 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
-                    {/* Language Selection */}
                     <div className="flex flex-col gap-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
                         Display Language
@@ -2442,27 +2272,13 @@ export default function ProfilePage() {
                           <option value="tr">Türkçe</option>
                         </select>
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="2.5"
-                            stroke="currentColor"
-                            className="w-4 h-4"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="m19.5 8.25-7.5 7.5-7.5-7.5"
-                            />
-                          </svg>
+                          <ChevronDownIcon className="w-4 h-4" />
                         </div>
                       </div>
                     </div>
 
                     <div className="w-full h-px bg-neutral-100 dark:bg-neutral-800/60 my-2" />
 
-                    {/* Region and Currency Selection */}
                     <div className="flex flex-col gap-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
                         Region & Currency
@@ -2488,25 +2304,11 @@ export default function ProfilePage() {
                           <option value="TR">Turkey (TRY ₺)</option>
                         </select>
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="2.5"
-                            stroke="currentColor"
-                            className="w-4 h-4"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="m19.5 8.25-7.5 7.5-7.5-7.5"
-                            />
-                          </svg>
+                          <ChevronDownIcon className="w-4 h-4" />
                         </div>
                       </div>
                     </div>
 
-                    {/* Save Button */}
                     <div className="border-t border-neutral-100 dark:border-neutral-800 pt-6 mt-4 flex justify-end">
                       <button
                         onClick={() => {
@@ -2543,20 +2345,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
                   <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-8 md:p-12 shadow-sm flex flex-col items-center justify-center text-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="1.5"
-                      stroke="currentColor"
-                      className="w-12 h-12 text-neutral-300 dark:text-neutral-600 mb-4"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.827M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"
-                      />
-                    </svg>
+                    <CogIcon className="w-12 h-12 text-neutral-300 dark:text-neutral-600 mb-4" />
                     <h3 className="text-sm font-black text-spc-grey dark:text-white uppercase tracking-widest mb-2">
                       Module in Development
                     </h3>
@@ -2587,7 +2376,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Dropdown Menu - Mobile Bottom Sheet */}
       {isAllOpen && (
         <div
           id="mobile-bottom-sheet"
@@ -2641,18 +2429,7 @@ export default function ProfilePage() {
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-emerald-600 dark:bg-emerald-700 text-white px-5 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-[0_10px_40px_-10px_rgba(4,120,87,0.5)] animate-in slide-in-from-bottom-4 duration-300 flex items-center gap-3 transition-colors">
           <div className="bg-white/20 rounded-full p-1 shrink-0">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="w-4 h-4 text-white"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-                clipRule="evenodd"
-              />
-            </svg>
+            <CheckIcon className="w-4 h-4 text-white" />
           </div>
           {toastMessage}
         </div>
