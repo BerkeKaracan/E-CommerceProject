@@ -5,7 +5,7 @@ import { useState, useEffect, useContext } from "react";
 import AuthModal from "@/components/AuthModal";
 import { AuthContext } from "@/context/AuthContext";
 import ThemeToggle from "@/components/ThemeToggle";
-import ProductCard from "@/components/ProductCart";
+import ProductCard from "@/components/ProductCard";
 import {
   SearchIcon,
   MenuIcon,

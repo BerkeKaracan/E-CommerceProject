@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "@/context/AuthContext";
 import ThemeToggle from "@/components/ThemeToggle";
-import ProductCard, { Product } from "@/components/ProductCart";
+import ProductCard, { Product } from "@/components/ProductCard";
 
 export default function SalePage() {
   const [saleProducts, setSaleProducts] = useState<Product[]>([]);
