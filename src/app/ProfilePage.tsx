@@ -122,6 +122,7 @@ const getLoyaltyTier = (points: number) => {
       color: "text-neutral-500",
       bg: "bg-neutral-500/10",
       border: "border-neutral-500/20",
+      icon: "🌱",
     };
   if (points < 2000)
     return {
@@ -129,6 +130,7 @@ const getLoyaltyTier = (points: number) => {
       color: "text-slate-400",
       bg: "bg-slate-400/10",
       border: "border-slate-400/20",
+      icon: "⚡",
     };
   if (points < 5000)
     return {
@@ -136,12 +138,14 @@ const getLoyaltyTier = (points: number) => {
       color: "text-yellow-600 dark:text-yellow-400",
       bg: "bg-yellow-400/10",
       border: "border-yellow-400/20",
+      icon: "⭐",
     };
   return {
     title: "PREMIUM REWARDS MEMBER",
     color: "text-purple-600 dark:text-purple-400",
     bg: "bg-purple-400/10",
     border: "border-purple-400/20",
+    icon: "👑",
   };
 };
 
@@ -669,17 +673,54 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Compact Premium Dashboard Header */}
-        <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6 mb-4 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-4 md:p-5 shadow-sm shrink-0">
-          <div className="relative shrink-0">
-            <div className="absolute inset-0 bg-btn-green/20 rounded-full blur-md"></div>
-            <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center text-3xl font-black text-spc-grey dark:text-white shadow-inner">
-              {user.name.charAt(0).toUpperCase()}
+        {/* Wireframe Design Custom Header */}
+        <div className="relative flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6 mb-4 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-4 md:p-5 shadow-sm shrink-0">
+          {/* Quick Feedback Button (Top Right) */}
+          <button className="absolute top-4 right-4 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-neutral-400 hover:text-red-500 transition-colors">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="2.5"
+              stroke="currentColor"
+              className="w-3.5 h-3.5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+            <span className="hidden md:inline">Feedback</span>
+          </button>
+
+          {/* Avatar with 10-Color Rainbow Spectrum Ring */}
+          <div className="relative shrink-0 mt-2 md:mt-0">
+            {/* Dynamic Glow Effect */}
+            <div
+              className="absolute inset-0 rounded-full blur-xl opacity-40 animate-pulse"
+              style={{
+                background:
+                  "conic-gradient(from 0deg, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0000)",
+              }}
+            ></div>
+
+            {/* 10-Color spectrum Ring */}
+            <div
+              className="relative p-[4px] rounded-full shadow-lg"
+              style={{
+                background:
+                  "conic-gradient(from 45deg, #f43f5e, #f97316, #fbbf24, #a3e635, #22c55e, #14b8a6, #0ea5e9, #6366f1, #a855f7, #ec4899, #f43f5e)",
+              }}
+            >
+              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-[3px] border-white dark:border-neutral-900 bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center text-3xl font-black text-spc-grey dark:text-white shadow-inner">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
             </div>
           </div>
 
           {isEditing ? (
-            <div className="flex flex-col gap-2 flex-1 w-full max-w-sm">
+            <div className="flex flex-col gap-2 flex-1 w-full max-w-sm mt-2 md:mt-0">
               <input
                 type="text"
                 value={editName}
@@ -708,61 +749,68 @@ export default function ProfilePage() {
               </div>
             </div>
           ) : (
-            <>
-              <div className="flex flex-col items-center md:items-start text-center md:text-left pt-1 flex-1">
-                <h1 className="text-2xl md:text-3xl font-black text-spc-grey dark:text-white uppercase tracking-tighter leading-none mb-3">
-                  {stats?.name || "Loading..."}
-                </h1>
+            <div className="flex flex-col items-center md:items-start text-center md:text-left flex-1 min-w-0 w-full pt-1">
+              {/* Name (Beautiful Font/Tight Tracking) */}
+              <h1 className="text-2xl md:text-3xl font-black text-spc-grey dark:text-white tracking-tighter leading-none mb-2 truncate max-w-full pr-16 md:pr-0">
+                {stats?.name || "Loading..."}
+              </h1>
 
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-3">
-                  <div className="flex items-stretch h-6 rounded-md overflow-hidden border border-neutral-900 dark:border-neutral-700 shadow-sm">
-                    <div className="bg-neutral-900 dark:bg-neutral-700 flex items-center px-4">
-                      <span className="text-[12px] font-black text-white uppercase tracking-tighter">
-                        POINTS
-                      </span>
-                    </div>
-                    <div className="bg-neutral-50 dark:bg-neutral-800 flex items-center px-4">
-                      <span className="text-[13px] font-black text-spc-grey dark:text-white">
-                        {stats?.points ?? 0}
-                      </span>
-                    </div>
-                  </div>
+              {/* Title / Tier */}
+              <div
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md border shadow-sm mb-4 ${getLoyaltyTier(lifetimePoints).bg} ${getLoyaltyTier(lifetimePoints).border}`}
+              >
+                <span className="text-[12px]">
+                  {getLoyaltyTier(lifetimePoints).icon}
+                </span>
+                <span
+                  className={`text-[9px] font-black tracking-widest ${getLoyaltyTier(lifetimePoints).color}`}
+                >
+                  {getLoyaltyTier(lifetimePoints).title}
+                </span>
+              </div>
 
-                  <div
-                    className={`flex items-stretch h-6 rounded-md overflow-hidden border shadow-sm ${getLoyaltyTier(lifetimePoints).border}`}
-                  >
-                    <div
-                      className={`${getLoyaltyTier(lifetimePoints).bg} flex items-center px-2 border-r ${getLoyaltyTier(lifetimePoints).border}`}
-                    >
-                      <span className="text-[14px]">💎</span>
-                    </div>
-                    <div className="bg-neutral-50 dark:bg-neutral-900 flex items-center px-2.5">
-                      <span
-                        className={`text-[9px] font-black tracking-widest ${getLoyaltyTier(lifetimePoints).color}`}
-                      >
-                        {getLoyaltyTier(lifetimePoints).title}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 text-neutral-400 dark:text-neutral-500">
-                  <MailIcon className="w-3.5 h-3.5 text-btn-green" />
-                  <span className="text-[11px] font-bold tracking-tight">
+              {/* 3 Columns: Points, Email, Orders */}
+              <div className="grid grid-cols-3 gap-2 md:gap-4 w-full max-w-lg mt-auto">
+                <div className="flex flex-col items-center md:items-start p-2.5 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-100 dark:border-neutral-800 overflow-hidden">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-neutral-400 mb-0.5">
+                    Email
+                  </span>
+                  <span className="text-xs font-bold text-spc-grey dark:text-white truncate w-full text-center md:text-left">
                     {user.email}
                   </span>
                 </div>
-              </div>
 
-              <div className="shrink-0 flex items-center justify-center mt-3 md:mt-0 pt-1">
-                <button
-                  onClick={startEditing}
-                  className="bg-neutral-100 dark:bg-neutral-800 text-spc-grey dark:text-white px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
-                >
-                  Edit Profile
-                </button>
+                <div className="flex flex-col items-center md:items-start p-2.5 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-100 dark:border-neutral-800">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-neutral-400 mb-0.5">
+                    Points
+                  </span>
+                  <span className="text-sm font-black text-spc-grey dark:text-white">
+                    {stats?.points ?? 0}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center md:items-start p-2.5 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-100 dark:border-neutral-800">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-neutral-400 mb-0.5">
+                    Orders
+                  </span>
+                  <span className="text-sm font-black text-spc-grey dark:text-white">
+                    {stats?.order_count ?? 0}
+                  </span>
+                </div>
               </div>
-            </>
+            </div>
+          )}
+
+          {/* Edit Button - Compact at bottom right on desktop */}
+          {!isEditing && (
+            <div className="shrink-0 flex items-center justify-center mt-2 md:mt-0 pt-1 md:self-end">
+              <button
+                onClick={startEditing}
+                className="bg-neutral-100 dark:bg-neutral-800 text-spc-grey dark:text-white px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+              >
+                Edit
+              </button>
+            </div>
           )}
         </div>
 
