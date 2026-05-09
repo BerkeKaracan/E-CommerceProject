@@ -669,10 +669,11 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6 mb-4 shrink-0">
+        {/* Compact Premium Dashboard Header */}
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6 mb-4 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-4 md:p-5 shadow-sm shrink-0">
           <div className="relative shrink-0">
-            <div className="absolute -inset-0.5 bg-btn-green/30 rounded-full blur-sm"></div>
-            <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex items-center justify-center text-3xl font-black text-neutral-300 dark:text-neutral-600 transition-colors">
+            <div className="absolute inset-0 bg-btn-green/20 rounded-full blur-md"></div>
+            <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center text-3xl font-black text-spc-grey dark:text-white shadow-inner">
               {user.name.charAt(0).toUpperCase()}
             </div>
           </div>
@@ -683,13 +684,13 @@ export default function ProfilePage() {
                 type="text"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="text-lg font-black bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg px-3 py-1.5 outline-none focus:ring-1 focus:ring-btn-green"
+                className="text-lg font-black bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-lg px-3 py-1.5 outline-none focus:border-btn-green"
               />
               <input
                 type="email"
                 value={editEmail}
                 onChange={(e) => setEditEmail(e.target.value)}
-                className="text-xs font-medium bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg px-3 py-1.5 outline-none focus:ring-1 focus:ring-btn-green"
+                className="text-xs font-medium bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-lg px-3 py-1.5 outline-none focus:border-btn-green"
               />
               <div className="flex gap-2 mt-1">
                 <button
@@ -707,50 +708,61 @@ export default function ProfilePage() {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center md:items-start text-center md:text-left pt-1">
-              <h1 className="text-2xl md:text-3xl font-black text-spc-grey dark:text-white uppercase tracking-tighter leading-none mb-3">
-                {stats?.name || "Loading..."}
-              </h1>
+            <>
+              <div className="flex flex-col items-center md:items-start text-center md:text-left pt-1 flex-1">
+                <h1 className="text-2xl md:text-3xl font-black text-spc-grey dark:text-white uppercase tracking-tighter leading-none mb-3">
+                  {stats?.name || "Loading..."}
+                </h1>
 
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-3">
-                <div className="flex items-stretch h-6 rounded-md overflow-hidden border border-neutral-900 dark:border-neutral-700 shadow-sm">
-                  <div className="bg-neutral-900 dark:bg-neutral-700 flex items-center px-4">
-                    <span className="text-[12px] font-black text-white uppercase tracking-tighter">
-                      POINTS
-                    </span>
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-3">
+                  <div className="flex items-stretch h-6 rounded-md overflow-hidden border border-neutral-900 dark:border-neutral-700 shadow-sm">
+                    <div className="bg-neutral-900 dark:bg-neutral-700 flex items-center px-4">
+                      <span className="text-[12px] font-black text-white uppercase tracking-tighter">
+                        POINTS
+                      </span>
+                    </div>
+                    <div className="bg-neutral-50 dark:bg-neutral-800 flex items-center px-4">
+                      <span className="text-[13px] font-black text-spc-grey dark:text-white">
+                        {stats?.points ?? 0}
+                      </span>
+                    </div>
                   </div>
-                  <div className="bg-white dark:bg-neutral-800 flex items-center px-4">
-                    <span className="text-[13px] font-blue text-blue-900 dark:text-white">
-                      {stats?.points ?? 0}
-                    </span>
-                  </div>
-                </div>
 
-                <div
-                  className={`flex items-stretch h-6 rounded-md overflow-hidden border shadow-sm ${getLoyaltyTier(lifetimePoints).border}`}
-                >
                   <div
-                    className={`${getLoyaltyTier(lifetimePoints).bg} flex items-center px-2 border-r ${getLoyaltyTier(lifetimePoints).border}`}
+                    className={`flex items-stretch h-6 rounded-md overflow-hidden border shadow-sm ${getLoyaltyTier(lifetimePoints).border}`}
                   >
-                    <span className="text-[14px]">💎</span>
-                  </div>
-                  <div className="bg-white dark:bg-neutral-900 flex items-center px-2.5">
-                    <span
-                      className={`text-[9px] font-black tracking-widest ${getLoyaltyTier(lifetimePoints).color}`}
+                    <div
+                      className={`${getLoyaltyTier(lifetimePoints).bg} flex items-center px-2 border-r ${getLoyaltyTier(lifetimePoints).border}`}
                     >
-                      {getLoyaltyTier(lifetimePoints).title}
-                    </span>
+                      <span className="text-[14px]">💎</span>
+                    </div>
+                    <div className="bg-neutral-50 dark:bg-neutral-900 flex items-center px-2.5">
+                      <span
+                        className={`text-[9px] font-black tracking-widest ${getLoyaltyTier(lifetimePoints).color}`}
+                      >
+                        {getLoyaltyTier(lifetimePoints).title}
+                      </span>
+                    </div>
                   </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-neutral-400 dark:text-neutral-500">
+                  <MailIcon className="w-3.5 h-3.5 text-btn-green" />
+                  <span className="text-[11px] font-bold tracking-tight">
+                    {user.email}
+                  </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 text-neutral-400 dark:text-neutral-500">
-                <MailIcon className="w-3.5 h-3.5 text-btn-green" />
-                <span className="text-[11px] font-bold tracking-tight">
-                  {user.email}
-                </span>
+              <div className="shrink-0 flex items-center justify-center mt-3 md:mt-0 pt-1">
+                <button
+                  onClick={startEditing}
+                  className="bg-neutral-100 dark:bg-neutral-800 text-spc-grey dark:text-white px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                >
+                  Edit Profile
+                </button>
               </div>
-            </div>
+            </>
           )}
         </div>
 
