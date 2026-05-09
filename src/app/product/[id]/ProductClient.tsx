@@ -582,7 +582,7 @@ export default function ProductClient({
                       <textarea
                         value={editText}
                         onChange={(e) => setEditText(e.target.value)}
-                        className="w-full text-black dark:text-white bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg p-3 text-sm outline-none focus:border-btn-green dark:focus:border-btn-green transition-all resize-none min-h-[80px]"
+                        className="w-full text-black dark:text-white bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg p-3 text-sm outline-none focus:border-btn-green dark:focus:border-btn-green transition-all resize-none min-h-[160px]"
                       />
                       <div className="flex gap-2 justify-end">
                         <button
