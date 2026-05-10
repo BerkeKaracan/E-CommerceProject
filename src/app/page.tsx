@@ -500,13 +500,13 @@ export default function Home() {
                     href="/profile"
                     className="cursor-pointer hover:text-btn-green transition-colors truncate text-xs sm:text-sm font-bold text-spc-grey dark:text-neutral-200 hidden sm:block"
                   >
-                    Hi, {user.name}
+                    Hi, {user?.name || "User"}
                   </Link>
                   <Link
                     href="/profile"
                     className="cursor-pointer hover:text-btn-green transition-colors sm:hidden w-7 h-7 bg-neutral-200 dark:bg-neutral-700 rounded-full flex items-center justify-center text-[10px] font-black text-spc-grey dark:text-white"
                   >
-                    {user.name.charAt(0).toUpperCase()}
+                    {user?.name?.charAt(0)?.toUpperCase() || "U"}
                   </Link>
 
                   <div className="w-px h-4 bg-neutral-300 dark:bg-neutral-600 shrink-0"></div>
@@ -1016,7 +1016,7 @@ export default function Home() {
                     Welcome back
                   </p>
                   <p className="text-base font-black text-spc-grey dark:text-neutral-200 group-hover:text-btn-green dark:group-hover:text-btn-green transition-colors">
-                    {user.name}
+                    {user?.name || "User"}
                   </p>
                 </Link>
               )}

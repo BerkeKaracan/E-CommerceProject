@@ -60,6 +60,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           return;
         }
 
+        if (data.access_token && authContext) {
+          authContext.login(data.access_token, data.user);
+          handleClose();
+          router.push("/profile");
+          return;
+        }
+
         setResetMessage("Account created successfully! Now you can sign in.");
         setIsLogin(true);
         setPassword("");
