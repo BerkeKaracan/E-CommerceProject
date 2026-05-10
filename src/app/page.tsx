@@ -245,9 +245,6 @@ export default function Home() {
       setCart([...cart, { ...product, quantity: amount }]);
     }
 
-    setToastMessage(`Added ${amount}x ${product.name} to cart!`);
-    setTimeout(() => setToastMessage(null), 2200);
-
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
         method: "POST",
@@ -258,11 +255,24 @@ export default function Home() {
         body: JSON.stringify({ product_id: product.id, quantity: amount }),
       });
 
-      if (!res.ok) throw new Error("Server failed to process cart addition");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(
+          errorData.detail || "Server failed to process cart addition",
+        );
+      }
+
+      setToastMessage(`Added ${amount}x ${product.name} to cart!`);
+      setTimeout(() => setToastMessage(null), 2200);
     } catch (error) {
       console.error("Add to cart error:", error);
       setCart(previousCart);
-      setToastMessage("Sync failed. Reverting cart...");
+
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Not enough stock or server error.";
+      setToastMessage(errorMessage);
       setTimeout(() => setToastMessage(null), 2200);
     }
   };
