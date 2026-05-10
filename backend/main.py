@@ -349,10 +349,11 @@ def get_products(
     elif sort == "Price: High to Low":
         query = query.order_by(desc(DBProduct.price), desc(DBProduct.id))
     else: 
+        # --- SAFE & STRICT RANKING FOR POSTGRES ---
         ranking_score = (
-            (func.coalesce(DBProduct.sales_count, 0) * 10) +   
-            func.coalesce(DBProduct.view_count, 0) +            
-            (func.coalesce(DBProduct.is_discounted, 0) * 50) +
+            (func.coalesce(DBProduct.sales_count, 0) * 10) +
+            func.coalesce(DBProduct.view_count, 0) +
+            (func.cast(func.coalesce(DBProduct.is_discounted, 0), Integer) * 50) +
             func.coalesce(DBProduct.discount_rate, 0)
         )
         
