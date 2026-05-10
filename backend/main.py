@@ -349,11 +349,17 @@ def get_products(
     elif sort == "Price: High to Low":
         query = query.order_by(desc(DBProduct.price), desc(DBProduct.id))
     else: 
+        ranking_score = (
+            (DBProduct.sales_count * 10) +   
+            DBProduct.view_count +            
+            (DBProduct.is_discounted * 50) +
+            DBProduct.discount_rate        
+        )
+        
         query = query.order_by(
-            asc(DBProduct.is_discounted), 
-            desc(DBProduct.sales_count), 
-            desc(DBProduct.price),
-            desc(DBProduct.id)
+            desc(DBProduct.stock > 0),  
+            desc(ranking_score),       
+            desc(DBProduct.id)          
         )
 
     products = query.offset(offset).limit(limit).all()
