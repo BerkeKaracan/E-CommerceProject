@@ -831,7 +831,7 @@ export default function ProfilePage() {
 
           <div
             id="profile-search-container"
-            className="flex-[3.5] min-w-[180px] md:min-w-0 snap-start flex items-center border-r-2 relative z-[1000] border-neutral-100 dark:border-neutral-800 px-4 md:px-7 bg-white dark:bg-neutral-900 focus-within:bg-neutral-50/30 dark:focus-within:bg-neutral-800/50 transition-colors group"
+            className="flex-[3.5] min-w-[180px] md:min-w-0 snap-start flex items-center border-r-2 relative z-10 border-neutral-100 dark:border-neutral-800 px-4 md:px-7 bg-white dark:bg-neutral-900 focus-within:bg-neutral-50/30 dark:focus-within:bg-neutral-800/50 transition-colors group"
           >
             <input
               id="profile-search-input"
@@ -2441,21 +2441,27 @@ export default function ProfilePage() {
       {isAllOpen && (
         <div
           id="mobile-bottom-sheet"
-          className="md:hidden fixed inset-0 z-999 flex flex-col justify-end"
+          className="md:hidden fixed inset-0 z-[1000] flex flex-col justify-end"
         >
           <div
             className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-in fade-in duration-200"
-            onClick={() => {
-              if (isSearchFocusedRef.current) {
-                document.getElementById("profile-search-input")?.blur();
-              } else {
-                setIsAllOpen(false);
-              }
-            }}
+            onClick={() => setIsAllOpen(false)}
           />
-          <div className="relative bg-white dark:bg-neutral-950 w-full rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-full duration-300 pb-8">
-            <div className="w-12 h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-full mx-auto mb-6" />
-            <div className="max-h-[60vh] overflow-y-auto">
+          <div className="relative bg-white dark:bg-neutral-950 w-full min-h-[50vh] flex flex-col rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-full duration-300 pb-8">
+            <div className="w-12 h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-full mx-auto mb-4 shrink-0" />
+            <div className="relative mb-6 shrink-0">
+              <input
+                autoFocus
+                type="text"
+                value={profileSearch}
+                onChange={(e) => setProfileSearch(e.target.value)}
+                placeholder="SEARCH SETTINGS..."
+                className="w-full bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl pl-10 pr-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-spc-grey dark:text-neutral-200 outline-none focus:border-btn-green dark:focus:border-btn-green transition-colors"
+              />
+              <SearchIcon className="w-4 h-4 text-neutral-400 absolute left-4 top-1/2 -translate-y-1/2" />
+            </div>
+
+            <div className="max-h-[60vh] overflow-y-auto flex-1">
               {filteredMenuOptions.length > 0 ? (
                 filteredMenuOptions.map((group, idx) => (
                   <div key={idx} className="mb-6 last:mb-0">
