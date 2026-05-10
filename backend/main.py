@@ -27,19 +27,11 @@ raw_url = os.getenv("DATABASE_URL")
 if raw_url:
     if raw_url.startswith("postgres://"):
         raw_url = raw_url.replace("postgres://", "postgresql://", 1)
-
     DATABASE_URL = raw_url.replace("?pgbouncer=true", "").replace("&pgbouncer=true", "")
 else:
     DATABASE_URL = "sqlite:///./market.db"
 
-engine = create_engine(
-    DATABASE_URL,
-    pool_size=50,
-    max_overflow=100,
-    pool_timeout=30,
-    pool_recycle=1800
-)
-
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base() 
