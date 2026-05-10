@@ -291,6 +291,11 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise credentials_exception
     return user
 
+def require_admin(current_user: DBUser = Depends(get_current_user)):
+    if current_user.role != "admin": 
+        raise HTTPException(status_code=403, detail="Access denied. Admins only.")
+    return current_user
+
 def get_current_admin(current_user: DBUser = Depends(get_current_user)):
     """RBAC Guard"""
     if current_user.role != "admin":
@@ -355,16 +360,16 @@ def get_products(
     return products
 
 @app.post("/api/products", response_model=ProductSchema)
-def create_product(product: ProductCreate, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_admin)):
+def create_product(req: ProductCreate, db: Session = Depends(get_db), admin: DBUser = Depends(require_admin)):
     """Only Admin"""
     new_product = DBProduct(
-        name=product.name,
-        category=product.category,
-        price=product.price,
-        image=product.image,
-        description=product.description,
-        is_discounted=product.is_discounted,
-        discount_rate=product.discount_rate
+        name=req.name,
+        category=req.category,
+        price=req.price,
+        image=req.image,
+        description=req.description,
+        is_discounted=req.is_discounted,
+        discount_rate=req.discount_rate
     )
     db.add(new_product)
     db.commit()
@@ -562,6 +567,8 @@ def process_checkout(req: CheckoutRequest, db: Session = Depends(get_db), curren
     for item in cart_items:
         product = db.query(DBProduct).filter(DBProduct.id == item.product_id).first()
         if product:
+            if product.stock < item.quantity:
+                raise HTTPException(status_code=400, detail=f"Stock out for {product.name}. Someone just bought the last piece!")
             product.stock -= item.quantity
             product.sales_count += item.quantity
             
