@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Image from "next/image";
 import { AuthContext } from "@/context/AuthContext";
 
@@ -25,6 +25,21 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   // FORGOT PASSWORD STATES
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [resetMessage, setResetMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRequires2FA(false);
+      setIsForgotPassword(false);
+      setError(null);
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +84,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         if (data.access_token && authContext) {
           authContext.login(data.access_token, data.user);
           handleClose();
-          router.push("/profile");
+          setTimeout(() => {
+            router.push("/profile");
+          }, 150);
           return;
         }
 
@@ -77,6 +94,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         setIsLogin(true);
         setPassword("");
         setConfirmPassword("");
+        onClose();
         setTimeout(() => setResetMessage(null), 2000);
       } catch (err) {
         console.error("Server Connection Error:", err);
@@ -110,8 +128,12 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           authContext.login(data.access_token, data.user);
         }
 
-        handleClose();
-        router.push("/profile");
+        setPassword("");
+        setConfirmPassword("");
+        onClose();
+        setTimeout(() => {
+          router.push("/profile");
+        }, 300);
       } catch (err) {
         console.error("Server Connection Error:", err);
         setError("Cannot connect to the server. Is backend running?");
@@ -142,9 +164,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       if (authContext) {
         authContext.login(data.access_token, data.user);
       }
-
       handleClose();
-      router.push("/profile");
+      setPassword("");
+      setConfirmPassword("");
+      onClose();
+      setTimeout(() => {
+        router.push("/profile");
+      }, 150);
     } catch (err) {
       setError("Cannot connect to the server.");
     }
