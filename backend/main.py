@@ -769,11 +769,50 @@ def toggle_saved_item(product_id: int, db: Session = Depends(get_db), current_us
         db.commit()
         return {"message": "Added to saved", "is_saved": True}
         
+# --- MAİL GÖNDERME FONKSİYONU VE API ---
+def send_reset_email(to_email: str, reset_link: str):
+    smtp_server = os.getenv("SMTP_SERVER", "sandbox.smtp.mailtrap.io")
+    smtp_port = int(os.getenv("SMTP_PORT", 2525))
+    smtp_user = os.getenv("SMTP_USERNAME")
+    smtp_pass = os.getenv("SMTP_PASSWORD")
+    sender_email = "no-reply@premiummarket.com"
+
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = to_email
+    msg['Subject'] = "Password Reset Request - Premium Market"
+
+    html_body = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #1a1a1a;">Password Reset</h2>
+        <p>Hello,</p>
+        <p>We received a request to reset your password. Click the button below to choose a new password:</p>
+        <a href="{reset_link}" style="display: inline-block; padding: 12px 24px; margin: 20px 0; background-color: #22c55e; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold;">Reset My Password</a>
+        <p style="font-size: 12px; color: #666;">If you didn't request this, you can safely ignore this email. The link will expire in 1 hour.</p>
+      </body>
+    </html>
+    """
+    msg.attach(MIMEText(html_body, "html"))
+
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        if smtp_user and smtp_pass:
+            server.login(smtp_user, smtp_pass)
+        server.send_message(msg)
+        server.quit()
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
 @app.post("/api/forgot-password")
 def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
     user = db.query(DBUser).filter(DBUser.email == request.email).first()
     if user:
-        pass
+        reset_token = f"reset_{user.id}"
+        reset_link = f"https://market-backend-db.onrender.com/reset-password?token={reset_token}"
+        send_reset_email(user.email, reset_link)
+        
     return {"message": "If an account exists, a reset link has been sent."}
 
 @app.post("/api/reset-password")
