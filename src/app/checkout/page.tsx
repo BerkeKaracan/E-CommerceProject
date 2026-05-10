@@ -124,8 +124,8 @@ export default function CheckoutPage() {
   };
 
   const increaseQty = async (product: CartItem) => {
-    setIsUpdating(true);
     if (!token) return;
+
     setCart(
       cart.map((item) =>
         item.id === product.id
@@ -133,19 +133,29 @@ export default function CheckoutPage() {
           : item,
       ),
     );
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ product_id: product.id, quantity: 1 }),
-    });
-    setIsUpdating(false);
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ product_id: product.id, quantity: 1 }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setToastMessage(data.detail || "Cannot add more items.");
+        setTimeout(() => setToastMessage(null), 3000);
+        fetchCart();
+      }
+    } catch (err) {
+      fetchCart();
+    }
   };
 
   const decreaseQty = async (product: CartItem) => {
-    setIsUpdating(true);
     if (!token) return;
     if (product.quantity <= 1) return removeItem(product.id, product.quantity);
 
@@ -156,14 +166,19 @@ export default function CheckoutPage() {
           : item,
       ),
     );
-    await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/cart/${product.id}?quantity=1`,
-      {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      },
-    );
-    setIsUpdating(false);
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/cart/${product.id}?quantity=1`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      if (!res.ok) fetchCart();
+    } catch (err) {
+      fetchCart();
+    }
   };
 
   const removeItem = async (productId: number, quantity: number) => {
@@ -293,7 +308,6 @@ export default function CheckoutPage() {
                         <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 rounded-lg p-0.5 border border-neutral-200 dark:border-neutral-700">
                           <button
                             onClick={() => decreaseQty(item)}
-                            disabled={isUpdating}
                             className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-neutral-700 hover:shadow-sm transition-all text-spc-grey dark:text-neutral-200 font-black text-sm"
                           >
                             -
@@ -303,7 +317,6 @@ export default function CheckoutPage() {
                           </span>
                           <button
                             onClick={() => increaseQty(item)}
-                            disabled={isUpdating}
                             className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-neutral-700 hover:shadow-sm transition-all text-spc-grey dark:text-neutral-200 font-black text-sm"
                           >
                             +
