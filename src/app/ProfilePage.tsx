@@ -309,6 +309,9 @@ export default function ProfilePage() {
         return;
       }
       authContext?.updateUser(data);
+      setStats((prev) =>
+        prev ? { ...prev, name: editName, email: editEmail } : null,
+      );
       setIsEditing(false);
     } catch (err) {
       setUpdateError("Server error.");
