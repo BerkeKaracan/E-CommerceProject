@@ -250,7 +250,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000", "https://e-commerce-project-market.vercel.app"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"]
