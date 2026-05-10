@@ -750,8 +750,7 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div className="flex flex-col items-center md:items-start text-center md:text-left flex-1 min-w-0 w-full pt-1">
-              {/* Name (Beautiful Font/Tight Tracking) */}
-              <h1 className="text-2xl md:text-3xl font-black text-spc-grey dark:text-white tracking-tighter leading-none mb-2 truncate max-w-full pr-16 md:pr-0">
+              <h1 className="text-2xl md:text-3xl font-black text-spc-grey dark:text-white tracking-tighter leading-none mb-2 truncate max-w-full">
                 {stats?.name || "Loading..."}
               </h1>
 
