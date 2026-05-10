@@ -185,27 +185,6 @@ export default function Home() {
           };
         });
 
-        // --- Aggressive Premium Custom Sorting Algorithm ---
-        if (sortOption === "Recommended") {
-          formattedData.sort((a, b) => {
-            const getScore = (item: Product) => {
-              let score = 0;
-              // 1. MASSIVE BOOST for Non-Discounted Items: Keeps premium untouched items at the very top
-              if (item.is_discounted !== 1) score += 0;
-
-              // 2. High Sales Count is highly rewarded
-              score += (item.sales_count || 0) * 100;
-
-              // 3. Price acts as a tie-breaker (higher price = more premium)
-              score += item.original_price || item.price;
-
-              return score;
-            };
-
-            return getScore(b) - getScore(a); // Descending order
-          });
-        }
-
         if (page === 1) {
           setProducts(formattedData);
         } else {

@@ -344,7 +344,12 @@ def get_products(
     elif sort == "Price: High to Low":
         query = query.order_by(desc(DBProduct.price), desc(DBProduct.id))
     else: 
-        query = query.order_by(desc(DBProduct.is_discounted), desc(DBProduct.sales_count), desc(DBProduct.id))
+        query = query.order_by(
+            asc(DBProduct.is_discounted), 
+            desc(DBProduct.sales_count), 
+            desc(DBProduct.price),
+            desc(DBProduct.id)
+        )
 
     products = query.offset(offset).limit(limit).all()
     return products
