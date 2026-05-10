@@ -2447,11 +2447,10 @@ export default function ProfilePage() {
             className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-in fade-in duration-200"
             onClick={() => setIsAllOpen(false)}
           />
-          <div className="relative bg-white dark:bg-neutral-950 w-full min-h-[50vh] flex flex-col rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-full duration-300 pb-8">
+          <div className="relative bg-white dark:bg-neutral-950 w-full min-h-[55vh] max-h-[85vh] flex flex-col rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-full duration-300 pb-12">
             <div className="w-12 h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-full mx-auto mb-4 shrink-0" />
             <div className="relative mb-6 shrink-0">
               <input
-                autoFocus
                 type="text"
                 value={profileSearch}
                 onChange={(e) => setProfileSearch(e.target.value)}
