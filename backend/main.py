@@ -350,10 +350,10 @@ def get_products(
         query = query.order_by(desc(DBProduct.price), desc(DBProduct.id))
     else: 
         ranking_score = (
-            (DBProduct.sales_count * 10) +   
-            DBProduct.view_count +            
-            (DBProduct.is_discounted * 50) +
-            DBProduct.discount_rate        
+            (func.coalesce(DBProduct.sales_count, 0) * 10) +   
+            func.coalesce(DBProduct.view_count, 0) +            
+            (func.coalesce(DBProduct.is_discounted, 0) * 50) +
+            func.coalesce(DBProduct.discount_rate, 0)
         )
         
         query = query.order_by(

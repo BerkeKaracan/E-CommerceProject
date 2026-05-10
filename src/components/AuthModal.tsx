@@ -16,6 +16,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [requires2FA, setRequires2FA] = useState(false);
   const [tempUserId, setTempUserId] = useState<number | null>(null);
   const [twoFaCode, setTwoFaCode] = useState("");
@@ -39,6 +40,11 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
     if (password.length < 6) {
       setError("Password must be at least 6 characters long.");
+      return;
+    }
+
+    if (!isLogin && password !== confirmPassword) {
+      setError("Passwords do not match.");
       return;
     }
 
@@ -70,6 +76,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         setResetMessage("Account created successfully! Now you can sign in.");
         setIsLogin(true);
         setPassword("");
+        setConfirmPassword("");
         setTimeout(() => setResetMessage(null), 2000);
       } catch (err) {
         console.error("Server Connection Error:", err);
@@ -440,6 +447,21 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 />
               </div>
 
+              {!isLogin && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-spc-grey dark:text-neutral-300 uppercase tracking-widest pl-1 transition-colors">
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100/50 dark:hover:bg-neutral-700/50 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm text-spc-grey dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-btn-green dark:focus:border-btn-green focus:ring-1 focus:ring-btn-green transition-all"
+                  />
+                </div>
+              )}
+
               <button
                 type="submit"
                 className="w-full bg-spc-grey dark:bg-neutral-800 hover:bg-btn-green dark:hover:bg-btn-green text-white font-black uppercase tracking-wide text-sm rounded-xl py-3.5 mt-2 transition-all duration-300 shadow-md hover:shadow-lg active:scale-[0.98]"
@@ -460,6 +482,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   onClick={() => {
                     setIsLogin(!isLogin);
                     setError(null);
+                    setConfirmPassword("");
                   }}
                   className="text-btn-green font-bold hover:text-category-blue dark:hover:text-white transition-colors underline decoration-2 underline-offset-4"
                 >
