@@ -18,7 +18,6 @@ import {
   SignOutIcon,
   UserIcon,
   ErrorIcon,
-  LoadMoreIcon,
   EmptyCartIcon,
   RefreshIcon,
 } from "@/components/Icons";
@@ -812,7 +811,6 @@ export default function Home() {
                     className="bg-white dark:bg-neutral-900 border-2 border-neutral-200 dark:border-neutral-700 text-spc-grey dark:text-neutral-200 px-10 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:border-btn-green dark:hover:border-btn-green hover:text-btn-green dark:hover:text-btn-green transition-all active:scale-95 shadow-sm group flex items-center gap-2 disabled:opacity-50"
                   >
                     {isLoading ? "Loading..." : "Load More Products"}
-                    <LoadMoreIcon className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
                   </button>
                 </div>
               )}

@@ -198,27 +198,6 @@ export const ErrorIcon = ({ className = "w-8 h-8", ...props }: IconProps) => (
   </svg>
 );
 
-export const LoadMoreIcon = ({
-  className = "w-4 h-4",
-  ...props
-}: IconProps) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    strokeWidth={3}
-    stroke="currentColor"
-    className={className}
-    {...props}
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-    />
-  </svg>
-);
-
 export const EmptyCartIcon = ({
   className = "w-12 h-12",
   ...props
