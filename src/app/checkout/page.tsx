@@ -30,6 +30,8 @@ export default function CheckoutPage() {
   const token = authContext?.token;
   const router = useRouter();
 
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -122,6 +124,7 @@ export default function CheckoutPage() {
   };
 
   const increaseQty = async (product: CartItem) => {
+    setIsUpdating(true);
     if (!token) return;
     setCart(
       cart.map((item) =>
@@ -138,9 +141,11 @@ export default function CheckoutPage() {
       },
       body: JSON.stringify({ product_id: product.id, quantity: 1 }),
     });
+    setIsUpdating(false);
   };
 
   const decreaseQty = async (product: CartItem) => {
+    setIsUpdating(true);
     if (!token) return;
     if (product.quantity <= 1) return removeItem(product.id, product.quantity);
 
@@ -158,6 +163,7 @@ export default function CheckoutPage() {
         headers: { Authorization: `Bearer ${token}` },
       },
     );
+    setIsUpdating(false);
   };
 
   const removeItem = async (productId: number, quantity: number) => {
@@ -173,6 +179,12 @@ export default function CheckoutPage() {
   };
 
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const [cardData, setCardData] = useState({
+    number: "",
+    expiry: "",
+    cvc: "",
+  });
 
   const handleCheckout = async () => {
     setIsProcessing(true);
@@ -196,7 +208,7 @@ export default function CheckoutPage() {
         setToastMessage(data.message);
         setTimeout(() => router.push("/profile"), 2000);
       } else {
-        setToastMessage((data.detail || "Checkout failed"));
+        setToastMessage(data.detail || "Checkout failed");
         setTimeout(() => setToastMessage(null), 2200);
       }
     } catch (err) {
@@ -281,6 +293,7 @@ export default function CheckoutPage() {
                         <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 rounded-lg p-0.5 border border-neutral-200 dark:border-neutral-700">
                           <button
                             onClick={() => decreaseQty(item)}
+                            disabled={isUpdating}
                             className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-neutral-700 hover:shadow-sm transition-all text-spc-grey dark:text-neutral-200 font-black text-sm"
                           >
                             -
@@ -290,6 +303,7 @@ export default function CheckoutPage() {
                           </span>
                           <button
                             onClick={() => increaseQty(item)}
+                            disabled={isUpdating}
                             className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-neutral-700 hover:shadow-sm transition-all text-spc-grey dark:text-neutral-200 font-black text-sm"
                           >
                             +
@@ -427,35 +441,111 @@ export default function CheckoutPage() {
                   +{Math.floor(totalCost / 10)} PTS
                 </span>
               </div>
-              <div className="space-y-3 mb-8 opacity-50 pointer-events-none">
-                <input
-                  type="text"
-                  placeholder="Card Number"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-lg px-4 py-3 text-sm text-spc-grey dark:text-neutral-300 placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
-                  disabled
-                />
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    placeholder="MM/YY"
-                    className="w-full bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-lg px-4 py-3 text-sm text-spc-grey dark:text-neutral-300 placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
-                    disabled
-                  />
-                  <input
-                    type="text"
-                    placeholder="CVC"
-                    className="w-full bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-lg px-4 py-3 text-sm text-spc-grey dark:text-neutral-300 placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
-                    disabled
-                  />
+              <div className="mb-6 p-4 bg-btn-green/5 border border-btn-green/20 rounded-2xl flex items-start gap-3">
+                <div className="bg-btn-green text-white p-1 rounded-full shrink-0 mt-0.5">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="w-3 h-3"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <p className="text-[13px] font-bold text-btn-green/80 leading-relaxed">
+                  TEST ENVIRONMENT ACTIVE: You can enter any 16-digit number to
+                  simulate a transaction. No real charges will occur.
+                </p>
+              </div>
+
+              <div className="space-y-4 mb-8">
+                <div className="group/input">
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] text-neutral-400 mb-2 block ml-1">
+                    Card Number
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="4242 4242 4242 4242"
+                      value={cardData.number}
+                      onChange={(e) =>
+                        setCardData({
+                          ...cardData,
+                          number: e.target.value
+                            .replace(/\D/g, "")
+                            .substring(0, 16),
+                        })
+                      }
+                      className="w-full bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-lg px-4 py-3 text-sm font-bold text-spc-grey dark:text-white outline-none focus:border-btn-green transition-all tracking-widest"
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-50">
+                      <div className="w-4 h-4 bg-red-500 rounded-full mix-blend-multiply dark:mix-blend-screen"></div>
+                      <div className="w-4 h-4 bg-yellow-500 rounded-full mix-blend-multiply dark:mix-blend-screen -ml-2"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="group/input">
+                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-neutral-400 mb-2 block ml-1">
+                      Expiry Date
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="MM/YY"
+                      value={cardData.expiry}
+                      onChange={(e) =>
+                        setCardData({
+                          ...cardData,
+                          expiry: e.target.value.substring(0, 5),
+                        })
+                      }
+                      className="w-full bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-lg px-4 py-3 text-sm font-bold text-spc-grey dark:text-white outline-none focus:border-btn-green transition-all"
+                    />
+                  </div>
+                  <div className="group/input">
+                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-neutral-400 mb-2 block ml-1">
+                      CVC
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="***"
+                      value={cardData.cvc}
+                      onChange={(e) =>
+                        setCardData({
+                          ...cardData,
+                          cvc: e.target.value
+                            .replace(/\D/g, "")
+                            .substring(0, 3),
+                        })
+                      }
+                      className="w-full bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-lg px-4 py-3 text-sm font-bold text-spc-grey dark:text-white outline-none focus:border-btn-green transition-all tracking-widest"
+                    />
+                  </div>
                 </div>
               </div>
 
               <button
                 onClick={handleCheckout}
-                disabled={cart.length === 0 || isProcessing}
-                className="w-full bg-btn-green text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg hover:bg-green-600 transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                disabled={
+                  cart.length === 0 ||
+                  isProcessing ||
+                  cardData.number.length < 16
+                }
+                className="w-full bg-btn-green text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg hover:bg-green-600 transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 flex justify-center items-center gap-2"
               >
-                {isProcessing ? "Processing..." : "Complete Order"}
+                {isProcessing ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Processing...
+                  </>
+                ) : (
+                  "Complete Test Order"
+                )}
               </button>
             </div>
           </div>
