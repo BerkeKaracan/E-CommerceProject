@@ -61,7 +61,6 @@ export default function ProductClient({
   const authContext = useContext(AuthContext);
   const token = authContext?.token;
 
-  // Kritik: isLoading false başlar çünkü initialProduct zaten elimizde[cite: 11]
   const [product, setProduct] = useState<ApiProduct | null>(initialProduct);
   const [relatedProducts, setRelatedProducts] = useState<ApiProduct[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -181,8 +180,6 @@ export default function ProductClient({
 
   useEffect(() => {
     if (!id || !product) return;
-
-    // Sadece benzer ürünleri çekiyoruz, ana ürünü tekrar çekmiyoruz[cite: 11]
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
       .then((r) => r.json())
       .then((allProducts: ApiProduct[]) => {
@@ -436,7 +433,6 @@ export default function ProductClient({
           </div>
         </div>
 
-        {/* YORUMLAR (REVIEWS) BÖLÜMÜ */}
         <div className="mt-16 border-t border-neutral-100 dark:border-neutral-800 pt-16 transition-colors">
           <h2 className="text-2xl font-black text-spc-grey dark:text-white mb-8 tracking-tighter transition-colors">
             Customer Reviews ({comments.length})
