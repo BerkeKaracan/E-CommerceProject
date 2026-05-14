@@ -329,6 +329,9 @@ export default function Home() {
 
   return (
     <main className="h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col overflow-hidden select-none transition-colors duration-300">
+      <h1 className="sr-only">
+        Premium Market - High-End E-Commerce & AI Shopping
+      </h1>
       {isSearchFocused && (
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-all duration-300"

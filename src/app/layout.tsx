@@ -10,6 +10,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://berkekaracan-portfolio.vercel.app/"),
   title: {
     default: "Premium Market | High-End E-Commerce",
     template: "%s | Premium Market",
