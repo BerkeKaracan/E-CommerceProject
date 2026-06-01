@@ -6,6 +6,8 @@ import AuthModal from "@/components/AuthModal";
 import { AuthContext } from "@/context/AuthContext";
 import ThemeToggle from "@/components/ThemeToggle";
 import ProductCard from "@/components/ProductCard";
+import ColdStartAlert from "@/components/ColdStartAlert";
+
 import {
   SearchIcon,
   MenuIcon,
@@ -329,6 +331,7 @@ export default function Home() {
 
   return (
     <main className="h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col overflow-hidden select-none transition-colors duration-300">
+      <ColdStartAlert />
       <h1 className="sr-only">
         Premium Market - High-End E-Commerce & AI Shopping
       </h1>
