@@ -53,7 +53,9 @@ export default function ProductCard({ product, children }: ProductCardProps) {
           {product.category}
         </p>
         <h3 className="text-base font-bold text-spc-grey dark:text-neutral-200 mb-3 text-center leading-tight group-hover/link:text-btn-green transition-colors">
-          {product.name}
+          {product.name.length > 24
+            ? product.name.substring(0, 24) + "..."
+            : product.name}
         </h3>
       </Link>
 
@@ -64,8 +66,8 @@ export default function ProductCard({ product, children }: ProductCardProps) {
           className={`flex flex-col items-center w-full ${children ? "mb-4" : "pt-4 border-t border-dashed border-neutral-200 dark:border-neutral-800"}`}
         >
           {product.is_discounted === 1 ? (
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-bold text-neutral-400 line-through decoration-red-500/50">
+            <div className="flex items-baseline gap-1.5">
+              <p className="text-[11px] font-medium text-neutral-400 line-through decoration-neutral-400">
                 ${originalPrice.toFixed(2)}
               </p>
               <p className="text-lg font-black text-red-500 dark:text-red-400">

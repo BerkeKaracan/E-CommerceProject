@@ -447,7 +447,9 @@ export default function Home() {
                             </div>
                             <div className="flex flex-col">
                               <span className="text-sm font-bold text-spc-grey dark:text-neutral-200 group-hover:text-btn-green transition-colors">
-                                {product.name}
+                                {product.name.length > 24
+                                  ? product.name.substring(0, 24) + "..."
+                                  : product.name}
                               </span>
                               <span className="text-[10px] text-neutral-400 dark:text-neutral-500 uppercase font-medium mt-0.5">
                                 {product.category}
@@ -580,7 +582,7 @@ export default function Home() {
               setPage((prev) => prev + 1);
             }
           }}
-          className="flex-1 h-full overflow-y-auto pr-2 pb-20 lg:pb-4 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-neutral-300 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700 [&::-webkit-scrollbar-thumb]:rounded-full"
+          className="flex-1 h-full overflow-y-auto pr-2 pb-20 lg:pb-4 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-neutral-300/40 hover:[&::-webkit-scrollbar-thumb]:bg-neutral-400/80 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700/40 dark:hover:[&::-webkit-scrollbar-thumb]:bg-neutral-600/80 [&::-webkit-scrollbar-thumb]:rounded-full transition-colors"
         >
           {searchQuery.trim().length === 0 && selectedCategory === "All" && (
             <div className="relative w-full aspect-video md:aspect-21/9 rounded-3xl overflow-hidden mb-8 shrink-0 flex items-center group cursor-pointer shadow-sm border border-transparent dark:border-neutral-800">
@@ -834,13 +836,13 @@ export default function Home() {
           )}
         </div>
 
-        <div className="hidden lg:flex w-full lg:w-[340px] shrink-0 flex-col gap-6 h-full pb-6 lg:pb-0">
+        <div className="hidden lg:flex w-full lg:w-[300px] shrink-0 flex-col gap-6 h-full pb-6 lg:pb-0">
           <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm flex-1 flex flex-col overflow-hidden transition-colors duration-300">
             <h2 className="text-neutral-400 dark:text-neutral-500 font-bold text-center mb-4 shrink-0 tracking-wide text-sm uppercase">
               Cart Preview
             </h2>
 
-            <div className="flex-1 overflow-y-auto pr-2 space-y-6 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-neutral-200 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700 [&::-webkit-scrollbar-thumb]:rounded-full">
+            <div className="flex-1 overflow-y-auto pr-2 pb-4 space-y-6 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-neutral-200/50 hover:[&::-webkit-scrollbar-thumb]:bg-neutral-300/80 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700/50 dark:hover:[&::-webkit-scrollbar-thumb]:bg-neutral-600/80 [&::-webkit-scrollbar-thumb]:rounded-full transition-colors">
               {cart.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-600 space-y-2 py-20">
                   <EmptyCartIcon className="w-12 h-12 opacity-20" />
@@ -854,7 +856,7 @@ export default function Home() {
                   return (
                     <div
                       key={index}
-                      className="flex flex-col items-center border-b border-neutral-100 dark:border-neutral-800 pb-6 last:border-0 last:pb-0 group"
+                      className="flex flex-col items-center border-b border-neutral-100 dark:border-neutral-800 pb-6 last:border-0 last:pb-2 group"
                     >
                       <Link
                         href={`/product/${item.id}`}
@@ -875,7 +877,9 @@ export default function Home() {
                         className="hover:text-btn-green transition-colors"
                       >
                         <h3 className="text-sm font-semibold text-spc-grey dark:text-neutral-200 mb-2 text-center">
-                          {item.name}{" "}
+                          {item.name.length > 24
+                            ? item.name.substring(0, 24) + "..."
+                            : item.name}{" "}
                           <span className="text-neutral-400 dark:text-neutral-500 font-normal ml-1">
                             x{item.quantity}
                           </span>
@@ -883,11 +887,11 @@ export default function Home() {
                       </Link>
                       <div className="flex flex-col items-center mb-4">
                         {item.is_discounted === 1 ? (
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-bold text-neutral-400 line-through decoration-red-500/50">
+                          <div className="flex items-baseline gap-1.5">
+                            <p className="text-[10px] font-medium text-neutral-400 line-through decoration-neutral-400">
                               ${item.original_price?.toFixed(2)}
                             </p>
-                            <p className="text-lg font-black text-red-500 dark:text-red-400">
+                            <p className="text-base font-black text-red-500 dark:text-red-400">
                               ${item.price.toFixed(2)}
                             </p>
                           </div>
