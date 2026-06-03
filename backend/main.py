@@ -482,7 +482,7 @@ def get_cart(db: Session = Depends(get_db), current_user: DBUser = Depends(get_c
 
 @app.post("/api/cart")
 def add_to_cart(item: CartItemAdd, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
-    product = db.query(DBProduct).filter(DBProduct.id == item.product_id).first()
+    product = db.query(DBProduct).filter(DBProduct.id == item.product_id).with_for_update().first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
@@ -572,10 +572,12 @@ def process_checkout(req: CheckoutRequest, db: Session = Depends(get_db), curren
     db.flush() 
 
     for item in cart_items:
-        product = db.query(DBProduct).filter(DBProduct.id == item.product_id).first()
+        product = db.query(DBProduct).filter(DBProduct.id == item.product_id).with_for_update().first()
+        
         if product:
             if product.stock < item.quantity:
                 raise HTTPException(status_code=400, detail=f"Stock out for {product.name}. Someone just bought the last piece!")
+            
             product.stock -= item.quantity
             product.sales_count += item.quantity
             
