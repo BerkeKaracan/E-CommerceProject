@@ -1,7 +1,8 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import AuthModal from "@/components/AuthModal";
 import { AuthContext } from "@/context/AuthContext";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -53,26 +54,18 @@ export default function Home() {
   const token = authContext?.token;
   const logout = authContext?.logout;
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  const [categories, setCategories] = useState<string[]>([]);
   const [cart, setCart] = useState<Product[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [sortOption, setSortOption] = useState("Recommended");
   const [priceFilter, setPriceFilter] = useState("All Prices");
-
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
-
-  const [fetchError, setFetchError] = useState(false);
-
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
 
   const [shopSelections, setShopSelections] = useState<Record<number, number>>(
     {},
@@ -86,17 +79,17 @@ export default function Home() {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
+  // Fetch Categories
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`)
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) {
-          setCategories(data);
-        }
+        if (Array.isArray(data)) setCategories(data);
       })
       .catch((err) => console.error("Category fetch error:", err));
   }, []);
 
+  // Fetch Cart
   useEffect(() => {
     const fetchCart = () => {
       if (token) {
@@ -117,9 +110,7 @@ export default function Home() {
               setCart(formattedCart);
             }
           })
-          .catch((err) => {
-            console.error("Cart fetching error (Focus):", err);
-          });
+          .catch((err) => console.error("Cart fetching error:", err));
       } else {
         setCart([]);
       }
@@ -130,6 +121,7 @@ export default function Home() {
     return () => window.removeEventListener("focus", fetchCart);
   }, [token]);
 
+  // Search Debounce
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -137,8 +129,8 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Main Fetch Operation with Auto-Retry Logic
-  useEffect(() => {
+  // --- REACT QUERY FETCH LOGIC ---
+  const fetchProducts = async ({ pageParam = 1 }) => {
     const params = new URLSearchParams();
     if (selectedCategory !== "All") params.append("category", selectedCategory);
     if (debouncedSearchQuery.trim())
@@ -147,76 +139,78 @@ export default function Home() {
       params.append("price_filter", priceFilter);
     params.append("sort", sortOption);
     params.append("limit", "12");
-    params.append("offset", ((page - 1) * 12).toString());
+    params.append("offset", ((pageParam - 1) * 12).toString());
 
-    let isMounted = true;
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/products?${params.toString()}`,
+    );
+    if (!res.ok) throw new Error("Network response was not ok");
+    return res.json();
+  };
 
-    const fetchProducts = async (retryCount = 0) => {
-      if (page === 1) setFetchError(false);
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: [
+      "products",
+      debouncedSearchQuery,
+      selectedCategory,
+      priceFilter,
+      sortOption,
+    ],
+    queryFn: fetchProducts,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage && lastPage.length === 12
+        ? allPages.length + 1
+        : undefined;
+    },
+  });
 
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/products?${params.toString()}`,
-        );
+  const products =
+    data?.pages.flatMap((pageData) => {
+      if (!Array.isArray(pageData)) return [];
+      return pageData.map((p: ApiProduct) => {
+        const finalPrice =
+          p.is_discounted === 1 && p.discount_rate
+            ? p.price * (1 - p.discount_rate / 100)
+            : p.price;
 
-        if (!res.ok) throw new Error("Network response was not ok");
+        return {
+          ...p,
+          original_price: p.price,
+          price: finalPrice,
+          quantity: 1,
+        };
+      });
+    }) || [];
 
-        const data: ApiProduct[] = await res.json();
-
-        if (!isMounted) return;
-
-        if (!Array.isArray(data)) {
-          if (page === 1) setProducts([]);
-          setHasMore(false);
-          setIsLoading(false);
-          return;
-        }
-
-        const formattedData: Product[] = data.map((p) => {
-          const finalPrice =
-            p.is_discounted === 1 && p.discount_rate
-              ? p.price * (1 - p.discount_rate / 100)
-              : p.price;
-
-          return {
-            ...p,
-            original_price: p.price,
-            price: finalPrice,
-            quantity: 1,
-          };
-        });
-
-        if (page === 1) {
-          setProducts(formattedData);
-        } else {
-          setProducts((prev) => [...prev, ...formattedData]);
-        }
-
-        if (data.length < 12) setHasMore(false);
-        setIsLoading(false);
-        setFetchError(false);
-      } catch (err) {
-        console.error("Data fetching error:", err);
-        if (retryCount < 2) {
-          console.log(`Retrying fetch... Attempt ${retryCount + 1}`);
-          setTimeout(() => {
-            if (isMounted) fetchProducts(retryCount + 1);
-          }, 1500);
-        } else {
-          if (isMounted) {
-            setIsLoading(false);
-            if (page === 1) setFetchError(true);
+  // --- SCROLL RESTORATION ---
+  useEffect(() => {
+    if (status === "success" && scrollContainerRef.current) {
+      const savedScroll = sessionStorage.getItem("market_home_scroll");
+      if (savedScroll) {
+        setTimeout(() => {
+          if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = parseInt(savedScroll, 10);
           }
-        }
+        }, 50);
       }
-    };
+    }
+  }, [status]);
 
-    fetchProducts();
+  // Handle Resets on Navigation or Search
+  const resetScroll = () => {
+    sessionStorage.setItem("market_home_scroll", "0");
+    if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
+  };
 
-    return () => {
-      isMounted = false;
-    };
-  }, [debouncedSearchQuery, selectedCategory, priceFilter, sortOption, page]);
+  // --------------------------------
 
   const handleShopSelect = (productId: number, val: number) => {
     setShopSelections({ ...shopSelections, [productId]: val });
@@ -356,9 +350,7 @@ export default function Home() {
                 onClick={() => {
                   setSearchQuery("");
                   setSelectedCategory("All");
-                  setPage(1);
-                  setHasMore(true);
-                  setIsLoading(true);
+                  resetScroll();
                 }}
                 className="text-2xl font-black tracking-tighter text-btn-green"
               >
@@ -373,16 +365,18 @@ export default function Home() {
             </div>
 
             <div
-              className={`hidden md:block flex-1 w-full px-2 lg:px-8 transition-all duration-500 ease-out ${isSearchFocused ? "max-w-none relative z-50" : "max-w-4xl relative z-10"}`}
+              className={`hidden md:block flex-1 w-full px-2 lg:px-8 transition-all duration-500 ease-out ${
+                isSearchFocused
+                  ? "max-w-none relative z-50"
+                  : "max-w-4xl relative z-10"
+              }`}
             >
               <div className="relative w-full flex items-center bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus-within:border-btn-green dark:focus-within:border-btn-green focus-within:ring-2 focus-within:ring-btn-green shadow-sm transition-all overflow-hidden h-12">
                 <select
                   value={selectedCategory}
                   onChange={(e) => {
                     setSelectedCategory(e.target.value);
-                    setPage(1);
-                    setHasMore(true);
-                    setIsLoading(true);
+                    resetScroll();
                   }}
                   className="h-full max-w-[120px] lg:max-w-[180px] truncate shrink-0 bg-neutral-50/50 dark:bg-neutral-800 border-none text-sm font-bold text-spc-grey dark:text-neutral-200 outline-none cursor-pointer pl-4 pr-8 focus:ring-0 appearance-none hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors capitalize"
                 >
@@ -402,9 +396,7 @@ export default function Home() {
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
-                    setPage(1);
-                    setHasMore(true);
-                    setIsLoading(true);
+                    resetScroll();
                   }}
                   onFocus={() => setIsSearchFocused(true)}
                   onKeyDown={handleKeyDown}
@@ -463,8 +455,8 @@ export default function Home() {
                             </span>
                             <button
                               onClick={(e) => {
-                                e.preventDefault(); // Prevents the Link from triggering
-                                e.stopPropagation(); // Stops the click from reaching the Link
+                                e.preventDefault();
+                                e.stopPropagation();
                                 addToCart(product, 1);
                                 setIsSearchFocused(false);
                                 setSearchQuery("");
@@ -502,7 +494,11 @@ export default function Home() {
             </div>
 
             <div
-              className={`items-center gap-1.5 sm:gap-4 shrink-0 ${isSearchFocused ? "hidden" : "flex animate-in fade-in duration-300"}`}
+              className={`items-center gap-1.5 sm:gap-4 shrink-0 ${
+                isSearchFocused
+                  ? "hidden"
+                  : "flex animate-in fade-in duration-300"
+              }`}
             >
               <Link
                 href="/tracking"
@@ -573,14 +569,20 @@ export default function Home() {
 
       <div className="flex-1 max-w-[1440px] mx-auto w-full px-3 md:px-6 lg:px-4 py-6 flex flex-col lg:flex-row gap-6 lg:gap-8 overflow-hidden">
         <div
+          ref={scrollContainerRef}
           onScroll={(e) => {
             const bottom =
               e.currentTarget.scrollHeight - e.currentTarget.scrollTop <=
               e.currentTarget.clientHeight + 150;
-            if (bottom && hasMore && !isLoading) {
-              setIsLoading(true);
-              setPage((prev) => prev + 1);
+
+            if (bottom && hasNextPage && !isFetchingNextPage) {
+              fetchNextPage();
             }
+
+            sessionStorage.setItem(
+              "market_home_scroll",
+              e.currentTarget.scrollTop.toString(),
+            );
           }}
           className="flex-1 h-full overflow-y-auto pr-2 pb-20 lg:pb-4 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-neutral-300/40 hover:[&::-webkit-scrollbar-thumb]:bg-neutral-400/80 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700/40 dark:hover:[&::-webkit-scrollbar-thumb]:bg-neutral-600/80 [&::-webkit-scrollbar-thumb]:rounded-full transition-colors"
         >
@@ -632,9 +634,7 @@ export default function Home() {
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
-                    setPage(1);
-                    setHasMore(true);
-                    setIsLoading(true);
+                    resetScroll();
                   }}
                   className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 focus:border-btn-green dark:focus:border-btn-green rounded-xl px-4 py-2.5 text-xs font-bold text-spc-grey dark:text-neutral-200 outline-none transition-all shadow-sm"
                 />
@@ -662,7 +662,11 @@ export default function Home() {
                     </span>
                   </button>
                   <div
-                    className={`absolute right-0 top-full mt-2 w-44 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-xl shadow-xl transition-all p-2 flex flex-col gap-1 ${isFilterOpen ? "opacity-100 visible" : "opacity-0 invisible lg:group-hover/filter:opacity-100 lg:group-hover/filter:visible"}`}
+                    className={`absolute right-0 top-full mt-2 w-44 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-xl shadow-xl transition-all p-2 flex flex-col gap-1 ${
+                      isFilterOpen
+                        ? "opacity-100 visible"
+                        : "opacity-0 invisible lg:group-hover/filter:opacity-100 lg:group-hover/filter:visible"
+                    }`}
                   >
                     {[
                       "All Prices",
@@ -676,11 +680,13 @@ export default function Home() {
                         onClick={() => {
                           setPriceFilter(pf);
                           setIsFilterOpen(false);
-                          setPage(1);
-                          setHasMore(true);
-                          setIsLoading(true);
+                          resetScroll();
                         }}
-                        className={`text-left px-3 py-2 text-[10px] font-bold rounded-md transition-colors ${priceFilter === pf ? "bg-btn-green/10 text-btn-green" : "text-spc-grey dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
+                        className={`text-left px-3 py-2 text-[10px] font-bold rounded-md transition-colors ${
+                          priceFilter === pf
+                            ? "bg-btn-green/10 text-btn-green"
+                            : "text-spc-grey dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                        }`}
                       >
                         {pf}
                       </button>
@@ -700,7 +706,11 @@ export default function Home() {
                     Sort
                   </button>
                   <div
-                    className={`absolute right-0 top-full mt-2 w-44 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-xl shadow-xl transition-all p-2 flex flex-col gap-1 ${isSortOpen ? "opacity-100 visible" : "opacity-0 invisible lg:group-hover/sort:opacity-100 lg:group-hover/sort:visible"}`}
+                    className={`absolute right-0 top-full mt-2 w-44 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-xl shadow-xl transition-all p-2 flex flex-col gap-1 ${
+                      isSortOpen
+                        ? "opacity-100 visible"
+                        : "opacity-0 invisible lg:group-hover/sort:opacity-100 lg:group-hover/sort:visible"
+                    }`}
                   >
                     {[
                       "Recommended",
@@ -712,11 +722,13 @@ export default function Home() {
                         onClick={() => {
                           setSortOption(opt);
                           setIsSortOpen(false);
-                          setPage(1);
-                          setHasMore(true);
-                          setIsLoading(true);
+                          resetScroll();
                         }}
-                        className={`text-left px-3 py-2 text-[10px] font-bold rounded-md transition-colors ${sortOption === opt ? "bg-btn-green/10 text-btn-green" : "text-spc-grey dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
+                        className={`text-left px-3 py-2 text-[10px] font-bold rounded-md transition-colors ${
+                          sortOption === opt
+                            ? "bg-btn-green/10 text-btn-green"
+                            : "text-spc-grey dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                        }`}
                       >
                         {opt}
                       </button>
@@ -727,7 +739,7 @@ export default function Home() {
             </div>
           </div>
 
-          {fetchError ? (
+          {status === "error" ? (
             <div className="w-full flex flex-col items-center justify-center py-20 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl shadow-sm">
               <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
                 <ErrorIcon className="w-8 h-8 text-red-500" />
@@ -740,18 +752,14 @@ export default function Home() {
                 your connection and try again.
               </p>
               <button
-                onClick={() => {
-                  setIsLoading(true);
-                  setFetchError(false);
-                  setPage(1);
-                }}
+                onClick={() => refetch()}
                 className="bg-black dark:bg-neutral-800 hover:bg-btn-green dark:hover:bg-btn-green text-white px-8 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-md flex items-center gap-2"
               >
                 <RefreshIcon className="w-4 h-4" />
                 Try Again
               </button>
             </div>
-          ) : isLoading && page === 1 ? (
+          ) : status === "pending" ? (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4">
               {Array.from({ length: 12 }).map((_, n) => (
                 <div
@@ -818,17 +826,14 @@ export default function Home() {
                 })}
               </div>
 
-              {hasMore && products.length >= 12 && (
+              {hasNextPage && products.length >= 12 && (
                 <div className="w-full flex justify-center mt-12 mb-8">
                   <button
-                    onClick={() => {
-                      setIsLoading(true);
-                      setPage((prev) => prev + 1);
-                    }}
-                    disabled={isLoading}
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
                     className="bg-white dark:bg-neutral-900 border-2 border-neutral-200 dark:border-neutral-700 text-spc-grey dark:text-neutral-200 px-10 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:border-btn-green dark:hover:border-btn-green hover:text-btn-green dark:hover:text-btn-green transition-all active:scale-95 shadow-sm group flex items-center gap-2 disabled:opacity-50"
                   >
-                    {isLoading ? "Loading..." : "Load More Products"}
+                    {isFetchingNextPage ? "Loading..." : "Load More Products"}
                   </button>
                 </div>
               )}
