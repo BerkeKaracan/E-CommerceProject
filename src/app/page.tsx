@@ -8,6 +8,7 @@ import { AuthContext } from "@/context/AuthContext";
 import ThemeToggle from "@/components/ThemeToggle";
 import ProductCard from "@/components/ProductCard";
 import ColdStartAlert from "@/components/ColdStartAlert";
+import toast from "react-hot-toast";
 
 import {
   SearchIcon,
@@ -17,7 +18,6 @@ import {
   PlusIcon,
   FilterIcon,
   SortIcon,
-  CheckIcon,
   SignOutIcon,
   UserIcon,
   ErrorIcon,
@@ -58,7 +58,6 @@ export default function Home() {
 
   const [categories, setCategories] = useState<string[]>([]);
   const [cart, setCart] = useState<Product[]>([]);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -258,8 +257,7 @@ export default function Home() {
         );
       }
 
-      setToastMessage(`Added ${amount}x ${product.name} to cart!`);
-      setTimeout(() => setToastMessage(null), 2200);
+      toast.success(`Added ${amount}x ${product.name} to cart!`);
     } catch (error) {
       console.error("Add to cart error:", error);
       setCart(previousCart);
@@ -268,8 +266,7 @@ export default function Home() {
         error instanceof Error
           ? error.message
           : "Not enough stock or server error.";
-      setToastMessage(errorMessage);
-      setTimeout(() => setToastMessage(null), 2200);
+      toast.error(errorMessage);
     }
   };
 
@@ -287,8 +284,10 @@ export default function Home() {
             : item,
         ),
       );
+      toast.success("Item quantity updated");
     } else {
       setCart(cart.filter((item) => item.id !== productId));
+      toast.success("Item removed from cart");
     }
 
     try {
@@ -304,8 +303,7 @@ export default function Home() {
     } catch (error) {
       console.error("Remove from cart error:", error);
       setCart(previousCart);
-      setToastMessage("Sync failed. Reverting cart...");
-      setTimeout(() => setToastMessage(null), 2200);
+      toast.error("Sync failed. Reverting cart...");
     }
   };
 
@@ -527,8 +525,7 @@ export default function Home() {
                   <button
                     onClick={() => {
                       if (logout) logout();
-                      setToastMessage("Logged out successfully!");
-                      setTimeout(() => setToastMessage(null), 2200);
+                      toast.success("Logged out successfully!");
                     }}
                     className="text-[10px] sm:text-xs font-black text-red-500 hover:text-red-600 transition-colors uppercase tracking-wider shrink-0 p-1 sm:p-0 flex items-center gap-1"
                   >
@@ -539,7 +536,7 @@ export default function Home() {
               ) : (
                 <button
                   onClick={() => setIsAuthOpen(true)}
-                  className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition-colors focus:outline-none"
+                  className="p-2 hover:bg-neutral-100 dark:bg-neutral-800 rounded-xl transition-colors focus:outline-none"
                 >
                   <UserIcon className="w-8 h-8 text-spc-grey dark:text-neutral-200" />
                 </button>
@@ -990,14 +987,6 @@ export default function Home() {
         </div>
       </div>
 
-      {toastMessage && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 dark:bg-emerald-700 text-white px-6 py-4 rounded-xl shadow-[0_10px_40px_-10px_rgba(4,120,87,0.5)] font-bold text-sm animate-in fade-in slide-in-from-bottom-8 flex items-center gap-3 whitespace-nowrap transition-colors">
-          <div className="bg-white/20 rounded-full p-1 shrink-0">
-            <CheckIcon className="w-4 h-4 text-white" />
-          </div>
-          {toastMessage}
-        </div>
-      )}
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
 
       {isMenuOpen && (
@@ -1077,8 +1066,7 @@ export default function Home() {
                     onClick={() => {
                       setIsMenuOpen(false);
                       if (logout) logout();
-                      setToastMessage("Logged out successfully!");
-                      setTimeout(() => setToastMessage(null), 2200);
+                      toast.success("Logged out successfully!");
                     }}
                     className="text-left px-3 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors flex items-center gap-3 mt-1"
                   >
