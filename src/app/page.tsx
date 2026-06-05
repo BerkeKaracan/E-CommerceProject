@@ -8,7 +8,7 @@ import { AuthContext } from "@/context/AuthContext";
 import ThemeToggle from "@/components/ThemeToggle";
 import ProductCard from "@/components/ProductCard";
 import ColdStartAlert from "@/components/ColdStartAlert";
-import toast from "react-hot-toast";
+import toast from "react-hot-toast"; // PROFESYONEL TOAST
 
 import {
   SearchIcon,
@@ -78,10 +78,8 @@ export default function Home() {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const isAnyOverlayOpen = isMenuOpen || isSearchFocused || isAuthOpen;
-
   useEffect(() => {
-    if (isAnyOverlayOpen) {
+    if (isMenuOpen || isSearchFocused || isAuthOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -89,7 +87,7 @@ export default function Home() {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isAnyOverlayOpen]);
+  }, [isMenuOpen, isSearchFocused, isAuthOpen]);
 
   // Fetch Categories
   useEffect(() => {
@@ -222,8 +220,6 @@ export default function Home() {
     if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
   };
 
-  // --------------------------------
-
   const handleShopSelect = (productId: number, val: number) => {
     setShopSelections({ ...shopSelections, [productId]: val });
   };
@@ -342,7 +338,7 @@ export default function Home() {
       </h1>
       {isSearchFocused && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-all duration-300 touch-none"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-all duration-300"
           onClick={() => setIsSearchFocused(false)}
         />
       )}
@@ -352,9 +348,9 @@ export default function Home() {
             <div className="flex items-center gap-2 sm:gap-6 shrink-0">
               <button
                 onClick={() => setIsMenuOpen(true)}
-                className="p-2 -ml-2 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-300 dark:focus:ring-neutral-700"
+                className="p-2 -ml-2 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-neutral-300 dark:focus:ring-neutral-700 active:scale-95 group"
               >
-                <MenuIcon className="w-6 h-6 text-spc-grey dark:text-neutral-200" />
+                <MenuIcon className="w-6 h-6 text-spc-grey dark:text-neutral-200 group-hover:scale-110 transition-transform duration-300" />
               </button>
               <Link
                 href="/"
@@ -417,12 +413,12 @@ export default function Home() {
                   onClick={() => setIsSearchFocused(false)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 dark:text-neutral-500 hover:text-btn-green transition-colors"
                 >
-                  <SearchIcon className="w-4 h-4" />
+                  <SearchIcon className="w-5 h-5" />
                 </button>
               </div>
 
               {isSearchFocused && searchQuery.length > 0 && (
-                <div className="absolute top-full left-2 lg:left-8 right-2 lg:right-8 mt-2 bg-white dark:bg-neutral-900 rounded-xl shadow-2xl border border-neutral-100 dark:border-neutral-800 overflow-hidden flex flex-col py-3 animate-in fade-in slide-in-from-top-2 overscroll-contain">
+                <div className="absolute top-full left-2 lg:left-8 right-2 lg:right-8 mt-2 bg-white dark:bg-neutral-900 rounded-xl shadow-2xl border border-neutral-100 dark:border-neutral-800 overflow-hidden flex flex-col py-3 animate-in fade-in slide-in-from-top-2">
                   <div className="px-5 py-2 text-[10px] font-black text-neutral-400 uppercase tracking-widest border-b border-neutral-100 dark:border-neutral-800 mb-2">
                     Top Results
                   </div>
@@ -594,11 +590,7 @@ export default function Home() {
               e.currentTarget.scrollTop.toString(),
             );
           }}
-          className={`flex-1 h-full pr-2 pb-20 lg:pb-4 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-neutral-300/40 hover:[&::-webkit-scrollbar-thumb]:bg-neutral-400/80 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700/40 dark:hover:[&::-webkit-scrollbar-thumb]:bg-neutral-600/80 [&::-webkit-scrollbar-thumb]:rounded-full transition-colors ${
-            isAnyOverlayOpen
-              ? "overflow-hidden touch-none pointer-events-none"
-              : "overflow-y-auto"
-          }`}
+          className="flex-1 h-full overflow-y-auto pr-2 pb-20 lg:pb-4 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-neutral-300/40 hover:[&::-webkit-scrollbar-thumb]:bg-neutral-400/80 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700/40 dark:hover:[&::-webkit-scrollbar-thumb]:bg-neutral-600/80 [&::-webkit-scrollbar-thumb]:rounded-full transition-colors"
         >
           {searchQuery.trim().length === 0 && selectedCategory === "All" && (
             <div className="relative w-full aspect-video md:aspect-21/9 rounded-3xl overflow-hidden mb-8 shrink-0 flex items-center group cursor-pointer shadow-sm border border-transparent dark:border-neutral-800">
@@ -861,13 +853,7 @@ export default function Home() {
               Cart Preview
             </h2>
 
-            <div
-              className={`flex-1 pr-2 pb-4 space-y-6 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-neutral-200/50 hover:[&::-webkit-scrollbar-thumb]:bg-neutral-300/80 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700/50 dark:hover:[&::-webkit-scrollbar-thumb]:bg-neutral-600/80 [&::-webkit-scrollbar-thumb]:rounded-full transition-colors ${
-                isAnyOverlayOpen
-                  ? "overflow-hidden touch-none pointer-events-none"
-                  : "overflow-y-auto"
-              }`}
-            >
+            <div className="flex-1 overflow-y-auto pr-2 pb-4 space-y-6 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-neutral-200/50 hover:[&::-webkit-scrollbar-thumb]:bg-neutral-300/80 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700/50 dark:hover:[&::-webkit-scrollbar-thumb]:bg-neutral-600/80 [&::-webkit-scrollbar-thumb]:rounded-full transition-colors">
               {cart.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-600 space-y-2 py-20">
                   <EmptyCartIcon className="w-12 h-12 opacity-20" />
@@ -1015,7 +1001,7 @@ export default function Home() {
       {isMenuOpen && (
         <div className="fixed inset-0 z-50 flex">
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity animate-in fade-in duration-300 touch-none"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity animate-in fade-in duration-300"
             onClick={() => setIsMenuOpen(false)}
           />
           <div className="relative w-[85%] max-w-[320px] bg-white dark:bg-neutral-950 h-full shadow-2xl flex flex-col animate-in slide-in-from-left duration-300 z-50">
@@ -1025,12 +1011,12 @@ export default function Home() {
               </span>
               <button
                 onClick={() => setIsMenuOpen(false)}
-                className="p-2 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-full text-spc-grey dark:text-neutral-200 transition-colors"
+                className="p-2 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-full text-spc-grey dark:text-neutral-200 transition-all duration-300 hover:rotate-90 hover:scale-110 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 active:scale-95"
               >
                 <CloseIcon className="w-5 h-5" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto overscroll-contain py-5 px-5 flex flex-col gap-8">
+            <div className="flex-1 overflow-y-auto py-5 px-5 flex flex-col gap-8">
               {!user ? (
                 <button
                   onClick={() => {
