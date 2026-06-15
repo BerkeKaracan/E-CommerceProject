@@ -39,9 +39,9 @@ Base = declarative_base()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # --- 2. SETTINGS ---
-SECRET_KEY = "market-super-secret-key" 
+SECRET_KEY = os.getenv("SECRET_KEY", "fallback-development-secret-key")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
 
 # --- 3. DATABASE MODELS ---
 class DBProduct(Base):
