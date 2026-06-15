@@ -472,12 +472,18 @@ def update_profile(user_update: UserUpdate, db: Session = Depends(get_db), curre
 
 @app.get("/api/cart")
 def get_cart(db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
-    cart_items = db.query(DBCartItem).filter(DBCartItem.user_id == current_user.id).all()
+    cart_data = db.query(DBCartItem, DBProduct).join(
+        DBProduct, DBCartItem.product_id == DBProduct.id
+    ).filter(DBCartItem.user_id == current_user.id).all()
+    
     result = []
-    for item in cart_items:
-        product = db.query(DBProduct).filter(DBProduct.id == item.product_id).first()
-        if product:
-            result.append({"id": item.id, "product_id": item.product_id, "quantity": item.quantity, "product": product})
+    for item, product in cart_data:
+        result.append({
+            "id": item.id, 
+            "product_id": item.product_id, 
+            "quantity": item.quantity, 
+            "product": product
+        })
     return result
 
 @app.post("/api/cart")
@@ -724,11 +730,18 @@ def fix_database(db: Session = Depends(get_db)):
 
 @app.get("/api/products/{product_id}/comments")
 def get_comments(product_id: int, db: Session = Depends(get_db)):
-    comments = db.query(DBComment).filter(DBComment.product_id == product_id).order_by(DBComment.created_at.desc()).all()
+    comments_data = db.query(DBComment, DBUser.name).outerjoin(
+        DBUser, DBComment.user_id == DBUser.id
+    ).filter(DBComment.product_id == product_id).order_by(DBComment.created_at.desc()).all()
+    
     result = []
-    for c in comments:
-        user = db.query(DBUser).filter(DBUser.id == c.user_id).first()
-        result.append({"id": c.id, "user_name": user.name if user else "Anonymous", "text": c.text, "created_at": c.created_at})
+    for c, user_name in comments_data:
+        result.append({
+            "id": c.id, 
+            "user_name": user_name if user_name else "Anonymous", 
+            "text": c.text, 
+            "created_at": c.created_at
+        })
     return result
 
 @app.post("/api/comments")
@@ -741,22 +754,38 @@ def add_comment(comment: CommentAdd, db: Session = Depends(get_db), current_user
 
 @app.get("/api/me/comments")
 def get_my_comments(db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
-    comments = db.query(DBComment).filter(DBComment.user_id == current_user.id).order_by(DBComment.created_at.desc()).all()
+    comments_data = db.query(DBComment, DBProduct).join(
+        DBProduct, DBComment.product_id == DBProduct.id
+    ).filter(DBComment.user_id == current_user.id).order_by(DBComment.created_at.desc()).all()
+    
     result = []
-    for c in comments:
-        product = db.query(DBProduct).filter(DBProduct.id == c.product_id).first()
-        if product:
-            result.append({"id": c.id, "product_id": product.id, "product_name": product.name, "product_image": product.image, "text": c.text, "created_at": c.created_at})
+    for c, product in comments_data:
+        result.append({
+            "id": c.id, 
+            "product_id": product.id, 
+            "product_name": product.name, 
+            "product_image": product.image, 
+            "text": c.text, 
+            "created_at": c.created_at
+        })
     return result
 
 @app.get("/api/me/saved")
 def get_saved_items(db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
-    saved = db.query(DBSavedItem).filter(DBSavedItem.user_id == current_user.id).order_by(DBSavedItem.created_at.desc()).all()
+    saved_data = db.query(DBSavedItem, DBProduct).join(
+        DBProduct, DBSavedItem.product_id == DBProduct.id
+    ).filter(DBSavedItem.user_id == current_user.id).order_by(DBSavedItem.created_at.desc()).all()
+    
     result = []
-    for s in saved:
-        product = db.query(DBProduct).filter(DBProduct.id == s.product_id).first()
-        if product:
-            result.append({"id": s.id, "product_id": product.id, "product_name": product.name, "product_image": product.image, "product_price": product.price, "saved_at": s.created_at})
+    for s, product in saved_data:
+        result.append({
+            "id": s.id, 
+            "product_id": product.id, 
+            "product_name": product.name, 
+            "product_image": product.image, 
+            "product_price": product.price, 
+            "saved_at": s.created_at
+        })
     return result
 
 @app.post("/api/saved/{product_id}")
