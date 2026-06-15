@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { AuthContext } from "@/context/AuthContext";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -66,6 +66,20 @@ export default function ProductClient({
   const [isLoading, setIsLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const showToast = (message: string, durationInMs?: number) => {
+    setToastMessage(message);
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+    if (durationInMs) {
+      toastTimerRef.current = setTimeout(() => {
+        setToastMessage(null);
+      }, durationInMs);
+    }
+  };
 
   const [comments, setComments] = useState<
     { id: number; user_name: string; text: string; created_at: string }[]
@@ -239,7 +253,7 @@ export default function ProductClient({
     }
     if (!product) return;
 
-    setToastMessage(`Adding ${quantity}x ${product.name} to cart...`);
+    showToast(`Adding ${quantity}x ${product.name} to cart...`);
 
     try {
       const response = await fetch(
@@ -258,15 +272,13 @@ export default function ProductClient({
         const errorData = await response.json();
         throw new Error(errorData.detail || "Failed to add to cart");
       }
-      setToastMessage(`Added ${quantity}x ${product.name} to cart!`);
-      setTimeout(() => setToastMessage(null), 2200);
+
+      showToast(`Added ${quantity}x ${product.name} to cart!`, 2200);
     } catch (error: unknown) {
       console.error("Cart error:", error);
       const errorMessage =
         error instanceof Error ? error.message : "An unexpected error occurred";
-
-      setToastMessage(`Error: ${errorMessage}`);
-      setTimeout(() => setToastMessage(null), 3000);
+      showToast(`Error: ${errorMessage}`, 3500);
     }
   };
 
