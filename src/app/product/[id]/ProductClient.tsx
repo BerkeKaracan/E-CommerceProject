@@ -239,20 +239,34 @@ export default function ProductClient({
     }
     if (!product) return;
 
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ product_id: product.id, quantity: quantity }),
-      });
+    setToastMessage(`Adding ${quantity}x ${product.name} to cart...`);
 
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/cart`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ product_id: product.id, quantity: quantity }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to add to cart");
+      }
       setToastMessage(`Added ${quantity}x ${product.name} to cart!`);
       setTimeout(() => setToastMessage(null), 2200);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Cart error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+
+      setToastMessage(`Error: ${errorMessage}`);
+      setTimeout(() => setToastMessage(null), 3000);
     }
   };
 
