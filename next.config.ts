@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
@@ -8,7 +9,35 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "cdn.dummyjson.com" },
       { protocol: "https", hostname: "api.qrserver.com" },
       { protocol: "https", hostname: "picsum.photos" },
+      { protocol: "https", hostname: "i.imgur.com" },
     ],
+  },
+
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.unsplash.com https://images.asos-media.com https://cdn.dummyjson.com https://api.qrserver.com https://picsum.photos; connect-src 'self' https://*;",
+          },
+        ],
+      },
+    ];
   },
 };
 

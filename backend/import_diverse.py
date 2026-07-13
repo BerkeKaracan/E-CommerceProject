@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Canlı veritabanına asla dokunmaması ve çökmemesi için güvenlik eklendi
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./market.db")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -20,7 +19,6 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def import_diverse_products():
-    # 1. ADIM: TABLOLARI YARAT (İşte eksik olan ve çökmeye sebep olan kısım)
     print("SYSTEM: Checking and creating database tables...")
     Base.metadata.create_all(bind=engine)
 
@@ -35,7 +33,7 @@ def import_diverse_products():
 
     print("SYSTEM: Fetching 150+ diverse items from DummyJSON...")
     
-    url = "https://dummyjson.com/products?limit=150"
+    url = "https://fakestoreapi.com/products?limit=150"
     response = requests.get(url)
     
     if response.status_code != 200:
