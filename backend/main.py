@@ -841,9 +841,10 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
     user = db.query(DBUser).filter(DBUser.email == request.email).first()
     if user:
         reset_token = f"reset_{user.id}"
-        reset_link = f"https://market-backend-db.onrender.com/reset-password?token={reset_token}"
+        base_url = os.getenv("BASE_URL", "http://localhost:8000")
+        reset_link = f"{base_url}/reset-password?token={reset_token}"
         send_reset_email(user.email, reset_link)
-        
+
     return {"message": "If an account exists, a reset link has been sent."}
 
 @app.post("/api/reset-password")

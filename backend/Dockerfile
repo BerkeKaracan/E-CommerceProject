@@ -29,4 +29,5 @@ EXPOSE 8000
 
 # 7. RUN COMMAND
 # Start the Uvicorn ASGI server
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", $PORT]
+# Use PORT environment variable (Cloud Run sets this automatically)
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]

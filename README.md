@@ -1,89 +1,72 @@
-# 🛍️ Premium Full-Stack E-Commerce Platform
+# E-Commerce Platform
 
-[![Deployed on Vercel](https://img.shields.io/badge/Live_Demo-Vercel-black?logo=vercel&style=for-the-badge)](https://e-commerce-project-market.vercel.app/)
-[![Next.js](https://img.shields.io/badge/Next.js-black?logo=next.js&style=for-the-badge)](#)
-[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white&style=for-the-badge)](#)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?logo=postgresql&logoColor=white&style=for-the-badge)](#)
+## Architecture Overview
 
-A feature-rich, high-performance **Full-Stack** modern e-commerce platform built to demonstrate advanced web development, secure backend architecture, and perfect web vitals.
+This project is a modern, high-performance e-commerce application utilizing a decoupled architecture.
 
-**🔴 Live Demo:** [View the project live on Vercel](https://e-commerce-project-market.vercel.app/)
+- **Frontend:** Next.js (React), deployed on Vercel.
+- **Backend:** FastAPI (Python 3.11), containerized with Docker and deployed on Google Cloud Platform (Cloud Run).
+- **Database:** PostgreSQL, managed via Supabase.
+- **AI Integration:** Google Gemini API for intelligent product recommendations and customer assistance.
 
-⚠️ **Disclaimer:** This is a portfolio project. No real transactions occur, and no real credit card data is processed.
+## Repository Structure
 
-## ✨ Key Features
+The repository is structured into two main directories:
 
-### 🛡️ Secure & Scalable Backend (FastAPI + Python)
+- `/src` & `/public` - Contains the Next.js frontend application.
+- `/backend` - Contains the FastAPI backend application.
 
-- **Advanced Authentication:** Secure JWT-based auth flows with Two-Factor Authentication (2FA) via PyOTP.
-- **Automated Mailing:** Integrated SMTP email delivery (via Mailtrap) with HTML rendering for safe password resets.
-- **Robust Database Management:** SQLAlchemy ORM implementation strictly handling complex relational data (Products, Orders, Users) with PostgreSQL/SQLite compatibility.
-- **Security First:** Strict CORS configurations, protected API endpoints, and SQL injection prevention.
+## Prerequisites
 
-### ⚡ Blazing Fast Frontend (Next.js + Tailwind v4)
+- Node.js (v18 or higher)
+- Python (3.11 or higher)
+- Docker (for local containerized testing)
+- Google Cloud SDK (gcloud CLI)
 
-- **Perfect Core Web Vitals:** Optimized for absolute performance (LCP < 1.3s, 0.00 CLS, ~32ms INP). Zero layout shifts!
-- **Absolute Dark/Light Mode:** Flawless transition across all components, including modals, dropdowns, and loading spinners.
-- **Complex UI/UX Interactions:** Mobile-first architecture featuring custom bottom-sheets, smooth modal exits without scroll-locks, and native-feeling inputs.
-- **Smart Product Discovery:** Real-time client-side search, category filtering, and smart sorting algorithms (coalesce protected).
-- **Dynamic Loyalty Program:** Automated points calculation based on order history. Users can redeem points for functional discount codes.
+## Environment Configuration
 
-## 🛠️ Tech Stack
+### Backend Environment Variables (`/backend/.env`)
 
-**Frontend:**
+Ensure the following variables are configured in your production environment (GCP Cloud Run -> Variables & Secrets):
+DATABASE_URL=postgresql://[user]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
+SECRET_KEY=[your_jwt_secret_key]
+GEMINI_API_KEY=[your_google_gemini_api_key]
+BASE_URL=https://[your-gcp-cloud-run-url]
 
-- Next.js (App Router)
-- React & Context API
-- Tailwind CSS v4
-- TypeScript
+### Frontend Environment Variables (`/.env.local`)
 
-**Backend:**
+NEXT_PUBLIC_API_URL=https://[your-gcp-cloud-run-url]
 
-- FastAPI (Python)
-- SQLAlchemy (ORM)
-- SQLite / PostgreSQL
-- PyOTP (2FA) & JWT (Auth)
-- Mailtrap (SMTP Testing)
+## Local Development Setup
 
-## 🚀 Getting Started
+### Backend Setup
 
-To run this full-stack project locally, follow these steps:
+1. Navigate to the backend directory: `cd backend`
+2. Create a virtual environment: `python -m venv venv`
+3. Activate the virtual environment.
+4. Install dependencies: `pip install -r requirements.txt`
+5. Run the development server: `uvicorn main:app --reload --port 8000`
 
-### 1. Clone the repository
+### Frontend Setup
 
-```bash
-git clone https://github.com/BerkeKaracan/E-CommerceProject.git
-cd E-CommerceProject
-```
+1. Return to the root directory.
+2. Install dependencies: `npm install`
+3. Run the development server: `npm run dev`
+4. Access the application at `http://localhost:3000`.
 
-### 2. Setup the Backend
+## Deployment Guidelines
 
-Navigate to the backend directory, install Python dependencies, and run the FastAPI server:
+### Backend Deployment (Google Cloud Run)
 
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload
-```
+The backend is containerized and hosted on GCP Cloud Run. To deploy a new revision:
 
-_(Backend runs on http://localhost:8000 by default)_
+1. Authenticate with Google Cloud: `gcloud auth login`
+2. Set the project ID: `gcloud config set project [PROJECT_ID]`
+3. Submit the build to Artifact Registry:
+   `gcloud builds submit --tag [REGION]-docker.pkg.dev/[PROJECT_ID]/[REPO_NAME]/backend:latest`
+4. Deploy to Cloud Run:
+   `gcloud run deploy backend --image [REGION]-docker.pkg.dev/[PROJECT_ID]/[REPO_NAME]/backend:latest --region [REGION]`
 
-### 3. Setup the Frontend
+### Frontend Deployment (Vercel)
 
-Open a new terminal, navigate to the project root, install Node dependencies, and start the Next.js server:
-
-```bash
-npm install
-npm run dev
-```
-
-_(Frontend runs on http://localhost:3000)_
-
-## 🎯 Technical Highlights
-
-- **Bulletproof Architecture:** Conquered React hydration issues, strictly managed `useEffect` behaviors, and implemented deep state cleanup mechanisms to prevent ghost-states (e.g., the infamous "gray screen" modal bugs).
-- **Production Ready:** Pre-configured Dockerfiles, Jest testing setup, ESLint strict rules, and responsive design tailored for real-world scenarios.
-
----
-
-_Developed by Berke Karacan_
+The frontend is deployed on Vercel. Pushing to the main branch will automatically trigger a new build. Ensure `NEXT_PUBLIC_API_URL` is updated in the Vercel project settings to point to the active GCP Cloud Run service.
