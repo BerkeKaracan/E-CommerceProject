@@ -73,7 +73,7 @@ export default function TrackingPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background flex flex-col">
+    <main className="bg-background flex flex-col">
       <Navbar />
 
       <div className="flex-1 w-full max-w-3xl mx-auto px-4 py-12 lg:py-20 flex flex-col">

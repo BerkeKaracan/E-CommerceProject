@@ -4,12 +4,51 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FormEvent, useState } from "react";
 import toast from "react-hot-toast";
+import { HELP_PORTAL_URL } from "@/lib/help";
+
+export function HomeFooter() {
+  return (
+    <footer className="shrink-0 bg-white/85 dark:bg-neutral-950/85 backdrop-blur-md border-t border-neutral-200/80 dark:border-neutral-800">
+      <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs font-medium text-neutral-400">
+          © 2026 Market · Portfolio Project
+        </p>
+        <div className="flex items-center gap-5">
+          <a
+            href={HELP_PORTAL_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-neutral-500 dark:text-neutral-400 hover:text-btn-green transition-colors"
+          >
+            Help Center
+          </a>
+          <a
+            href={HELP_PORTAL_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-neutral-500 dark:text-neutral-400 hover:text-btn-green transition-colors"
+          >
+            Returns & Refunds
+          </a>
+          <a
+            href={HELP_PORTAL_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-neutral-500 dark:text-neutral-400 hover:text-btn-green transition-colors"
+          >
+            Contact Us
+          </a>
+        </div>
+      </div>
+    </footer>
+  );
+}
 
 export default function Footer() {
   const pathname = usePathname();
   const [email, setEmail] = useState("");
 
-  if (pathname === "/" || pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/admin") || pathname === "/") {
     return null;
   }
 
@@ -24,7 +63,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-white dark:bg-neutral-950 border-t border-neutral-200 dark:border-neutral-800 pt-16 pb-8">
+    <footer className="shrink-0 bg-white dark:bg-neutral-950 border-t border-neutral-200 dark:border-neutral-800 pt-16 pb-8">
       <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           <div className="flex flex-col gap-6">
@@ -96,28 +135,34 @@ export default function Footer() {
             </h3>
             <ul className="flex flex-col gap-4">
               <li>
-                <Link
-                  href="/support#faq"
+                <a
+                  href={HELP_PORTAL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm font-bold text-neutral-500 dark:text-neutral-400 hover:text-btn-green dark:hover:text-btn-green transition-colors"
                 >
                   Help Center
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
-                  href="/support#returns"
+                <a
+                  href={HELP_PORTAL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm font-bold text-neutral-500 dark:text-neutral-400 hover:text-btn-green dark:hover:text-btn-green transition-colors"
                 >
                   Returns & Refunds
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
-                  href="/support#contact"
+                <a
+                  href={HELP_PORTAL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm font-bold text-neutral-500 dark:text-neutral-400 hover:text-btn-green dark:hover:text-btn-green transition-colors"
                 >
                   Contact Us
-                </Link>
+                </a>
               </li>
             </ul>
           </div>

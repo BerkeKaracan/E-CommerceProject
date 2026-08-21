@@ -26,6 +26,8 @@ import {
 } from "@/components/Icons";
 import type { ApiProduct, CartItemResponse, Product } from "@/types/product";
 import { getPublicApiUrl } from "@/lib/api";
+import { HELP_PORTAL_URL } from "@/lib/help";
+import { HomeFooter } from "@/components/Footer";
 
 export default function Home() {
   const authContext = useContext(AuthContext);
@@ -1108,28 +1110,37 @@ export default function Home() {
                 </h3>
                 <ul className="flex flex-col gap-4">
                   <li>
-                    <Link
-                      href="/support#faq"
+                    <a
+                      href={HELP_PORTAL_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsMenuOpen(false)}
                       className="text-sm font-bold text-neutral-500 dark:text-neutral-400 hover:text-btn-green dark:hover:text-btn-green transition-colors"
                     >
                       Help Center
-                    </Link>
+                    </a>
                   </li>
                   <li>
-                    <Link
-                      href="/support#returns"
+                    <a
+                      href={HELP_PORTAL_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsMenuOpen(false)}
                       className="text-sm font-bold text-neutral-500 dark:text-neutral-400 hover:text-btn-green dark:hover:text-btn-green transition-colors"
                     >
                       Returns & Refunds
-                    </Link>
+                    </a>
                   </li>
                   <li>
-                    <Link
-                      href="/support#contact"
+                    <a
+                      href={HELP_PORTAL_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsMenuOpen(false)}
                       className="text-sm font-bold text-neutral-500 dark:text-neutral-400 hover:text-btn-green dark:hover:text-btn-green transition-colors"
                     >
                       Contact Us
-                    </Link>
+                    </a>
                   </li>
                 </ul>
               </div>
@@ -1137,6 +1148,7 @@ export default function Home() {
           </div>
         </div>
       )}
+      <HomeFooter />
     </main>
   );
 }

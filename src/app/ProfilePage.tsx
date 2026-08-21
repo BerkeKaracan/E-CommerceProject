@@ -7,6 +7,7 @@ import { AuthContext } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import toast from "react-hot-toast";
 import { QRCodeSVG } from "qrcode.react";
+import { HELP_PORTAL_URL } from "@/lib/help";
 import {
   SearchIcon,
   CheckIcon,
@@ -665,7 +666,7 @@ export default function ProfilePage() {
     .filter((group) => group.items.length > 0);
 
   return (
-    <div className="w-full min-h-screen bg-background font-sans text-spc-grey dark:text-neutral-200 flex flex-col">
+    <div className="w-full bg-background font-sans text-spc-grey dark:text-neutral-200 flex flex-col">
       <Navbar />
       <div className="max-w-[1200px] mx-auto w-full flex-1 flex flex-col relative px-4 md:px-8 py-6 md:py-8">
         {/* Wireframe Design Custom Header */}
@@ -1429,10 +1430,19 @@ export default function ProfilePage() {
                         Help Center
                       </h2>
                       <p className="text-[10px] font-bold text-neutral-400">
-                        Find answers or reach out to our team
+                        Find answers or reach out on the help board
                       </p>
                     </div>
                   </div>
+
+                  <a
+                    href={HELP_PORTAL_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex w-fit items-center justify-center bg-spc-grey dark:bg-white text-white dark:text-spc-grey px-6 py-3 rounded-full text-xs font-semibold hover:bg-btn-green hover:text-white dark:hover:bg-btn-green dark:hover:text-white transition-colors"
+                  >
+                    Open Help Center
+                  </a>
 
                   <div className="space-y-3">
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-2 ml-1">
@@ -1465,45 +1475,21 @@ export default function ProfilePage() {
                     ))}
                   </div>
 
-                  <div className="bg-neutral-900 dark:bg-neutral-800 p-6 md:p-8 rounded-3xl shadow-xl mt-4 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-btn-green/10 rounded-full -mr-10 -mt-10 blur-2xl pointer-events-none"></div>
-
-                    <h3 className="text-base font-black text-white mb-1 uppercase tracking-tight">
-                      Send us a message
+                  <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 p-6 rounded-2xl mt-4">
+                    <h3 className="text-base font-semibold text-spc-grey dark:text-white mb-1">
+                      Need more help?
                     </h3>
-                    <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-6">
-                      Our team typically responds within 24 hours
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-5">
+                      Submit ideas, votes, and questions on the help board.
                     </p>
-
-                    <form
-                      className="space-y-4"
-                      onSubmit={(e) => e.preventDefault()}
+                    <a
+                      href={HELP_PORTAL_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center bg-btn-green text-white px-6 py-3 rounded-full text-xs font-semibold hover:brightness-110 transition-colors"
                     >
-                      <div>
-                        <label className="text-[9px] font-black uppercase text-neutral-500 tracking-widest ml-1">
-                          Email Address
-                        </label>
-                        <input
-                          type="email"
-                          defaultValue={user?.email}
-                          className="w-full mt-1.5 bg-neutral-800 dark:bg-neutral-950 border border-neutral-700 rounded-xl px-4 py-3 text-sm text-white placeholder:text-neutral-600 outline-none focus:border-btn-green transition-all"
-                          placeholder="your@email.com"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[9px] font-black uppercase text-neutral-500 tracking-widest ml-1">
-                          How can we help?
-                        </label>
-                        <textarea
-                          rows={4}
-                          className="w-full mt-1.5 bg-neutral-800 dark:border-neutral-950 border border-neutral-700 rounded-xl px-4 py-3 text-sm text-white placeholder:text-neutral-600 outline-none focus:border-btn-green transition-all resize-none"
-                          placeholder="Describe your issue..."
-                        />
-                      </div>
-                      <button className="w-full bg-btn-green text-white font-black uppercase text-[10px] tracking-widest py-4 rounded-xl hover:brightness-110 transition-all shadow-lg active:scale-[0.98]">
-                        Send Support Ticket
-                      </button>
-                    </form>
+                      Open Help Center
+                    </a>
                   </div>
                 </div>
               ) : activeTab === "Personal Information" ? (

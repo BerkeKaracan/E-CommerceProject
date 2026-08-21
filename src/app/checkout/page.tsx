@@ -225,7 +225,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-spc-grey dark:text-neutral-200">
+    <div className="bg-background text-spc-grey dark:text-neutral-200">
       <Navbar />
       <div className="max-w-[1000px] mx-auto p-4 md:p-8">
         <h1 className="text-3xl md:text-4xl font-semibold tracking-tight mb-8 text-spc-grey dark:text-white">
