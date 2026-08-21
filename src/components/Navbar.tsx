@@ -19,7 +19,7 @@ export default function Navbar({ showSignIn = true }: NavbarProps) {
 
   return (
     <>
-      <nav className="shrink-0 z-50 bg-neutral-50 dark:bg-neutral-950 w-full shadow-sm border-b border-neutral-200 dark:border-neutral-800 transition-colors duration-300">
+      <nav className="shrink-0 z-50 bg-white/85 dark:bg-neutral-950/85 backdrop-blur-md w-full border-b border-neutral-200/80 dark:border-neutral-800 transition-colors duration-300">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
           <div className="flex items-center justify-between h-20">
             <div className="flex items-center gap-4">
@@ -46,7 +46,7 @@ export default function Navbar({ showSignIn = true }: NavbarProps) {
               </Link>
               <Link
                 href="/"
-                className="text-2xl font-black tracking-tighter text-btn-green"
+                className="text-2xl font-semibold tracking-tight text-btn-green"
               >
                 market
               </Link>

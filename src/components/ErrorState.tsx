@@ -19,7 +19,7 @@ export default function ErrorState({
       <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
         <ErrorIcon className="w-8 h-8 text-red-500" aria-hidden />
       </div>
-      <h3 className="text-lg font-black text-spc-grey dark:text-white uppercase tracking-widest mb-2">
+      <h3 className="text-lg font-semibold text-spc-grey dark:text-white mb-2">
         {title}
       </h3>
       <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-6 max-w-sm">
@@ -30,7 +30,7 @@ export default function ErrorState({
           <button
             type="button"
             onClick={onRetry}
-            className="bg-black dark:bg-neutral-800 hover:bg-btn-green dark:hover:bg-btn-green text-white px-8 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-md flex items-center gap-2"
+            className="bg-spc-grey dark:bg-neutral-800 hover:bg-btn-green dark:hover:bg-btn-green text-white px-8 py-3 rounded-full text-xs font-semibold uppercase tracking-[0.14em] transition-colors flex items-center gap-2"
           >
             <RefreshIcon className="w-4 h-4" aria-hidden />
             Try Again

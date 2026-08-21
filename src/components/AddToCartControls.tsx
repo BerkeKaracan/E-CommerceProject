@@ -42,20 +42,20 @@ export default function AddToCartControls({ product }: { product: ApiProduct }) 
 
   return (
     <>
-      <div className="flex items-center justify-between w-full mb-3 bg-neutral-100/50 dark:bg-neutral-800 rounded-xl p-1 border border-transparent dark:border-neutral-700 shadow-sm">
+      <div className="flex items-center justify-between w-full mb-3 bg-neutral-50 dark:bg-neutral-800 rounded-full p-1">
         <button
           type="button"
           aria-label="Decrease quantity"
           onClick={() => setQty((n) => Math.max(1, n - 1))}
-          className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-colors"
         >
           <MinusIcon className="w-4 h-4" aria-hidden />
         </button>
         <div className="flex flex-col items-center justify-center">
-          <span className="text-xs font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest leading-none mb-0.5">
+          <span className="text-[11px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-[0.14em] leading-none mb-0.5">
             Qty
           </span>
-          <span className="text-sm font-bold text-spc-grey dark:text-white leading-none">
+          <span className="text-sm font-semibold text-spc-grey dark:text-white leading-none">
             {qty}
           </span>
         </div>
@@ -63,7 +63,7 @@ export default function AddToCartControls({ product }: { product: ApiProduct }) 
           type="button"
           aria-label="Increase quantity"
           onClick={() => setQty((n) => n + 1)}
-          className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-colors"
         >
           <PlusIcon className="w-4 h-4" aria-hidden />
         </button>
@@ -72,7 +72,7 @@ export default function AddToCartControls({ product }: { product: ApiProduct }) 
         type="button"
         onClick={addToCart}
         disabled={isAdding}
-        className="w-full bg-btn-green text-white py-2.5 rounded-xl text-sm font-bold hover:brightness-95 transition-all active:scale-95 shadow-sm hover:shadow-md disabled:opacity-60"
+        className="w-full bg-btn-green text-white py-2.5 rounded-full text-sm font-semibold hover:brightness-95 transition-all disabled:opacity-60"
       >
         {isAdding ? "Adding..." : `Add to Cart +${qty}`}
       </button>

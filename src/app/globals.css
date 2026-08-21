@@ -2,23 +2,23 @@
 @variant dark (&:is(.dark *));
 
 :root {
-  --background: #ffffff;
+  --background: #f4f3f1;
   --foreground: #171717;
 
-  --category-blue: #3e5168;
+  --category-blue: #5b6570;
   --neutral-50: #f9fafb;
   --gray-700: #404040;
   --neutral-200: #e5e7eb;
   --neutral-400: #9ca3af;
   --warning-400: #fbbf24;
   --btn-green: #10b981;
-  --spc-grey: #2b2828;
+  --spc-grey: #1f1e1d;
   --destructive-600: #dc2626;
   --checkout-amber: #ffc107;
 }
 
 .dark {
-  --background: #0a0a0a;
+  --background: #0b0b0b;
   --foreground: #ededed;
 }
 
@@ -39,7 +39,16 @@
   --color-checkout-amber: var(--checkout-amber);
 }
 
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--btn-green) 28%, transparent);
 }

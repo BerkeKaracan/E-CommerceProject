@@ -38,22 +38,18 @@ export default function SalePage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col transition-colors duration-300">
+    <main className="min-h-screen bg-background flex flex-col">
       <Navbar />
 
       <div className="flex-1 max-w-[1440px] mx-auto w-full px-4 lg:px-8 py-10 flex flex-col">
-        <div className="flex flex-col items-center justify-center mb-16 animate-in slide-in-from-bottom-4 duration-500">
-          <div className="bg-black dark:bg-white text-white dark:text-black px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-3 shadow-lg">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 dark:bg-red-500"></span>
-            </span>
+        <div className="flex flex-col items-center justify-center mb-12">
+          <div className="bg-spc-grey dark:bg-white text-white dark:text-spc-grey px-4 py-1.5 rounded-full text-xs font-medium uppercase tracking-[0.14em] mb-5">
             Limited Time Offers
           </div>
-          <h1 className="text-5xl md:text-7xl font-black text-spc-grey dark:text-white tracking-tighter text-center transition-colors mb-4">
+          <h1 className="text-4xl md:text-6xl font-semibold text-spc-grey dark:text-white tracking-tight text-center mb-3">
             Flash Sale
           </h1>
-          <p className="text-neutral-500 dark:text-neutral-400 font-medium text-center max-w-lg transition-colors text-sm md:text-base leading-relaxed">
+          <p className="text-neutral-500 dark:text-neutral-400 text-center max-w-lg text-sm md:text-base leading-relaxed">
             Curated premium items at exceptional value. Discover our exclusive
             collection with up to 50% off. Once they are gone, they are gone.
           </p>

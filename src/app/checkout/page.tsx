@@ -218,23 +218,23 @@ export default function CheckoutPage() {
 
   if (isLoading) {
     return (
-      <div className="h-screen flex justify-center items-center bg-neutral-50 dark:bg-neutral-950 transition-colors duration-300">
+      <div className="h-screen flex justify-center items-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-[3px] border-neutral-200 dark:border-neutral-800 border-t-btn-green dark:border-t-btn-green"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-spc-grey dark:text-neutral-200 transition-colors duration-300">
+    <div className="min-h-screen bg-background text-spc-grey dark:text-neutral-200">
       <Navbar />
       <div className="max-w-[1000px] mx-auto p-4 md:p-8">
-        <h1 className="text-3xl md:text-4xl font-black tracking-tighter mb-8 text-spc-grey dark:text-white">
+        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight mb-8 text-spc-grey dark:text-white">
           Secure Checkout
         </h1>
 
         <div className="flex flex-col md:flex-row gap-8">
-          <div className="flex-[2] bg-white dark:bg-neutral-900 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm transition-colors">
-            <h2 className="text-lg font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-6">
+          <div className="flex-[2] bg-white dark:bg-neutral-900 rounded-2xl p-6 border border-neutral-200/80 dark:border-neutral-800">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-400 dark:text-neutral-500 mb-6">
               Order Summary
             </h2>
 
@@ -245,7 +245,7 @@ export default function CheckoutPage() {
                 action={
                   <Link
                     href="/"
-                    className="bg-btn-green text-white px-8 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest"
+                    className="bg-btn-green text-white px-8 py-3 rounded-full text-xs font-semibold uppercase tracking-[0.14em]"
                   >
                     Continue shopping
                   </Link>
@@ -274,19 +274,19 @@ export default function CheckoutPage() {
                         {item.name}
                       </h3>
                       <div className="flex items-center gap-4 mt-3">
-                        <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 rounded-lg p-0.5 border border-neutral-200 dark:border-neutral-700">
+                        <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 rounded-full p-0.5 border border-neutral-200 dark:border-neutral-700">
                           <button
                             onClick={() => decreaseQty(item)}
-                            className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-neutral-700 hover:shadow-sm transition-all text-spc-grey dark:text-neutral-200 font-black text-sm"
+                            className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white dark:hover:bg-neutral-700 transition-all text-spc-grey dark:text-neutral-200 text-sm"
                           >
                             -
                           </button>
-                          <span className="w-8 text-center text-xs font-black text-spc-grey dark:text-neutral-200 select-none">
+                          <span className="w-8 text-center text-xs font-semibold text-spc-grey dark:text-neutral-200 select-none">
                             {item.quantity}
                           </span>
                           <button
                             onClick={() => increaseQty(item)}
-                            className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-neutral-700 hover:shadow-sm transition-all text-spc-grey dark:text-neutral-200 font-black text-sm"
+                            className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white dark:hover:bg-neutral-700 transition-all text-spc-grey dark:text-neutral-200 text-sm"
                           >
                             +
                           </button>
@@ -316,7 +316,7 @@ export default function CheckoutPage() {
                     </div>
                     <div className="text-right shrink-0 max-w-[30%]">
                       <p
-                        className="text-base md:text-lg font-black text-spc-grey dark:text-white truncate"
+                        className="text-base md:text-lg font-semibold text-spc-grey dark:text-white truncate"
                         title={`$${(item.price * item.quantity).toFixed(2)}`}
                       >
                         ${(item.price * item.quantity).toFixed(2)}
@@ -328,8 +328,8 @@ export default function CheckoutPage() {
             )}
           </div>
           <div className="flex-1">
-            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm sticky top-8 transition-colors">
-              <h2 className="text-lg font-black text-spc-grey dark:text-white mb-6">
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 border border-neutral-200/80 dark:border-neutral-800 sticky top-8">
+              <h2 className="text-lg font-semibold text-spc-grey dark:text-white mb-6">
                 Payment Details
               </h2>
 
@@ -343,14 +343,14 @@ export default function CheckoutPage() {
                       setPromoInput(e.target.value.toUpperCase())
                     }
                     placeholder="REWARD-XXXXXX"
-                    className="flex-1 bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-lg px-4 py-3 text-sm font-black text-spc-grey dark:text-neutral-200 outline-none focus:border-btn-green transition-colors uppercase tracking-widest"
+                    className="flex-1 bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 rounded-full px-4 py-3 text-sm font-semibold text-spc-grey dark:text-neutral-200 outline-none focus:border-btn-green uppercase tracking-widest"
                   />
                   <button
                     onClick={handleApplyPromo}
                     disabled={
                       isApplying || !promoInput.trim() || cart.length === 0
                     }
-                    className="bg-black dark:bg-neutral-800 hover:bg-neutral-700 text-white disabled:bg-neutral-200 dark:disabled:bg-neutral-800/50 disabled:text-neutral-400 px-6 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-sm active:scale-95"
+                    className="bg-spc-grey dark:bg-neutral-800 hover:bg-neutral-700 text-white disabled:bg-neutral-200 dark:disabled:bg-neutral-800/50 disabled:text-neutral-400 px-6 py-3 rounded-full text-xs font-semibold uppercase tracking-[0.14em] transition-colors"
                   >
                     {isApplying ? "..." : "Add"}
                   </button>
@@ -398,7 +398,7 @@ export default function CheckoutPage() {
                   </div>
                 )}
                 <div className="w-full h-px bg-neutral-200 dark:bg-neutral-800 my-2" />
-                <div className="flex justify-between items-end gap-4 text-xl font-black text-spc-grey dark:text-white">
+                <div className="flex justify-between items-end gap-4 text-xl font-semibold text-spc-grey dark:text-white">
                   <span className="shrink-0">Total</span>
                   <span className="text-btn-green text-right break-all leading-tight max-w-[65%]">
                     ${totalCost.toFixed(2)}
@@ -518,7 +518,7 @@ export default function CheckoutPage() {
                   isProcessing ||
                   cardData.number.length < 16
                 }
-                className="w-full bg-btn-green text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg hover:bg-green-600 transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 flex justify-center items-center gap-2"
+                className="w-full bg-checkout-amber hover:brightness-95 text-spc-grey py-4 rounded-full font-semibold text-sm uppercase tracking-[0.14em] transition-all disabled:opacity-50 flex justify-center items-center gap-2"
               >
                 {isProcessing ? (
                   <>

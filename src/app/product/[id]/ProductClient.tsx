@@ -265,7 +265,7 @@ export default function ProductClient({
 
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950 transition-colors duration-300">
+      <div className="h-screen flex items-center justify-center bg-background">
         <div className="w-12 h-12 border-4 border-neutral-200/50 dark:border-neutral-800 border-t-btn-green dark:border-t-btn-green rounded-full animate-spin"></div>
       </div>
     );
@@ -274,25 +274,25 @@ export default function ProductClient({
   if (!product) return null;
 
   return (
-    <main className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col pb-20 transition-colors duration-300">
+    <main className="min-h-screen bg-background flex flex-col pb-20">
       <Navbar />
 
       <div className="flex-1 max-w-[1200px] mx-auto w-full px-4 lg:px-8 py-8 lg:py-16">
-        <div className="bg-white dark:bg-neutral-900 rounded-4xl shadow-sm border border-neutral-100 dark:border-neutral-800 overflow-hidden flex flex-col lg:flex-row transition-colors duration-300">
-          <div className="w-full lg:w-1/2 bg-neutral-50 dark:bg-neutral-800/50 relative aspect-square lg:aspect-auto lg:min-h-[600px] flex items-center justify-center p-8 group transition-colors">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200/80 dark:border-neutral-800 overflow-hidden flex flex-col lg:flex-row">
+          <div className="w-full lg:w-1/2 bg-neutral-100 dark:bg-neutral-800 relative aspect-square lg:aspect-auto lg:min-h-[600px] overflow-hidden group">
             <Image
               src={product.image}
               alt={product.name}
               fill
-              className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
+              className="object-cover object-center group-hover:scale-[1.03] transition-transform duration-700"
             />
           </div>
 
           <div className="w-full lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center">
-            <p className="text-xs font-black text-category-blue dark:text-neutral-400 uppercase tracking-[0.2em] mb-3 transition-colors">
+            <p className="text-xs font-medium text-category-blue dark:text-neutral-400 uppercase tracking-[0.16em] mb-3">
               {product.category}
             </p>
-            <h1 className="text-3xl lg:text-5xl font-black text-spc-grey dark:text-white tracking-tight mb-4 transition-colors">
+            <h1 className="text-3xl lg:text-5xl font-semibold text-spc-grey dark:text-white tracking-tight mb-4">
               {product.name}
             </h1>
 
@@ -327,7 +327,7 @@ export default function ProductClient({
               );
             })()}
 
-            <p className="text-2xl lg:text-4xl font-black text-btn-green ">
+            <p className="text-2xl lg:text-4xl font-semibold text-spc-grey dark:text-white">
               ${product.price.toFixed(2)}
             </p>
 
@@ -351,15 +351,15 @@ export default function ProductClient({
             </p>
 
             <div className="flex items-center gap-4 mb-6">
-              <div className="bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 flex items-center gap-4 transition-colors">
+              <div className="bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-full px-4 py-3 flex items-center gap-4">
                 <button
                   aria-label="Decrease quantity"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white font-black text-xl transition-colors"
+                  className="text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white text-xl transition-colors"
                 >
                   -
                 </button>
-                <span className="text-sm font-black text-spc-grey dark:text-white w-4 text-center transition-colors">
+                <span className="text-sm font-semibold text-spc-grey dark:text-white w-4 text-center">
                   {quantity}
                 </span>
                 <button
@@ -370,7 +370,7 @@ export default function ProductClient({
                     }
                   }}
                   disabled={(product.stock ?? 50) === 0}
-                  className="text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white font-black text-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white text-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   +
                 </button>
@@ -379,10 +379,10 @@ export default function ProductClient({
               <button
                 onClick={addToCart}
                 disabled={(product.stock ?? 50) === 0}
-                className={`flex-1 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-colors shadow-sm ${
+                className={`flex-1 py-4 rounded-full font-semibold uppercase tracking-[0.14em] text-xs transition-colors ${
                   (product.stock ?? 50) === 0
                     ? "bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 cursor-not-allowed"
-                    : "bg-btn-green hover:bg-green-600 text-white active:scale-95"
+                    : "bg-btn-green hover:bg-green-600 text-white"
                 }`}
               >
                 {(product.stock ?? 50) === 0 ? "Out of Stock" : "Add to Cart"}
@@ -418,7 +418,7 @@ export default function ProductClient({
         </div>
 
         <div className="mt-16 border-t border-neutral-100 dark:border-neutral-800 pt-16 transition-colors">
-          <h2 className="text-2xl font-black text-spc-grey dark:text-white mb-8 tracking-tighter transition-colors">
+          <h2 className="text-2xl font-semibold text-spc-grey dark:text-white mb-8 tracking-tight">
             Customer Reviews ({comments.length})
           </h2>
 
@@ -601,7 +601,7 @@ export default function ProductClient({
 
         {relatedProducts.length > 0 && (
           <div className="mt-20 border-t border-neutral-100 dark:border-neutral-800 pt-16 transition-colors">
-            <h2 className="text-2xl font-black text-spc-grey dark:text-white mb-8 tracking-tighter transition-colors">
+            <h2 className="text-2xl font-semibold text-spc-grey dark:text-white mb-8 tracking-tight">
               You Might Also Like
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -609,23 +609,23 @@ export default function ProductClient({
                 <Link
                   href={`/product/${relProduct.id}`}
                   key={relProduct.id}
-                  className="bg-white dark:bg-neutral-900 border border-neutral-100/60 dark:border-neutral-800/60 rounded-2xl p-4 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] dark:shadow-none hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col group"
+                  className="bg-white dark:bg-neutral-900 border border-neutral-200/70 dark:border-neutral-800 rounded-2xl overflow-hidden flex flex-col group"
                 >
-                  <div className="aspect-3/4 w-full bg-neutral-50/80 dark:bg-neutral-800 rounded-xl mb-4 relative overflow-hidden group-hover:bg-neutral-100 dark:group-hover:bg-neutral-700 transition-colors">
+                  <div className="aspect-3/4 w-full bg-neutral-100 dark:bg-neutral-800 relative overflow-hidden">
                     <Image
                       src={relProduct.image}
                       alt={relProduct.name}
                       fill
-                      className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                      className="object-cover object-center group-hover:scale-[1.03] transition-transform duration-500"
                     />
                   </div>
-                  <p className="text-[10px] text-category-blue dark:text-neutral-400 font-bold uppercase tracking-widest mb-1.5 text-center truncate transition-colors">
+                  <p className="text-[11px] text-category-blue dark:text-neutral-500 font-medium uppercase tracking-[0.14em] mt-3 mb-1 text-center truncate px-3">
                     {relProduct.category}
                   </p>
-                  <h3 className="text-sm font-bold text-spc-grey dark:text-neutral-200 mb-2 text-center leading-tight group-hover:text-btn-green dark:group-hover:text-btn-green transition-colors line-clamp-2">
+                  <h3 className="text-sm font-semibold text-spc-grey dark:text-neutral-200 mb-2 text-center leading-snug group-hover:text-btn-green transition-colors line-clamp-2 px-3">
                     {relProduct.name}
                   </h3>
-                  <p className="text-base font-black text-spc-grey dark:text-white text-center mt-auto transition-colors">
+                  <p className="text-base font-semibold text-spc-grey dark:text-white text-center mt-auto pb-4">
                     ${relProduct.price.toFixed(2)}
                   </p>
                 </Link>

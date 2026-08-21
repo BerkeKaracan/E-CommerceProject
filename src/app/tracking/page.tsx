@@ -73,15 +73,15 @@ export default function TrackingPage() {
   };
 
   return (
-    <main className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col transition-colors duration-300">
+    <main className="min-h-screen bg-background flex flex-col">
       <Navbar />
 
       <div className="flex-1 w-full max-w-3xl mx-auto px-4 py-12 lg:py-20 flex flex-col">
-        <div className="text-center mb-10 animate-in slide-in-from-bottom-4 duration-500">
-          <h1 className="text-4xl font-black text-spc-grey dark:text-white tracking-tighter mb-3 transition-colors">
-            Track Your Order 📦
+        <div className="text-center mb-10">
+          <h1 className="text-4xl font-semibold text-spc-grey dark:text-white tracking-tight mb-3">
+            Track Your Order
           </h1>
-          <p className="text-neutral-400 dark:text-neutral-500 font-medium transition-colors">
+          <p className="text-neutral-500 dark:text-neutral-400">
             Enter your Order ID below to see real-time logistics updates.
           </p>
         </div>
@@ -112,12 +112,12 @@ export default function TrackingPage() {
             value={orderId}
             onChange={(e) => setOrderId(e.target.value)}
             placeholder="e.g. 104"
-            className="flex-1 w-full min-w-0 bg-transparent px-3 md:px-4 py-3 md:py-5 outline-none font-black text-spc-grey dark:text-white text-base md:text-lg placeholder:font-medium placeholder:text-neutral-300 dark:placeholder:text-neutral-600 transition-colors"
+            className="flex-1 w-full min-w-0 bg-transparent px-3 md:px-4 py-3 md:py-5 outline-none font-semibold text-spc-grey dark:text-white text-base md:text-lg placeholder:font-medium placeholder:text-neutral-300 dark:placeholder:text-neutral-600"
           />
           <button
             type="submit"
             disabled={isLoading || !orderId.trim()}
-            className="bg-black dark:bg-neutral-800 hover:bg-neutral-800 dark:hover:bg-neutral-700 disabled:bg-neutral-300 dark:disabled:bg-neutral-800 text-white dark:text-neutral-200 px-4 md:px-8 py-3.5 md:py-4 rounded-xl font-black uppercase tracking-widest text-[10px] md:text-xs transition-all active:scale-95 shrink-0"
+            className="bg-spc-grey dark:bg-neutral-800 hover:bg-btn-green disabled:bg-neutral-300 dark:disabled:bg-neutral-800 text-white px-5 md:px-8 py-3 md:py-3.5 rounded-full font-semibold uppercase tracking-[0.14em] text-[10px] md:text-xs transition-colors shrink-0"
           >
             {isLoading ? "Loading..." : "Track"}
           </button>
@@ -131,7 +131,7 @@ export default function TrackingPage() {
               <button
                 type="button"
                 onClick={() => setIsAuthOpen(true)}
-                className="mt-4 bg-btn-green text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest"
+                className="mt-4 bg-btn-green text-white px-6 py-2.5 rounded-full text-xs font-semibold uppercase tracking-[0.14em]"
               >
                 Sign in
               </button>
@@ -141,18 +141,18 @@ export default function TrackingPage() {
 
         {/* Order Result (Logistics Timeline) */}
         {order && (
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-3xl p-6 md:p-10 shadow-lg dark:shadow-none animate-in fade-in slide-in-from-bottom-8 transition-colors">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-2xl p-6 md:p-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 pb-6 border-b border-neutral-100 dark:border-neutral-800 gap-4 transition-colors">
               <div>
-                <p className="text-xs font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-1 transition-colors">
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-neutral-400 dark:text-neutral-500 mb-1">
                   Order Number
                 </p>
-                <p className="text-2xl font-black text-spc-grey dark:text-white transition-colors">
+                <p className="text-2xl font-semibold text-spc-grey dark:text-white">
                   #{order.id}
                 </p>
               </div>
               <div className="md:text-right">
-                <p className="text-xs font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-1 transition-colors">
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-neutral-400 dark:text-neutral-500 mb-1">
                   Order Date
                 </p>
                 <p className="text-sm font-bold text-spc-grey dark:text-neutral-200 transition-colors">
@@ -244,7 +244,7 @@ export default function TrackingPage() {
                       </div>
                       <div>
                         <h4
-                          className={`font-black transition-colors ${active ? "text-btn-green" : "text-spc-grey dark:text-neutral-200"}`}
+                          className={`font-semibold ${active ? "text-btn-green" : "text-spc-grey dark:text-neutral-200"}`}
                         >
                           {step.title}
                         </h4>
@@ -261,7 +261,7 @@ export default function TrackingPage() {
             </div>
 
             <div className="mt-10 pt-6 border-t border-neutral-100 dark:border-neutral-800">
-              <h4 className="font-black text-xs uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-4 transition-colors">
+              <h4 className="font-semibold text-xs uppercase tracking-[0.14em] text-neutral-400 dark:text-neutral-500 mb-4">
                 Items in this Order
               </h4>
               <div className="space-y-4">
@@ -290,7 +290,7 @@ export default function TrackingPage() {
                         </p>
                       </div>
                     </div>
-                    <span className="text-sm font-black text-spc-grey dark:text-neutral-200">
+                    <span className="text-sm font-semibold text-spc-grey dark:text-neutral-200">
                       ${(item.quantity * item.price).toFixed(2)}
                     </span>
                   </div>

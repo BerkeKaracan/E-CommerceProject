@@ -24,13 +24,13 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-white dark:bg-neutral-950 border-t border-neutral-200 dark:border-neutral-800 pt-16 pb-8 transition-colors duration-300">
+    <footer className="bg-white dark:bg-neutral-950 border-t border-neutral-200 dark:border-neutral-800 pt-16 pb-8">
       <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           <div className="flex flex-col gap-6">
             <Link
               href="/"
-              className="text-3xl font-black tracking-tighter text-btn-green w-fit"
+              className="text-3xl font-semibold tracking-tight text-btn-green w-fit"
             >
               market
             </Link>
@@ -59,7 +59,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-xs font-black uppercase tracking-widest text-spc-grey dark:text-white mb-6 transition-colors">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-spc-grey dark:text-white mb-6">
               Explore
             </h3>
             <ul className="flex flex-col gap-4">
@@ -91,7 +91,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-xs font-black uppercase tracking-widest text-spc-grey dark:text-white mb-6 transition-colors">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-spc-grey dark:text-white mb-6">
               Support
             </h3>
             <ul className="flex flex-col gap-4">
@@ -123,7 +123,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-xs font-black uppercase tracking-widest text-spc-grey dark:text-white mb-6 transition-colors">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-spc-grey dark:text-white mb-6">
               Stay Updated
             </h3>
             <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2 transition-colors">

@@ -40,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${inter.className} flex flex-col min-h-screen bg-background text-foreground dark:bg-neutral-950 dark:text-white transition-colors duration-300`}
+        className={`${inter.variable} ${inter.className} flex flex-col min-h-screen bg-background text-foreground antialiased`}
       >
         <Providers>
           <Analytics />

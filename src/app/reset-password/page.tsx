@@ -71,12 +71,12 @@ function ResetPasswordForm() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center p-6 transition-colors">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="absolute top-6 right-6">
         <ThemeToggle />
       </div>
-      <div className="bg-white dark:bg-neutral-900 p-8 rounded-3xl shadow-xl w-full max-w-md border border-neutral-100 dark:border-neutral-800">
-        <h1 className="text-3xl font-black text-spc-grey dark:text-white tracking-tighter mb-2">
+      <div className="bg-white dark:bg-neutral-900 p-8 rounded-2xl w-full max-w-md border border-neutral-200/80 dark:border-neutral-800">
+        <h1 className="text-3xl font-semibold text-spc-grey dark:text-white tracking-tight mb-2">
           New Password
         </h1>
         <p className="text-neutral-400 dark:text-neutral-500 text-sm font-medium mb-8">
@@ -128,7 +128,7 @@ function ResetPasswordForm() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-spc-grey hover:bg-btn-green text-white font-black uppercase tracking-wide text-sm rounded-xl py-3.5 mt-2 transition-all disabled:opacity-50"
+              className="w-full bg-spc-grey hover:bg-btn-green text-white font-semibold uppercase tracking-[0.14em] text-sm rounded-full py-3.5 mt-2 transition-colors disabled:opacity-50"
             >
               {isSubmitting ? "Updating..." : "Reset Password"}
             </button>
@@ -152,7 +152,7 @@ export default function ResetPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950 text-sm font-bold text-neutral-400">
+        <div className="min-h-screen flex items-center justify-center bg-background text-sm font-medium text-neutral-400">
           Loading...
         </div>
       }

@@ -19,7 +19,7 @@ export default function EmptyState({
       <div className="w-16 h-16 bg-neutral-50 dark:bg-neutral-800 rounded-full flex items-center justify-center mb-4 text-neutral-300 dark:text-neutral-600">
         {icon ?? <EmptyCartIcon className="w-8 h-8" aria-hidden />}
       </div>
-      <h3 className="text-base font-black text-spc-grey dark:text-white uppercase tracking-widest mb-2">
+      <h3 className="text-base font-semibold text-spc-grey dark:text-white mb-2">
         {title}
       </h3>
       {description && (

@@ -329,7 +329,7 @@ export default function Home() {
   };
 
   return (
-    <main className="h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col overflow-hidden transition-colors duration-300">
+    <main className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
       <h1 className="sr-only">
         Premium Market - High-End E-Commerce & AI Shopping
       </h1>
@@ -339,7 +339,7 @@ export default function Home() {
           onClick={() => setIsSearchFocused(false)}
         />
       )}
-      <nav className="shrink-0 z-40 bg-neutral-50 dark:bg-neutral-950 w-full shadow-sm border-b border-neutral-200 dark:border-neutral-800 transition-colors duration-300 select-none">
+      <nav className="shrink-0 z-40 bg-white/85 dark:bg-neutral-950/85 backdrop-blur-md w-full border-b border-neutral-200/80 dark:border-neutral-800 select-none">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-4 lg:px-4">
           <div className="flex items-center justify-between h-20 gap-2 lg:gap-10">
             <div className="flex items-center gap-2 sm:gap-6 shrink-0">
@@ -377,7 +377,7 @@ export default function Home() {
                   : "max-w-4xl relative z-10"
               }`}
             >
-              <div className="relative w-full flex items-center bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus-within:border-btn-green dark:focus-within:border-btn-green focus-within:ring-2 focus-within:ring-btn-green shadow-sm transition-all overflow-hidden h-12">
+              <div className="relative w-full flex items-center bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl focus-within:border-btn-green dark:focus-within:border-btn-green focus-within:ring-2 focus-within:ring-btn-green/30 shadow-sm transition-all overflow-hidden h-12">
                 <select
                   value={selectedCategory}
                   onChange={(e) => {
@@ -419,7 +419,7 @@ export default function Home() {
 
               {isSearchFocused && searchQuery.length > 0 && (
                 <div className="absolute top-full left-2 lg:left-8 right-2 lg:right-8 mt-2 bg-white dark:bg-neutral-900 rounded-xl shadow-2xl border border-neutral-100 dark:border-neutral-800 overflow-hidden flex flex-col py-3 animate-in fade-in slide-in-from-top-2">
-                  <div className="px-5 py-2 text-[10px] font-black text-neutral-400 uppercase tracking-widest border-b border-neutral-100 dark:border-neutral-800 mb-2">
+                  <div className="px-5 py-2 text-xs font-semibold text-neutral-400 uppercase tracking-[0.16em] border-b border-neutral-100 dark:border-neutral-800 mb-2">
                     Top Results
                   </div>
 
@@ -466,7 +466,7 @@ export default function Home() {
                                 setIsSearchFocused(false);
                                 setSearchQuery("");
                               }}
-                              className="opacity-0 group-hover:opacity-100 transition-all bg-btn-green text-white text-[10px] font-bold px-3 py-1.5 rounded-md hover:bg-green-600 active:scale-95 translate-x-2 group-hover:translate-x-0 shadow-sm"
+                              className="opacity-0 group-hover:opacity-100 transition-all bg-btn-green text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-green-600 active:scale-95 translate-x-2 group-hover:translate-x-0"
                             >
                               + ADD
                             </button>
@@ -513,7 +513,7 @@ export default function Home() {
               </Link>
               <ThemeToggle />
               {user ? (
-                <div className="flex items-center gap-2 sm:gap-3 bg-neutral-100 dark:bg-neutral-800 px-2 sm:px-3 py-1.5 rounded-xl shrink-0 border border-transparent dark:border-neutral-700">
+                <div className="flex items-center gap-2 sm:gap-3 bg-neutral-100/80 dark:bg-neutral-800 px-2 sm:px-3 py-1.5 rounded-full shrink-0 border border-neutral-200/60 dark:border-neutral-700">
                   <Link
                     href="/profile"
                     className="cursor-pointer hover:text-btn-green transition-colors truncate text-xs sm:text-sm font-bold text-spc-grey dark:text-neutral-200 hidden sm:block"
@@ -564,7 +564,7 @@ export default function Home() {
                     className="w-8 h-8 dark:invert"
                   />
                 </div>
-                <span className="font-bold text-spc-grey dark:text-neutral-200 group-hover:bg-neutral-200 dark:group-hover:bg-neutral-800 bg-neutral-50 dark:bg-neutral-950 px-1 -ml-3.5 z-10 text-xs sm:text-sm leading-none transition-colors">
+                <span className="font-semibold text-spc-grey dark:text-neutral-200 group-hover:bg-neutral-200 dark:group-hover:bg-neutral-800 bg-transparent px-1 -ml-3.5 z-10 text-xs sm:text-sm leading-none transition-colors">
                   My Cart {totalItems}
                 </span>
               </Link>
@@ -593,29 +593,29 @@ export default function Home() {
           className="flex-1 h-full overflow-y-auto pr-2 pb-20 lg:pb-4 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-neutral-300/40 hover:[&::-webkit-scrollbar-thumb]:bg-neutral-400/80 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700/40 dark:hover:[&::-webkit-scrollbar-thumb]:bg-neutral-600/80 [&::-webkit-scrollbar-thumb]:rounded-full transition-colors"
         >
           {searchQuery.trim().length === 0 && selectedCategory === "All" && (
-            <div className="relative w-full aspect-video md:aspect-21/9 rounded-3xl overflow-hidden mb-8 shrink-0 flex items-center group cursor-pointer shadow-sm border border-transparent dark:border-neutral-800">
+            <div className="relative w-full aspect-video md:aspect-21/9 rounded-2xl overflow-hidden mb-8 shrink-0 flex items-center group">
               <Image
                 src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200&auto=format&fit=crop"
                 alt="Summer Collection 2026"
                 fill
-                className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
+                className="object-cover object-center group-hover:scale-[1.03] transition-transform duration-700"
                 priority
               />
-              <div className="absolute inset-0 bg-linear-to-r from-neutral-900/90 via-neutral-900/50 to-transparent"></div>
+              <div className="absolute inset-0 bg-linear-to-r from-black/80 via-black/40 to-transparent"></div>
               <div className="relative z-10 px-6 md:px-12 max-w-lg">
-                <span className="inline-block py-1 px-3 rounded-full bg-btn-green/20 text-btn-green text-[10px] font-black uppercase tracking-widest mb-3 backdrop-blur-md border border-btn-green/30">
+                <span className="inline-block py-1 px-3 rounded-full bg-white/10 text-white text-[11px] font-semibold uppercase tracking-[0.16em] mb-3 backdrop-blur-sm border border-white/20">
                   Limited Time Offer
                 </span>
-                <h2 className="text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight mb-2 tracking-tight">
+                <h2 className="text-2xl md:text-4xl lg:text-5xl font-semibold text-white leading-[1.1] mb-3 tracking-tight">
                   2026 Exclusive <br className="hidden md:block" /> Collection
                 </h2>
-                <p className="text-neutral-300 text-xs md:text-sm mb-6 font-medium max-w-xs">
+                <p className="text-neutral-200 text-sm mb-6 font-normal max-w-xs leading-relaxed">
                   Discover the new season with up to 50% off on selected premium
                   items. Elevate your style.
                 </p>
                 <Link
                   href="/sale"
-                  className="inline-block bg-white text-spc-grey px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-btn-green hover:text-white transition-colors shadow-lg active:scale-95 text-center"
+                  className="inline-block bg-white text-spc-grey px-6 py-2.5 rounded-full text-xs font-semibold uppercase tracking-[0.14em] hover:bg-btn-green hover:text-white transition-colors text-center"
                 >
                   Shop Now
                 </Link>
@@ -624,7 +624,7 @@ export default function Home() {
           )}
 
           <div className="flex justify-between items-end mb-6 mt-2">
-            <h2 className="text-lg md:text-xl font-black text-spc-grey dark:text-neutral-100 hidden md:block">
+            <h2 className="text-lg md:text-xl font-semibold text-spc-grey dark:text-neutral-100 hidden md:block">
               {searchQuery.trim().length > 0
                 ? `Results for "${searchQuery}"`
                 : selectedCategory === "All"
@@ -661,7 +661,7 @@ export default function Home() {
                     }}
                     aria-label="Filter by price"
                     aria-expanded={isFilterOpen}
-                    className="flex items-center gap-1.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 hover:border-btn-green dark:hover:border-btn-green px-4 py-2 rounded-xl text-[10px] md:text-xs font-black text-spc-grey dark:text-neutral-200 uppercase tracking-widest transition-all shadow-sm active:scale-95"
+                    className="flex items-center gap-1.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 hover:border-btn-green dark:hover:border-btn-green px-4 py-2 rounded-full text-xs font-semibold text-spc-grey dark:text-neutral-200 uppercase tracking-[0.12em] transition-all active:scale-95"
                   >
                     <FilterIcon className="w-4 h-4" />
                     <span>
@@ -710,7 +710,7 @@ export default function Home() {
                     }}
                     aria-label="Sort products"
                     aria-expanded={isSortOpen}
-                    className="flex items-center gap-1.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 hover:border-btn-green dark:hover:border-btn-green px-4 py-2 rounded-xl text-[10px] md:text-xs font-black text-spc-grey dark:text-neutral-200 uppercase tracking-widest transition-all shadow-sm active:scale-95"
+                    className="flex items-center gap-1.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 hover:border-btn-green dark:hover:border-btn-green px-4 py-2 rounded-full text-xs font-semibold text-spc-grey dark:text-neutral-200 uppercase tracking-[0.12em] transition-all active:scale-95"
                   >
                     <SortIcon className="w-4 h-4" />
                     Sort
@@ -781,7 +781,7 @@ export default function Home() {
                   const currentStep = shopSelections[product.id] || 1;
                   return (
                     <ProductCard key={product.id} product={product}>
-                      <div className="flex items-center justify-between w-full mb-3 bg-neutral-100/50 dark:bg-neutral-800 rounded-xl p-1 border border-transparent dark:border-neutral-700 shadow-sm">
+                      <div className="flex items-center justify-between w-full mb-3 bg-neutral-50 dark:bg-neutral-800 rounded-full p-1">
                         <button
                           onClick={() =>
                             handleShopSelect(
@@ -790,16 +790,16 @@ export default function Home() {
                             )
                           }
                           aria-label="Decrease quantity"
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
+                          className="w-8 h-8 flex items-center justify-center rounded-full bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-colors"
                         >
                           <MinusIcon className="w-4 h-4" />
                         </button>
 
                         <div className="flex flex-col items-center justify-center">
-                          <span className="text-[9px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest leading-none mb-0.5">
+                          <span className="text-[11px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-[0.14em] leading-none mb-0.5">
                             Qty
                           </span>
-                          <span className="text-sm font-bold text-spc-grey dark:text-white leading-none">
+                          <span className="text-sm font-semibold text-spc-grey dark:text-white leading-none">
                             {currentStep}
                           </span>
                         </div>
@@ -809,7 +809,7 @@ export default function Home() {
                             handleShopSelect(product.id, currentStep + 1)
                           }
                           aria-label="Increase quantity"
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
+                          className="w-8 h-8 flex items-center justify-center rounded-full bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-colors"
                         >
                           <PlusIcon className="w-4 h-4" />
                         </button>
@@ -817,7 +817,7 @@ export default function Home() {
 
                       <button
                         onClick={() => addToCart(product, currentStep)}
-                        className="w-full bg-btn-green text-white py-2.5 rounded-xl text-sm font-bold hover:brightness-95 transition-all active:scale-95 shadow-sm hover:shadow-md"
+                        className="w-full bg-btn-green text-white py-2.5 rounded-full text-sm font-semibold hover:brightness-95 transition-all"
                       >
                         Add to Cart +{currentStep}
                       </button>
@@ -831,7 +831,7 @@ export default function Home() {
                   <button
                     onClick={() => fetchNextPage()}
                     disabled={isFetchingNextPage}
-                    className="bg-white dark:bg-neutral-900 border-2 border-neutral-200 dark:border-neutral-700 text-spc-grey dark:text-neutral-200 px-10 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:border-btn-green dark:hover:border-btn-green hover:text-btn-green dark:hover:text-btn-green transition-all active:scale-95 shadow-sm group flex items-center gap-2 disabled:opacity-50"
+                    className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-spc-grey dark:text-neutral-200 px-10 py-3 rounded-full font-semibold text-xs uppercase tracking-[0.14em] hover:border-btn-green dark:hover:border-btn-green hover:text-btn-green dark:hover:text-btn-green transition-all disabled:opacity-50"
                   >
                     {isFetchingNextPage ? "Loading..." : "Load More Products"}
                   </button>
@@ -841,17 +841,17 @@ export default function Home() {
           )}
         </div>
 
-        <div className="hidden lg:flex w-full lg:w-[300px] shrink-0 flex-col gap-6 h-full pb-6 lg:pb-0">
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm flex-1 flex flex-col overflow-hidden transition-colors duration-300">
-            <h2 className="text-neutral-400 dark:text-neutral-500 font-bold text-center mb-4 shrink-0 tracking-wide text-sm uppercase">
+        <div className="hidden lg:flex w-full lg:w-[300px] shrink-0 flex-col gap-4 h-full pb-6 lg:pb-0">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-2xl p-4 flex-1 flex flex-col overflow-hidden">
+            <h2 className="text-neutral-400 dark:text-neutral-500 font-semibold text-center mb-3 shrink-0 tracking-[0.14em] text-xs uppercase">
               Cart Preview
             </h2>
 
-            <div className="flex-1 overflow-y-auto pr-2 pb-4 space-y-6 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-neutral-200/50 hover:[&::-webkit-scrollbar-thumb]:bg-neutral-300/80 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700/50 dark:hover:[&::-webkit-scrollbar-thumb]:bg-neutral-600/80 [&::-webkit-scrollbar-thumb]:rounded-full transition-colors">
+            <div className="flex-1 overflow-y-auto pr-1 pb-2 space-y-3 transform-gpu will-change-scroll [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-neutral-200/50 hover:[&::-webkit-scrollbar-thumb]:bg-neutral-300/80 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-700/50 dark:hover:[&::-webkit-scrollbar-thumb]:bg-neutral-600/80 [&::-webkit-scrollbar-thumb]:rounded-full">
               {cart.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-600 space-y-2 py-20">
-                  <EmptyCartIcon className="w-12 h-12 opacity-20" />
-                  <p className="text-xs font-bold uppercase tracking-widest opacity-50">
+                <div className="h-full flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-600 space-y-2 py-16">
+                  <EmptyCartIcon className="w-10 h-10 opacity-25" />
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] opacity-60">
                     Your cart is empty
                   </p>
                 </div>
@@ -861,91 +861,88 @@ export default function Home() {
                   return (
                     <div
                       key={index}
-                      className="flex flex-col items-center border-b border-neutral-100 dark:border-neutral-800 pb-6 last:border-0 last:pb-2 group"
+                      className="flex flex-col gap-2 border-b border-neutral-100 dark:border-neutral-800 pb-3 last:border-0 last:pb-0"
                     >
-                      <Link
-                        href={`/product/${item.id}`}
-                        className="w-32 h-40 bg-neutral-100 dark:bg-neutral-800 rounded-lg mb-4 shrink-0 relative overflow-hidden block"
-                      >
-                        <Image
-                          src={item.image}
-                          alt={item.name}
-                          fill
-                          className="object-cover object-center group-hover:scale-105 transition-transform"
-                        />
-                      </Link>
-                      <p className="text-[10px] text-neutral-500 dark:text-neutral-400 uppercase mb-1 text-center">
-                        {item.category}
-                      </p>
-                      <Link
-                        href={`/product/${item.id}`}
-                        className="hover:text-btn-green transition-colors"
-                      >
-                        <h3 className="text-sm font-semibold text-spc-grey dark:text-neutral-200 mb-2 text-center line-clamp-2">
-                          {item.name}{" "}
-                          <span className="text-neutral-400 dark:text-neutral-500 font-normal ml-1">
+                      <div className="flex items-center gap-3">
+                        <Link
+                          href={`/product/${item.id}`}
+                          className="w-14 h-16 bg-neutral-100 dark:bg-neutral-800 rounded-lg shrink-0 relative overflow-hidden"
+                        >
+                          <Image
+                            src={item.image}
+                            alt={item.name}
+                            fill
+                            className="object-cover object-center"
+                          />
+                        </Link>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[10px] text-neutral-400 uppercase tracking-wide truncate">
+                            {item.category}
+                          </p>
+                          <Link
+                            href={`/product/${item.id}`}
+                            className="hover:text-btn-green transition-colors"
+                          >
+                            <h3 className="text-sm font-semibold text-spc-grey dark:text-neutral-200 line-clamp-1">
+                              {item.name}
+                            </h3>
+                          </Link>
+                          <p className="text-xs text-neutral-400">
                             x{item.quantity}
-                          </span>
-                        </h3>
-                      </Link>
-                      <div className="flex flex-col items-center mb-4">
-                        {item.is_discounted === 1 ? (
-                          <div className="flex items-baseline gap-1.5">
-                            <p className="text-[10px] font-medium text-neutral-400 line-through decoration-neutral-400">
-                              ${item.original_price?.toFixed(2)}
-                            </p>
-                            <p className="text-base font-black text-red-500 dark:text-red-400">
+                          </p>
+                          {item.is_discounted === 1 ? (
+                            <div className="flex items-baseline gap-1.5 mt-0.5">
+                              <p className="text-[11px] text-neutral-400 line-through">
+                                ${item.original_price?.toFixed(2)}
+                              </p>
+                              <p className="text-sm font-semibold text-red-600 dark:text-red-400">
+                                ${item.price.toFixed(2)}
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-sm font-semibold text-spc-grey dark:text-white mt-0.5">
                               ${item.price.toFixed(2)}
                             </p>
-                          </div>
-                        ) : (
-                          <p className="text-lg font-black text-spc-grey dark:text-white">
-                            ${item.price.toFixed(2)}
-                          </p>
-                        )}
+                          )}
+                        </div>
                       </div>
 
-                      <div className="w-full space-y-2 mt-2">
-                        <div className="flex items-center justify-between w-full mb-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg p-1 border border-neutral-200 dark:border-neutral-700 shadow-sm">
-                          <button
-                            onClick={() =>
-                              handleCartSelect(
-                                item.id,
-                                Math.max(1, currentStep - 1),
-                              )
-                            }
-                            className="w-7 h-7 flex items-center justify-center rounded bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
-                          >
-                            <MinusIcon className="w-3 h-3" />
-                          </button>
-
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
-                              Qty
-                            </span>
-                            <span className="text-sm font-bold text-spc-grey dark:text-white">
-                              {currentStep}
-                            </span>
-                          </div>
-
-                          <button
-                            onClick={() =>
-                              handleCartSelect(item.id, currentStep + 1)
-                            }
-                            className="w-7 h-7 flex items-center justify-center rounded bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
-                          >
-                            <PlusIcon className="w-3 h-3" />
-                          </button>
-                        </div>
+                      <div className="flex items-center justify-between w-full bg-neutral-50 dark:bg-neutral-800 rounded-full p-0.5">
+                        <button
+                          onClick={() =>
+                            handleCartSelect(
+                              item.id,
+                              Math.max(1, currentStep - 1),
+                            )
+                          }
+                          aria-label="Decrease quantity"
+                          className="w-7 h-7 flex items-center justify-center rounded-full bg-white dark:bg-neutral-700 text-neutral-500"
+                        >
+                          <MinusIcon className="w-3 h-3" />
+                        </button>
+                        <span className="text-xs font-semibold text-spc-grey dark:text-white">
+                          {currentStep}
+                        </span>
+                        <button
+                          onClick={() =>
+                            handleCartSelect(item.id, currentStep + 1)
+                          }
+                          aria-label="Increase quantity"
+                          className="w-7 h-7 flex items-center justify-center rounded-full bg-white dark:bg-neutral-700 text-neutral-500"
+                        >
+                          <PlusIcon className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5">
                         <button
                           onClick={() => addToCart(item, currentStep)}
-                          className="w-full bg-btn-green text-white py-2 rounded-lg text-sm font-bold hover:bg-green-600 transition-colors"
+                          className="bg-btn-green text-white py-1.5 rounded-full text-xs font-semibold hover:bg-green-600 transition-colors"
                         >
-                          Add to Cart +{currentStep}
+                          Add +{currentStep}
                         </button>
                         <button
                           onClick={() => removeFromCart(item.id, currentStep)}
-                          className="w-full bg-[#EF4444] text-white py-2 rounded-lg text-sm font-bold hover:bg-red-600 transition-colors"
+                          className="bg-[#EF4444] text-white py-1.5 rounded-full text-xs font-semibold hover:bg-red-600 transition-colors"
                         >
                           Delete -{currentStep}
                         </button>
@@ -957,11 +954,11 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm shrink-0 transition-colors duration-300">
-            <h2 className="text-xl font-black text-spc-grey dark:text-white mb-5">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-2xl p-5 shrink-0">
+            <h2 className="text-lg font-semibold text-spc-grey dark:text-white mb-4">
               Summary
             </h2>
-            <div className="space-y-3 mb-6">
+            <div className="space-y-2.5 mb-5">
               <div className="flex justify-between text-sm font-medium text-neutral-500 dark:text-neutral-400">
                 <span>Products Cost</span>
                 <span className="text-spc-grey dark:text-white">
@@ -974,13 +971,13 @@ export default function Home() {
                   ${shippingCost.toFixed(2)}
                 </span>
               </div>
-              <div className="flex justify-between text-lg font-black text-spc-grey dark:text-white pt-4 border-t border-dashed border-neutral-300 dark:border-neutral-700 mt-2">
+              <div className="flex justify-between text-base font-semibold text-spc-grey dark:text-white pt-3 border-t border-neutral-200 dark:border-neutral-700 mt-1">
                 <span>Total Cost</span> <span>${totalCost.toFixed(2)}</span>
               </div>
             </div>
             <Link
               href="/checkout"
-              className="w-full bg-[#FFC107] text-spc-grey py-3.5 rounded-lg font-black hover:opacity-90 transition-transform active:scale-95 shadow-sm text-sm uppercase tracking-wide flex justify-center"
+              className="w-full bg-checkout-amber text-spc-grey py-3.5 rounded-full font-semibold hover:opacity-90 transition-opacity text-sm uppercase tracking-[0.12em] flex justify-center"
             >
               Go to Checkout
             </Link>
