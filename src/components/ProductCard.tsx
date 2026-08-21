@@ -1,87 +1,76 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ReactNode } from "react";
-import { DiscountBadgeIcon } from "@/components/Icons";
+import type { ApiProduct } from "@/types/product";
 
-export interface Product {
-  id: number;
-  name: string;
-  category: string;
-  price: number;
-  image: string;
-  is_discounted?: number;
-  discount_rate?: number;
-  original_price?: number;
-}
+export type Product = ApiProduct;
 
 interface ProductCardProps {
   product: Product;
-  children?: ReactNode; // Allows injecting custom buttons like "Add to Cart"
+  children?: ReactNode;
 }
 
 export default function ProductCard({ product, children }: ProductCardProps) {
-  const discountedPrice =
-    product.is_discounted === 1 && product.discount_rate
+  const hasPrecomputedDiscount =
+    product.original_price != null && product.original_price !== product.price;
+
+  const originalPrice = product.original_price ?? product.price;
+  const discountedPrice = hasPrecomputedDiscount
+    ? product.price
+    : product.is_discounted === 1 && product.discount_rate
       ? product.price * (1 - product.discount_rate / 100)
       : product.price;
 
-  // Use original_price if it exists, otherwise fallback to standard price
-  const originalPrice = product.original_price || product.price;
-
   return (
-    <div className="bg-white dark:bg-neutral-900 border border-neutral-100/60 dark:border-neutral-800/60 rounded-2xl p-4 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] dark:shadow-none dark:hover:border-neutral-600 hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group">
-      {/* Clickable Area (Image & Text) */}
+    <div className="bg-white dark:bg-neutral-900 border border-neutral-200/70 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] dark:shadow-none dark:hover:border-neutral-700 transition-shadow duration-300 flex flex-col h-full group">
       <Link
         href={`/product/${product.id}`}
-        className="w-full flex flex-col items-center flex-1 cursor-pointer group/link"
+        className="w-full flex flex-col flex-1 cursor-pointer group/link"
       >
-        <div className="aspect-square md:aspect-3/4 w-full bg-neutral-50/80 dark:bg-neutral-800 rounded-xl mb-4 shrink-0 flex items-center justify-center overflow-hidden relative group-hover:bg-neutral-100 dark:group-hover:bg-neutral-700 transition-colors">
-          {product.is_discounted === 1 && product.discount_rate && (
-            <div className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-black px-2.5 py-1 rounded-md z-20 shadow-md animate-pulse">
+        <div className="aspect-3/4 w-full bg-neutral-100 dark:bg-neutral-800 shrink-0 overflow-hidden relative">
+          {product.is_discounted === 1 && product.discount_rate ? (
+            <div className="absolute top-3 left-3 bg-spc-grey dark:bg-white text-white dark:text-spc-grey text-[11px] font-semibold px-2 py-0.5 rounded-md z-20">
               -{product.discount_rate}%
             </div>
-          )}
+          ) : null}
           <Image
             src={product.image}
             alt={product.name}
             fill
-            className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+            className="object-cover object-center group-hover:scale-[1.03] transition-transform duration-500"
           />
         </div>
 
-        <p className="text-[10px] text-category-blue dark:text-neutral-400 font-bold uppercase tracking-widest mb-1.5 text-center">
-          {product.category}
-        </p>
-        <h3 className="text-base font-bold text-spc-grey dark:text-neutral-200 mb-3 text-center leading-tight group-hover/link:text-btn-green transition-colors">
-          {product.name.length > 24
-            ? product.name.substring(0, 24) + "..."
-            : product.name}
-        </h3>
+        <div className="px-3.5 pt-3.5 pb-1 flex flex-col items-center">
+          <p className="text-[11px] text-category-blue dark:text-neutral-500 font-medium uppercase tracking-[0.14em] mb-1 text-center">
+            {product.category}
+          </p>
+          <h3 className="text-[15px] font-semibold text-spc-grey dark:text-neutral-100 text-center leading-snug group-hover/link:text-btn-green transition-colors line-clamp-2">
+            {product.name}
+          </h3>
+        </div>
       </Link>
 
-      {/* Pricing & Actions Area */}
-      <div className="mt-auto w-full">
-        {/* If it has children (Home Page) show normal margin, if no children (Sale Page) show dashed top border */}
+      <div className="mt-auto w-full px-3.5 pb-3.5 pt-2">
         <div
-          className={`flex flex-col items-center w-full ${children ? "mb-4" : "pt-4 border-t border-dashed border-neutral-200 dark:border-neutral-800"}`}
+          className={`flex flex-col items-center w-full ${children ? "mb-3" : "pt-3 border-t border-neutral-100 dark:border-neutral-800"}`}
         >
           {product.is_discounted === 1 ? (
             <div className="flex items-baseline gap-1.5">
-              <p className="text-[11px] font-medium text-neutral-400 line-through decoration-neutral-400">
+              <p className="text-xs font-medium text-neutral-400 line-through">
                 ${originalPrice.toFixed(2)}
               </p>
-              <p className="text-lg font-black text-red-500 dark:text-red-400">
+              <p className="text-base font-semibold text-red-600 dark:text-red-400">
                 ${discountedPrice.toFixed(2)}
               </p>
             </div>
           ) : (
-            <p className="text-lg font-black text-spc-grey dark:text-white">
+            <p className="text-base font-semibold text-spc-grey dark:text-white">
               ${product.price.toFixed(2)}
             </p>
           )}
         </div>
 
-        {/* Render Add to Cart & Stepper Buttons Here */}
         {children}
       </div>
     </div>

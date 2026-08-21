@@ -39,6 +39,11 @@ def test_health_check(client):
     assert response.status_code == 200
     assert response.json()["status"] == "online"
 
+def test_liveness(client):
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
+
 def test_get_categories(client):
     """Is there a list of categories?"""
     response = client.get("/api/categories")

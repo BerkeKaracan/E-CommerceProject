@@ -1,15 +1,36 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { FormEvent, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function Footer() {
+  const pathname = usePathname();
+  const [email, setEmail] = useState("");
+
+  if (pathname === "/" || pathname.startsWith("/admin")) {
+    return null;
+  }
+
+  const handleNewsletter = (e: FormEvent) => {
+    e.preventDefault();
+    toast.success("Newsletter coming soon — this is a portfolio project.");
+    setEmail("");
+  };
+
+  const handleSocial = () => {
+    toast("Social links coming soon.", { icon: "👋" });
+  };
+
   return (
-    <footer className="bg-white dark:bg-neutral-950 border-t border-neutral-200 dark:border-neutral-800 pt-16 pb-8 transition-colors duration-300 select-none">
+    <footer className="bg-white dark:bg-neutral-950 border-t border-neutral-200 dark:border-neutral-800 pt-16 pb-8">
       <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-          {/* Brand & About */}
           <div className="flex flex-col gap-6">
             <Link
               href="/"
-              className="text-3xl font-black tracking-tighter text-btn-green w-fit"
+              className="text-3xl font-semibold tracking-tight text-btn-green w-fit"
             >
               market
             </Link>
@@ -18,24 +39,27 @@ export default function Footer() {
               Elevate your everyday style with our exclusive collections.
             </p>
             <div className="flex items-center gap-4 mt-2">
-              <a
-                href="#"
+              <button
+                type="button"
+                onClick={handleSocial}
+                aria-label="X (coming soon)"
                 className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center text-spc-grey dark:text-neutral-400 hover:bg-btn-green dark:hover:bg-btn-green hover:text-white dark:hover:text-white transition-colors"
               >
                 <span className="font-bold text-xs">X</span>
-              </a>
-              <a
-                href="#"
+              </button>
+              <button
+                type="button"
+                onClick={handleSocial}
+                aria-label="Instagram (coming soon)"
                 className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center text-spc-grey dark:text-neutral-400 hover:bg-btn-green dark:hover:bg-btn-green hover:text-white dark:hover:text-white transition-colors"
               >
                 <span className="font-bold text-xs">IG</span>
-              </a>
+              </button>
             </div>
           </div>
 
-          {/* Quick Links */}
           <div>
-            <h3 className="text-xs font-black uppercase tracking-widest text-spc-grey dark:text-white mb-6 transition-colors">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-spc-grey dark:text-white mb-6">
               Explore
             </h3>
             <ul className="flex flex-col gap-4">
@@ -67,7 +91,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-xs font-black uppercase tracking-widest text-spc-grey dark:text-white mb-6 transition-colors">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-spc-grey dark:text-white mb-6">
               Support
             </h3>
             <ul className="flex flex-col gap-4">
@@ -98,22 +122,34 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Newsletter */}
           <div>
-            <h3 className="text-xs font-black uppercase tracking-widest text-spc-grey dark:text-white mb-6 transition-colors">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-spc-grey dark:text-white mb-6">
               Stay Updated
             </h3>
-            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-4 transition-colors">
+            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2 transition-colors">
               Subscribe to get special offers, free giveaways, and
               once-in-a-lifetime deals.
             </p>
-            <div className="flex items-center gap-2">
+            <p className="text-xs font-bold text-neutral-400 dark:text-neutral-500 mb-4 uppercase tracking-widest">
+              Coming soon
+            </p>
+            <form
+              onSubmit={handleNewsletter}
+              className="flex items-center gap-2"
+            >
               <input
                 type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Your email address"
                 className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-sm flex-1 outline-none focus:border-btn-green dark:focus:border-btn-green text-spc-grey dark:text-white placeholder:text-neutral-400 transition-colors"
               />
-              <button className="bg-black dark:bg-neutral-800 hover:bg-neutral-800 dark:hover:bg-neutral-700 text-white px-4 py-3 rounded-xl font-bold transition-colors active:scale-95 shrink-0">
+              <button
+                type="submit"
+                aria-label="Subscribe (coming soon)"
+                className="bg-black dark:bg-neutral-800 hover:bg-neutral-800 dark:hover:bg-neutral-700 text-white px-4 py-3 rounded-xl font-bold transition-colors active:scale-95 shrink-0"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -121,6 +157,7 @@ export default function Footer() {
                   strokeWidth="3"
                   stroke="currentColor"
                   className="w-5 h-5"
+                  aria-hidden
                 >
                   <path
                     strokeLinecap="round"
@@ -129,7 +166,7 @@ export default function Footer() {
                   />
                 </svg>
               </button>
-            </div>
+            </form>
           </div>
         </div>
 
@@ -138,21 +175,7 @@ export default function Footer() {
             <p className="text-xs font-bold text-neutral-400 dark:text-neutral-500 transition-colors">
               © 2026 Market. All rights reserved.
             </p>
-            <p className="text-[10px] font-black text-red-500/80 dark:text-red-400/80 uppercase tracking-widest flex items-center gap-1.5">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="2.5"
-                stroke="currentColor"
-                className="w-3.5 h-3.5"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
+            <p className="text-xs font-black text-red-500/80 dark:text-red-400/80 uppercase tracking-widest flex items-center gap-1.5">
               Portfolio Project — No Real Transactions
             </p>
           </div>

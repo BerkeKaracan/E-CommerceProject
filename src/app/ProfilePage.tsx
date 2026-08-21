@@ -4,12 +4,12 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AuthContext } from "@/context/AuthContext";
-import ThemeToggle from "@/components/ThemeToggle";
+import Navbar from "@/components/Navbar";
+import toast from "react-hot-toast";
 import { QRCodeSVG } from "qrcode.react";
 import {
   SearchIcon,
   CheckIcon,
-  ReturnIcon,
   MailIcon,
   ChevronDownIcon,
   TrashIcon,
@@ -200,7 +200,20 @@ export default function ProfilePage() {
   const [isOrderFilterOpen, setIsOrderFilterOpen] = useState(false);
   const [isOrderSortOpen, setIsOrderSortOpen] = useState(false);
 
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const setToastMessage = (msg: string | null) => {
+    if (!msg) return;
+    const lower = msg.toLowerCase();
+    if (
+      lower.includes("fail") ||
+      lower.includes("error") ||
+      lower.includes("invalid") ||
+      lower.includes("do not match")
+    ) {
+      toast.error(msg);
+    } else {
+      toast.success(msg);
+    }
+  };
 
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [aiInput, setAiInput] = useState("");
@@ -652,50 +665,28 @@ export default function ProfilePage() {
     .filter((group) => group.items.length > 0);
 
   return (
-    <div className="w-full min-h-screen bg-white dark:bg-neutral-950 p-4 md:p-8 font-sans select-none text-spc-grey dark:text-neutral-200 flex flex-col transition-colors duration-300">
-      <div className="max-w-[1200px] mx-auto w-full flex-1 flex flex-col relative">
-        <div className="flex items-center justify-between mb-3 md:mb-4 shrink-0">
-          <Link
-            href="/"
-            className="flex items-center gap-2 w-fit text-neutral-400 hover:text-spc-grey dark:text-neutral-500 dark:hover:text-neutral-300 transition-colors group"
-          >
-            <ReturnIcon className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-            <span className="text-[10px] font-black uppercase tracking-widest">
-              Return Main Page
-            </span>
-          </Link>
-
-          <div className="flex items-center gap-4">
-            <ThemeToggle />
+    <div className="w-full min-h-screen bg-background font-sans text-spc-grey dark:text-neutral-200 flex flex-col">
+      <Navbar />
+      <div className="max-w-[1200px] mx-auto w-full flex-1 flex flex-col relative px-4 md:px-8 py-6 md:py-8">
+        {/* Wireframe Design Custom Header */}
+        <div className="relative flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6 mb-4 bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-2xl p-4 md:p-5 shrink-0">
+          {/* Quick Feedback Button (Top Right) */}
+          <div className="absolute top-4 right-4 flex items-center gap-4">
             <button
+              type="button"
+              onClick={() => toast.success("Feedback coming soon.")}
+              className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.14em] text-neutral-400 hover:text-spc-grey dark:hover:text-white transition-colors"
+            >
+              <span className="hidden md:inline">Feedback</span>
+            </button>
+            <button
+              type="button"
               onClick={logout}
-              className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+              className="text-xs font-medium uppercase tracking-[0.14em] text-red-500 hover:text-red-600 transition-colors"
             >
               Sign Out
             </button>
           </div>
-        </div>
-
-        {/* Wireframe Design Custom Header */}
-        <div className="relative flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6 mb-4 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-4 md:p-5 shadow-sm shrink-0">
-          {/* Quick Feedback Button (Top Right) */}
-          <button className="absolute top-4 right-4 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-neutral-400 hover:text-red-500 transition-colors">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="2.5"
-              stroke="currentColor"
-              className="w-3.5 h-3.5"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-            <span className="hidden md:inline">Feedback</span>
-          </button>
 
           {/* Avatar with 10-Color Rainbow Spectrum Ring */}
           <div className="relative shrink-0 mt-2 md:mt-0">
@@ -753,7 +744,7 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div className="flex flex-col items-center md:items-start text-center md:text-left flex-1 min-w-0 w-full pt-1">
-              <h1 className="text-2xl md:text-3xl font-black text-spc-grey dark:text-white tracking-tighter leading-none mb-2 truncate max-w-full">
+              <h1 className="text-2xl md:text-3xl font-semibold text-spc-grey dark:text-white tracking-tight leading-none mb-2 truncate max-w-full">
                 {stats?.name || "Loading..."}
               </h1>
 
@@ -1141,60 +1132,18 @@ export default function ProfilePage() {
                             >
                               <div className="p-4 md:p-5 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 flex flex-col gap-4">
                                 <div>
-                                  <h4 className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2">
-                                    Items in your order
+                                  <h4 className="text-xs font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2">
+                                    Order details
                                   </h4>
-                                  <div className="flex items-center gap-3 bg-white dark:bg-neutral-800 p-3 rounded-xl border border-neutral-100 dark:border-neutral-700">
-                                    <div className="w-10 h-10 bg-neutral-100 dark:bg-neutral-700 rounded-md flex items-center justify-center text-xl shrink-0">
-                                      🛍️
-                                    </div>
-                                    <div className="flex-1">
-                                      <p className="text-xs font-bold text-spc-grey dark:text-neutral-200">
-                                        Premium Market Products
-                                      </p>
-                                      <p className="text-[10px] font-medium text-neutral-500">
-                                        Qty: Multiple items included
-                                      </p>
-                                    </div>
-                                    <p className="text-xs font-black text-spc-grey dark:text-white">
-                                      ${order.total_amount.toFixed(2)}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4 mt-2">
-                                  <div className="bg-white dark:bg-neutral-800 p-3 rounded-xl border border-neutral-100 dark:border-neutral-700">
-                                    <h4 className="text-[9px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-1">
-                                      Shipping Address
-                                    </h4>
-                                    <p className="text-[10px] md:text-xs font-medium text-spc-grey dark:text-neutral-300 leading-relaxed truncate">
-                                      {user?.name || "Customer"}
-                                      <br />
-                                      123 Commerce St, Suite 100
-                                      <br />
-                                      Istanbul, Turkey 34000
-                                    </p>
-                                  </div>
-                                  <div className="bg-white dark:bg-neutral-800 p-3 rounded-xl border border-neutral-100 dark:border-neutral-700">
-                                    <h4 className="text-[9px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-1">
-                                      Payment Method
-                                    </h4>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <div className="w-6 h-4 bg-neutral-200 dark:bg-neutral-600 rounded flex items-center justify-center text-[6px] font-black text-neutral-600 dark:text-neutral-300">
-                                        VISA
-                                      </div>
-                                      <p className="text-[10px] md:text-xs font-medium text-spc-grey dark:text-neutral-300">
-                                        •••• 4242
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="mt-2 flex justify-end">
+                                  <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-3">
+                                    Line items are available on the tracking
+                                    page for this order.
+                                  </p>
                                   <Link
-                                    href="/tracking"
-                                    className="bg-black dark:bg-neutral-700 hover:bg-neutral-800 dark:hover:bg-neutral-600 text-white px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-colors flex items-center gap-2 shadow-sm"
+                                    href={`/tracking`}
+                                    className="inline-flex items-center gap-2 bg-black dark:bg-neutral-700 hover:bg-neutral-800 text-white px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-colors shadow-sm"
                                   >
-                                    Track Package
+                                    Track order #{order.id}
                                     <ArrowRightIcon className="w-3 h-3" />
                                   </Link>
                                 </div>
@@ -1837,12 +1786,20 @@ export default function ProfilePage() {
                         <h2 className="text-sm md:text-base font-black text-spc-grey dark:text-white uppercase tracking-wider">
                           Payment Methods
                         </h2>
-                        <p className="text-[10px] font-bold text-neutral-400">
-                          Manage your saved credit cards and billing options
+                        <p className="text-xs font-bold text-neutral-400">
+                          Demo cards — not stored or charged
                         </p>
                       </div>
                     </div>
-                    <button className="bg-btn-green text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-green-600 transition-colors active:scale-95">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        toast("Card vault coming soon — demo only.", {
+                          icon: "💳",
+                        })
+                      }
+                      className="bg-btn-green text-white px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest shadow-sm hover:bg-green-600 transition-colors active:scale-95"
+                    >
                       + Add Card
                     </button>
                   </div>
@@ -2279,7 +2236,9 @@ export default function ProfilePage() {
                         setIsSavingNotifs(true);
                         setTimeout(() => {
                           setIsSavingNotifs(false);
-                          setToastMessage("Preferences successfully updated!");
+                          setToastMessage(
+                            "Demo only — notification preferences are not saved.",
+                          );
                           setTimeout(() => setToastMessage(null), 3000);
                         }, 800);
                       }}
@@ -2300,8 +2259,8 @@ export default function ProfilePage() {
                       <h2 className="text-sm md:text-base font-black text-spc-grey dark:text-white uppercase tracking-wider">
                         Language & Region
                       </h2>
-                      <p className="text-[10px] font-bold text-neutral-400">
-                        Customize your browsing experience
+                      <p className="text-xs font-bold text-neutral-400">
+                        Demo settings — not persisted
                       </p>
                     </div>
                   </div>
@@ -2377,9 +2336,9 @@ export default function ProfilePage() {
                           setIsSavingLang(true);
                           setTimeout(() => {
                             setIsSavingLang(false);
-                            setToastMessage(
-                              "Language & Region updated successfully!",
-                            );
+                          setToastMessage(
+                            "Demo only — language preferences are not saved.",
+                          );
                             setTimeout(() => setToastMessage(null), 3000);
                           }, 800);
                         }}
@@ -2491,14 +2450,6 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
-        </div>
-      )}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-emerald-600 dark:bg-emerald-700 text-white px-5 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-[0_10px_40px_-10px_rgba(4,120,87,0.5)] animate-in slide-in-from-bottom-4 duration-300 flex items-center gap-3 transition-colors">
-          <div className="bg-white/20 rounded-full p-1 shrink-0">
-            <CheckIcon className="w-4 h-4 text-white" />
-          </div>
-          {toastMessage}
         </div>
       )}
     </div>

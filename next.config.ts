@@ -16,7 +16,18 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/(.*)",
+        source: "/feedback-portal-verify.txt",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Methods", value: "GET, HEAD, OPTIONS" },
+          { key: "Access-Control-Allow-Headers", value: "*" },
+          { key: "Content-Type", value: "text/plain; charset=utf-8" },
+          { key: "Cache-Control", value: "no-store" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+        ],
+      },
+      {
+        source: "/((?!feedback-portal-verify\\.txt).*)",
         headers: [
           {
             key: "X-Frame-Options",
@@ -33,7 +44,7 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.unsplash.com https://images.asos-media.com https://cdn.dummyjson.com https://api.qrserver.com https://picsum.photos; connect-src 'self' https://*;",
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.unsplash.com https://images.asos-media.com https://cdn.dummyjson.com https://api.qrserver.com https://picsum.photos https://i.imgur.com; connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 http://backend:8000 https://*;",
           },
         ],
       },
