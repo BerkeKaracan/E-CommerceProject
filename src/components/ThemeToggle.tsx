@@ -12,15 +12,21 @@ export default function ThemeToggle() {
   }, []);
 
   if (!mounted) {
-    return <div className="w-8 h-8" />;
+    return (
+      <div className="w-9 h-9 rounded-xl bg-neutral-100 dark:bg-neutral-800" />
+    );
   }
 
   const currentTheme = theme === "system" ? resolvedTheme : theme;
+  const isDark = currentTheme === "dark";
 
   return (
     <button
-      onClick={() => setTheme(currentTheme === "dark" ? "light" : "dark")}
-      className="p-2 rounded-xl hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-colors"
+      type="button"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className="p-2 rounded-xl hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-300 dark:focus:ring-neutral-700"
+      aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+      aria-pressed={isDark}
       title="Toggle Theme"
     >
       {currentTheme === "dark" ? (

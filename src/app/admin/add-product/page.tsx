@@ -4,6 +4,8 @@ import { AuthContext } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import toast from "react-hot-toast";
+import { getPublicApiUrl } from "@/lib/api";
 
 interface ProductFormData {
   name: string;
@@ -22,6 +24,12 @@ export default function AddProductPage() {
   const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(false);
+  const [categories, setCategories] = useState<string[]>([
+    "Electronics",
+    "Clothing",
+    "Home",
+    "Accessories",
+  ]);
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     category: "Electronics",
@@ -38,12 +46,23 @@ export default function AddProductPage() {
       if (!user) {
         router.push("/");
       } else if (user.role !== "admin") {
-        alert("Access Denied: Only administrators can access this area!");
+        toast.error("Access Denied: Only administrators can access this area!");
         router.push("/");
       }
     }, 500);
     return () => clearTimeout(timer);
   }, [user, router]);
+
+  useEffect(() => {
+    fetch(`${getPublicApiUrl()}/api/categories`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) setCategories(data);
+      })
+      .catch(() => {
+        /* keep defaults */
+      });
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -80,7 +99,7 @@ export default function AddProductPage() {
       };
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/products`,
+        `${getPublicApiUrl()}/api/products`,
         {
           method: "POST",
           headers: {
@@ -95,11 +114,10 @@ export default function AddProductPage() {
         throw new Error("Failed to create product");
       }
 
-      alert("Product successfully added to inventory!");
-      router.push("/admin"); // Redirect back to dashboard
-    } catch (error) {
-      console.error(error);
-      alert("Error adding product. Check console for details.");
+      toast.success("Product successfully added to inventory!");
+      router.push("/admin");
+    } catch {
+      toast.error("Error adding product. Check console for details.");
     } finally {
       setIsLoading(false);
     }
@@ -196,10 +214,11 @@ export default function AddProductPage() {
                     onChange={handleChange}
                     className="w-full bg-neutral-900 border border-neutral-800 rounded-md px-4 py-3 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all appearance-none"
                   >
-                    <option value="Electronics">Electronics</option>
-                    <option value="Clothing">Clothing</option>
-                    <option value="Home">Home</option>
-                    <option value="Accessories">Accessories</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

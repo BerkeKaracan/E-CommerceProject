@@ -1,90 +1,44 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, useContext } from "react";
-import { AuthContext } from "@/context/AuthContext";
-import ThemeToggle from "@/components/ThemeToggle";
-
-interface ApiProduct {
-  id: number;
-  name: string;
-  category: string;
-  price: number;
-  image: string;
-  sales_count?: number;
-}
+import { useState, useEffect } from "react";
+import Navbar from "@/components/Navbar";
+import EmptyState from "@/components/EmptyState";
+import ErrorState from "@/components/ErrorState";
+import { getPublicApiUrl } from "@/lib/api";
+import type { ApiProduct } from "@/types/product";
 
 export default function TrendsPage() {
   const [trendingProducts, setTrendingProducts] = useState<ApiProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   const [showMore, setShowMore] = useState(false);
 
-  const authContext = useContext(AuthContext);
-  const user = authContext?.user;
-
-  useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/trending`)
-      .then((res) => res.json())
+  const fetchTrends = () => {
+    setIsLoading(true);
+    setHasError(false);
+    fetch(`${getPublicApiUrl()}/api/analytics/trending`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load trends");
+        return res.json();
+      })
       .then((data) => {
         if (data.best_sellers) {
           setTrendingProducts(data.best_sellers);
         }
-        setIsLoading(false);
       })
-      .catch((err) => {
-        console.error("Trending fetch error:", err);
-        setIsLoading(false);
-      });
+      .catch(() => setHasError(true))
+      .finally(() => setIsLoading(false));
+  };
+
+  useEffect(() => {
+    fetchTrends();
   }, []);
 
   return (
-    <main className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col select-none transition-colors duration-300">
-      {/* Simple Navbar - Return */}
-      <nav className="shrink-0 z-50 bg-neutral-50 dark:bg-neutral-950 w-full shadow-sm border-b border-neutral-200 dark:border-neutral-800 transition-colors duration-300">
-        <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/"
-                className="p-2 -ml-2 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg transition-colors group"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2.5"
-                  stroke="currentColor"
-                  className="w-5 h-5 text-spc-grey dark:text-neutral-300 group-hover:-translate-x-1 transition-transform"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
-                  />
-                </svg>
-              </Link>
-              <Link
-                href="/"
-                className="text-2xl font-black tracking-tighter text-btn-green"
-              >
-                market
-              </Link>
-            </div>
-            <div className="flex items-center gap-4">
-              <ThemeToggle />
-              {user && (
-                <Link
-                  href="/profile"
-                  className="text-sm font-bold text-spc-grey dark:text-neutral-300 hover:text-btn-green dark:hover:text-btn-green transition-colors"
-                >
-                  Hi, {user.name}
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
+    <main className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col transition-colors duration-300">
+      <Navbar />
 
       <div className="flex-1 max-w-[1440px] mx-auto w-full px-4 lg:px-8 py-10 flex flex-col">
         {/* Header Section */}
@@ -110,6 +64,8 @@ export default function TrendsPage() {
           <div className="flex-1 flex justify-center items-center">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-neutral-200 dark:border-neutral-800 border-t-btn-green dark:border-t-btn-green"></div>
           </div>
+        ) : hasError ? (
+          <ErrorState onRetry={fetchTrends} />
         ) : trendingProducts.length > 0 ? (
           <div className="flex flex-col gap-12 pb-20">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -140,7 +96,7 @@ export default function TrendsPage() {
                       <p className="text-[10px] text-category-blue dark:text-neutral-400 font-bold uppercase tracking-widest mb-1.5 transition-colors">
                         {product.category}
                       </p>
-                      <h3 className="text-lg font-black text-spc-grey dark:text-neutral-200 mb-2 text-center leading-tight hover:text-green-400 dark:hover:text-btn-green transition-colors">
+                      <h3 className="text-lg font-black text-spc-grey dark:text-neutral-200 mb-2 text-center leading-tight hover:text-btn-green dark:hover:text-btn-green transition-colors line-clamp-2">
                         {product.name}
                       </h3>
                     </div>
@@ -299,12 +255,10 @@ export default function TrendsPage() {
             )}
           </div>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-600 transition-colors">
-            <span className="text-4xl mb-4">📭</span>
-            <p className="text-sm font-bold uppercase tracking-widest">
-              No trend data available yet.
-            </p>
-          </div>
+          <EmptyState
+            title="No trend data"
+            description="We don't have enough sales data yet to show trending products."
+          />
         )}
       </div>
     </main>

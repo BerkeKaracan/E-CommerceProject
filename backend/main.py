@@ -1,8 +1,11 @@
 import os
+import logging
 from typing import List, Optional
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, DateTime, or_, desc, asc
@@ -244,17 +247,33 @@ class ChatRequest(BaseModel):
     history: list[ChatMessage] = []
 
 # --- 5. FASTAPI APP & CONFIGURATION ---
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("market")
+
 app = FastAPI(title="Market Backend API")
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://e-commerce-project-market.vercel.app"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://e-commerce-project-market.vercel.app",
+    ],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    messages = []
+    for err in exc.errors():
+        loc = " -> ".join(str(x) for x in err.get("loc", []))
+        messages.append(f"{loc}: {err.get('msg')}")
+    detail = "; ".join(messages) if messages else "Validation error"
+    return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content={"detail": detail})
 
 def get_db():
     db = SessionLocal()
@@ -309,6 +328,10 @@ def get_current_admin(current_user: DBUser = Depends(get_current_user)):
 @app.get("/")
 def health_check():
     return {"status": "online", "message": "Market Backend is running on FastAPI"}
+
+@app.get("/health")
+def liveness():
+    return {"status": "ok"}
 
 @app.get("/api/products", response_model=List[ProductSchema])
 def get_products(
@@ -668,7 +691,7 @@ async def chat_with_ai(request: ChatRequest, db: Session = Depends(get_db)):
         return {"response": response.text}
         
     except Exception as e:
-        print(f"AI Error: {str(e)}")
+        logger.exception("AI Error: %s", e)
         raise HTTPException(status_code=500, detail="The AI encountered a tactical error.")
 
 @app.get("/api/track/{order_id}")
@@ -707,6 +730,8 @@ def get_trending_products(db: Session = Depends(get_db)):
 
 @app.get("/api/fix-db")
 def fix_database(db: Session = Depends(get_db)):
+    if os.getenv("ENABLE_FIX_DB", "false").lower() not in ("1", "true", "yes"):
+        raise HTTPException(status_code=403, detail="This endpoint is disabled.")
     try:
         # 1. Add missing stock column to Product table
         db.execute(text('ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 50;'))
@@ -834,14 +859,14 @@ def send_reset_email(to_email: str, reset_link: str):
         server.send_message(msg)
         server.quit()
     except Exception as e:
-        print(f"Failed to send email: {e}")
+        logger.exception("Failed to send email: %s", e)
 
 @app.post("/api/forgot-password")
 def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
     user = db.query(DBUser).filter(DBUser.email == request.email).first()
     if user:
         reset_token = f"reset_{user.id}"
-        base_url = os.getenv("BASE_URL", "http://localhost:8000")
+        base_url = os.getenv("FRONTEND_URL") or os.getenv("BASE_URL", "http://localhost:3000")
         reset_link = f"{base_url}/reset-password?token={reset_token}"
         send_reset_email(user.email, reset_link)
 

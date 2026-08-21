@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://berkekaracan-portfolio.vercel.app/"),
@@ -40,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.className} flex flex-col min-h-screen dark:bg-neutral-950 dark:text-white transition-colors duration-300`}
+        className={`${inter.variable} ${inter.className} flex flex-col min-h-screen bg-background text-foreground dark:bg-neutral-950 dark:text-white transition-colors duration-300`}
       >
         <Providers>
           <Analytics />

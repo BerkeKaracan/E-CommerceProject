@@ -1,21 +1,14 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect, useContext, useRef } from "react";
+import { useParams } from "next/navigation";
+import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "@/context/AuthContext";
-import ThemeToggle from "@/components/ThemeToggle";
-
-interface ApiProduct {
-  id: number;
-  name: string;
-  category: string;
-  price: number;
-  image: string;
-  sales_count?: number;
-  description?: string;
-  stock: number;
-}
+import Navbar from "@/components/Navbar";
+import AuthModal from "@/components/AuthModal";
+import toast from "react-hot-toast";
+import { getPublicApiUrl, parseApiDetail } from "@/lib/api";
+import type { ApiProduct } from "@/types/product";
 
 interface StarIconProps {
   filled: boolean;
@@ -55,31 +48,16 @@ export default function ProductClient({
   initialProduct: ApiProduct;
 }) {
   const params = useParams();
-  const router = useRouter();
   const id = params.id;
 
   const authContext = useContext(AuthContext);
   const token = authContext?.token;
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   const [product, setProduct] = useState<ApiProduct | null>(initialProduct);
   const [relatedProducts, setRelatedProducts] = useState<ApiProduct[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const showToast = (message: string, durationInMs?: number) => {
-    setToastMessage(message);
-    if (toastTimerRef.current) {
-      clearTimeout(toastTimerRef.current);
-    }
-    if (durationInMs) {
-      toastTimerRef.current = setTimeout(() => {
-        setToastMessage(null);
-      }, durationInMs);
-    }
-  };
 
   const [comments, setComments] = useState<
     { id: number; user_name: string; text: string; created_at: string }[]
@@ -104,7 +82,7 @@ export default function ProductClient({
     if (!confirm("Are you sure you want to delete your review?")) return;
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/${commentId}`,
+        `${getPublicApiUrl()}/api/comments/${commentId}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -123,7 +101,7 @@ export default function ProductClient({
     try {
       const payloadText = `${editRating}|${editText}`;
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/${commentId}`,
+        `${getPublicApiUrl()}/api/comments/${commentId}`,
         {
           method: "PUT",
           headers: {
@@ -136,7 +114,7 @@ export default function ProductClient({
       if (res.ok) {
         setEditingCommentId(null);
         const refreshRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}/comments`,
+          `${getPublicApiUrl()}/api/products/${id}/comments`,
         );
         setComments(await refreshRes.json());
       }
@@ -147,7 +125,7 @@ export default function ProductClient({
 
   useEffect(() => {
     if (token && product) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/me/saved`, {
+      fetch(`${getPublicApiUrl()}/api/me/saved`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())
@@ -165,7 +143,8 @@ export default function ProductClient({
 
   const toggleSave = async () => {
     if (!token) {
-      alert("Please sign in to save items!");
+      toast.error("Please sign in to save items.");
+      setIsAuthOpen(true);
       return;
     }
 
@@ -174,7 +153,7 @@ export default function ProductClient({
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/saved/${product?.id}`,
+        `${getPublicApiUrl()}/api/saved/${product?.id}`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -194,7 +173,7 @@ export default function ProductClient({
 
   useEffect(() => {
     if (!id || !product) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
+    fetch(`${getPublicApiUrl()}/api/products`)
       .then((r) => r.json())
       .then((allProducts: ApiProduct[]) => {
         const related = allProducts
@@ -205,23 +184,30 @@ export default function ProductClient({
         );
       });
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}/comments`)
+    fetch(`${getPublicApiUrl()}/api/products/${id}/comments`)
       .then((res) => res.json())
       .then((data) => setComments(data))
       .catch((err) => console.error("Comments error:", err));
   }, [id, product]);
 
   const submitComment = async () => {
-    if (!token) return alert("Sign in to comment!");
+    if (!token) {
+      toast.error("Sign in to comment.");
+      setIsAuthOpen(true);
+      return;
+    }
     if (newComment.length < 3) return;
-    if (hasReviewed) return alert("You have already reviewed this product.");
+    if (hasReviewed) {
+      toast.error("You have already reviewed this product.");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       const payloadText = `${rating}|${newComment}`;
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/comments`,
+        `${getPublicApiUrl()}/api/comments`,
         {
           method: "POST",
           headers: {
@@ -235,7 +221,7 @@ export default function ProductClient({
         setNewComment("");
         setRating(5);
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}/comments`,
+          `${getPublicApiUrl()}/api/products/${id}/comments`,
         );
         setComments(await res.json());
       }
@@ -248,37 +234,32 @@ export default function ProductClient({
 
   const addToCart = async () => {
     if (!token) {
-      alert("Please sign in to add items to cart!");
+      toast.error("Please sign in to add items to cart.");
+      setIsAuthOpen(true);
       return;
     }
     if (!product) return;
 
-    showToast(`Adding ${quantity}x ${product.name} to cart...`);
-
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/cart`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ product_id: product.id, quantity: quantity }),
+      const response = await fetch(`${getPublicApiUrl()}/api/cart`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify({ product_id: product.id, quantity: quantity }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to add to cart");
+        throw new Error(parseApiDetail(errorData) || "Failed to add to cart");
       }
 
-      showToast(`Added ${quantity}x ${product.name} to cart!`, 2200);
+      toast.success(`Added ${quantity}x ${product.name} to cart!`);
     } catch (error: unknown) {
-      console.error("Cart error:", error);
       const errorMessage =
         error instanceof Error ? error.message : "An unexpected error occurred";
-      showToast(`Error: ${errorMessage}`, 3500);
+      toast.error(errorMessage);
     }
   };
 
@@ -293,33 +274,8 @@ export default function ProductClient({
   if (!product) return null;
 
   return (
-    <main className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col select-none pb-20 transition-colors duration-300">
-      <nav className="shrink-0 z-50 w-full shadow-sm border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 transition-colors duration-300">
-        <div className="max-w-[1440px] mx-auto px-4 lg:px-8 flex items-center justify-between h-20">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-neutral-300 transition-colors font-black uppercase text-[10px] tracking-widest"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="3"
-              stroke="currentColor"
-              className="w-4 h-4"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
-              />
-            </svg>
-            Go Back
-          </button>
-
-          <ThemeToggle />
-        </div>
-      </nav>
+    <main className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col pb-20 transition-colors duration-300">
+      <Navbar />
 
       <div className="flex-1 max-w-[1200px] mx-auto w-full px-4 lg:px-8 py-8 lg:py-16">
         <div className="bg-white dark:bg-neutral-900 rounded-4xl shadow-sm border border-neutral-100 dark:border-neutral-800 overflow-hidden flex flex-col lg:flex-row transition-colors duration-300">
@@ -376,12 +332,12 @@ export default function ProductClient({
             </p>
 
             <div className="mt-4 mb-2">
-              {product.stock > 0 ? (
-                <span className="text-sm font-medium text-spc-grey bg-gray-200  px-3 py-1 rounded-md">
-                  {product.stock} in stock
+              {(product.stock ?? 50) > 0 ? (
+                <span className="text-sm font-medium text-spc-grey dark:text-neutral-200 bg-neutral-200 dark:bg-neutral-800 px-3 py-1 rounded-md">
+                  {(product.stock ?? 50)} in stock
                 </span>
               ) : (
-                <span className="text-sm font-bold text-spc-grey bg-gray-200 px-3 py-1 rounded-md">
+                <span className="text-sm font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-3 py-1 rounded-md">
                   Out of Stock
                 </span>
               )}
@@ -397,6 +353,7 @@ export default function ProductClient({
             <div className="flex items-center gap-4 mb-6">
               <div className="bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 flex items-center gap-4 transition-colors">
                 <button
+                  aria-label="Decrease quantity"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   className="text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white font-black text-xl transition-colors"
                 >
@@ -406,12 +363,13 @@ export default function ProductClient({
                   {quantity}
                 </span>
                 <button
+                  aria-label="Increase quantity"
                   onClick={() => {
-                    if (quantity < product.stock) {
+                    if (quantity < (product.stock ?? 50)) {
                       setQuantity(quantity + 1);
                     }
                   }}
-                  disabled={product.stock === 0}
+                  disabled={(product.stock ?? 50) === 0}
                   className="text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-white font-black text-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   +
@@ -420,14 +378,14 @@ export default function ProductClient({
 
               <button
                 onClick={addToCart}
-                disabled={product.stock === 0}
+                disabled={(product.stock ?? 50) === 0}
                 className={`flex-1 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-colors shadow-sm ${
-                  product.stock === 0
+                  (product.stock ?? 50) === 0
                     ? "bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 cursor-not-allowed"
                     : "bg-btn-green hover:bg-green-600 text-white active:scale-95"
                 }`}
               >
-                {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
+                {(product.stock ?? 50) === 0 ? "Out of Stock" : "Add to Cart"}
               </button>
 
               <button
@@ -664,16 +622,9 @@ export default function ProductClient({
                   <p className="text-[10px] text-category-blue dark:text-neutral-400 font-bold uppercase tracking-widest mb-1.5 text-center truncate transition-colors">
                     {relProduct.category}
                   </p>
-                  <h3 className="text-sm font-bold text-spc-grey dark:text-neutral-200 mb-2 text-center leading-tight group-hover:text-btn-green dark:group-hover:text-btn-green transition-colors truncate">
+                  <h3 className="text-sm font-bold text-spc-grey dark:text-neutral-200 mb-2 text-center leading-tight group-hover:text-btn-green dark:group-hover:text-btn-green transition-colors line-clamp-2">
                     {relProduct.name}
                   </h3>
-                  <div className="flex justify-center mb-2">
-                    <StarIcon filled={true} />
-                    <StarIcon filled={true} />
-                    <StarIcon filled={true} />
-                    <StarIcon filled={true} />
-                    <StarIcon filled={true} />
-                  </div>
                   <p className="text-base font-black text-spc-grey dark:text-white text-center mt-auto transition-colors">
                     ${relProduct.price.toFixed(2)}
                   </p>
@@ -684,11 +635,7 @@ export default function ProductClient({
         )}
       </div>
 
-      {toastMessage && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-btn-green text-white px-6 py-4 rounded-xl shadow-2xl font-bold text-sm animate-in fade-in slide-in-from-bottom-8">
-          {toastMessage}
-        </div>
-      )}
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       {product && (
         <script
           type="application/ld+json"
@@ -705,7 +652,7 @@ export default function ProductClient({
                 priceCurrency: "USD",
                 price: product.price,
                 availability:
-                  product.stock > 0
+                  (product.stock ?? 50) > 0
                     ? "https://schema.org/InStock"
                     : "https://schema.org/OutOfStock",
               },

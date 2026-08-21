@@ -7,7 +7,10 @@ import AuthModal from "@/components/AuthModal";
 import { AuthContext } from "@/context/AuthContext";
 import ThemeToggle from "@/components/ThemeToggle";
 import ProductCard from "@/components/ProductCard";
-import toast from "react-hot-toast"; // PROFESYONEL TOAST
+import EmptyState from "@/components/EmptyState";
+import ErrorState from "@/components/ErrorState";
+import ProductGridSkeleton from "@/components/ProductGridSkeleton";
+import toast from "react-hot-toast";
 
 import {
   SearchIcon,
@@ -19,33 +22,10 @@ import {
   SortIcon,
   SignOutIcon,
   UserIcon,
-  ErrorIcon,
   EmptyCartIcon,
-  RefreshIcon,
 } from "@/components/Icons";
-
-interface ApiProduct {
-  id: number;
-  name: string;
-  category: string;
-  price: number;
-  image: string;
-  is_discounted?: number;
-  discount_rate?: number;
-  original_price?: number;
-  sales_count?: number;
-}
-
-interface Product extends ApiProduct {
-  quantity: number;
-}
-
-interface CartItemResponse {
-  id: number;
-  product_id: number;
-  quantity: number;
-  product: ApiProduct;
-}
+import type { ApiProduct, CartItemResponse, Product } from "@/types/product";
+import { getPublicApiUrl } from "@/lib/api";
 
 export default function Home() {
   const authContext = useContext(AuthContext);
@@ -88,21 +68,38 @@ export default function Home() {
     };
   }, [isMenuOpen, isSearchFocused, isAuthOpen]);
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setIsMenuOpen(false);
+      setIsFilterOpen(false);
+      setIsSortOpen(false);
+      setIsSearchFocused(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   // Fetch Categories
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`)
-      .then((res) => res.json())
+    fetch(`${getPublicApiUrl()}/api/categories`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load categories");
+        return res.json();
+      })
       .then((data) => {
         if (Array.isArray(data)) setCategories(data);
       })
-      .catch((err) => console.error("Category fetch error:", err));
+      .catch(() => {
+        toast.error("Couldn't load categories. Filters may be limited.");
+      });
   }, []);
 
   // Fetch Cart
   useEffect(() => {
     const fetchCart = () => {
       if (token) {
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+        fetch(`${getPublicApiUrl()}/api/cart`, {
           headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",
         })
@@ -119,7 +116,9 @@ export default function Home() {
               setCart(formattedCart);
             }
           })
-          .catch((err) => console.error("Cart fetching error:", err));
+          .catch(() => {
+            toast.error("Couldn't load your cart. Please try again.");
+          });
       } else {
         setCart([]);
       }
@@ -151,7 +150,7 @@ export default function Home() {
     params.append("offset", ((pageParam - 1) * 12).toString());
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/products?${params.toString()}`,
+      `${getPublicApiUrl()}/api/products?${params.toString()}`,
     );
     if (!res.ok) throw new Error("Network response was not ok");
     return res.json();
@@ -249,7 +248,7 @@ export default function Home() {
     }
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+      const res = await fetch(`${getPublicApiUrl()}/api/cart`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -300,7 +299,7 @@ export default function Home() {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/cart/${productId}?quantity=${amount}`,
+        `${getPublicApiUrl()}/api/cart/${productId}?quantity=${amount}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -330,7 +329,7 @@ export default function Home() {
   };
 
   return (
-    <main className="h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col overflow-hidden select-none transition-colors duration-300">
+    <main className="h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col overflow-hidden transition-colors duration-300">
       <h1 className="sr-only">
         Premium Market - High-End E-Commerce & AI Shopping
       </h1>
@@ -340,12 +339,14 @@ export default function Home() {
           onClick={() => setIsSearchFocused(false)}
         />
       )}
-      <nav className="shrink-0 z-40 bg-neutral-50 dark:bg-neutral-950 w-full shadow-sm border-b border-neutral-200 dark:border-neutral-800 transition-colors duration-300">
+      <nav className="shrink-0 z-40 bg-neutral-50 dark:bg-neutral-950 w-full shadow-sm border-b border-neutral-200 dark:border-neutral-800 transition-colors duration-300 select-none">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-4 lg:px-4">
           <div className="flex items-center justify-between h-20 gap-2 lg:gap-10">
             <div className="flex items-center gap-2 sm:gap-6 shrink-0">
               <button
                 onClick={() => setIsMenuOpen(true)}
+                aria-label="Open menu"
+                aria-expanded={isMenuOpen}
                 className="p-2 -ml-2 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-neutral-300 dark:focus:ring-neutral-700 active:scale-95 group"
               >
                 <MenuIcon className="w-6 h-6 text-spc-grey dark:text-neutral-200 group-hover:scale-110 transition-transform duration-300" />
@@ -409,6 +410,7 @@ export default function Home() {
                 />
                 <button
                   onClick={() => setIsSearchFocused(false)}
+                  aria-label="Search"
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 dark:text-neutral-500 hover:text-btn-green transition-colors"
                 >
                   <SearchIcon className="w-5 h-5" />
@@ -443,10 +445,8 @@ export default function Home() {
                               />
                             </div>
                             <div className="flex flex-col">
-                              <span className="text-sm font-bold text-spc-grey dark:text-neutral-200 group-hover:text-btn-green transition-colors">
-                                {product.name.length > 24
-                                  ? product.name.substring(0, 24) + "..."
-                                  : product.name}
+                              <span className="text-sm font-bold text-spc-grey dark:text-neutral-200 group-hover:text-btn-green transition-colors line-clamp-1">
+                                {product.name}
                               </span>
                               <span className="text-[10px] text-neutral-400 dark:text-neutral-500 uppercase font-medium mt-0.5">
                                 {product.category}
@@ -543,7 +543,8 @@ export default function Home() {
               ) : (
                 <button
                   onClick={() => setIsAuthOpen(true)}
-                  className="p-2 hover:bg-neutral-100 dark:bg-neutral-800 rounded-xl transition-colors focus:outline-none"
+                  aria-label="Sign in"
+                  className="p-2 hover:bg-neutral-100 dark:bg-neutral-800 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-300 dark:focus:ring-neutral-700"
                 >
                   <UserIcon className="w-8 h-8 text-spc-grey dark:text-neutral-200" />
                 </button>
@@ -551,7 +552,8 @@ export default function Home() {
 
               <Link
                 href="/checkout"
-                className="flex items-end p-2 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg transition-colors focus:outline-none group"
+                aria-label={`My cart, ${totalItems} items`}
+                className="flex items-end p-2 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-300 dark:focus:ring-neutral-700 group"
               >
                 <div className="relative shrink-0">
                   <Image
@@ -657,6 +659,8 @@ export default function Home() {
                       setIsFilterOpen(!isFilterOpen);
                       setIsSortOpen(false);
                     }}
+                    aria-label="Filter by price"
+                    aria-expanded={isFilterOpen}
                     className="flex items-center gap-1.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 hover:border-btn-green dark:hover:border-btn-green px-4 py-2 rounded-xl text-[10px] md:text-xs font-black text-spc-grey dark:text-neutral-200 uppercase tracking-widest transition-all shadow-sm active:scale-95"
                   >
                     <FilterIcon className="w-4 h-4" />
@@ -704,6 +708,8 @@ export default function Home() {
                       setIsSortOpen(!isSortOpen);
                       setIsFilterOpen(false);
                     }}
+                    aria-label="Sort products"
+                    aria-expanded={isSortOpen}
                     className="flex items-center gap-1.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 hover:border-btn-green dark:hover:border-btn-green px-4 py-2 rounded-xl text-[10px] md:text-xs font-black text-spc-grey dark:text-neutral-200 uppercase tracking-widest transition-all shadow-sm active:scale-95"
                   >
                     <SortIcon className="w-4 h-4" />
@@ -744,42 +750,30 @@ export default function Home() {
           </div>
 
           {status === "error" ? (
-            <div className="w-full flex flex-col items-center justify-center py-20 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl shadow-sm">
-              <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
-                <ErrorIcon className="w-8 h-8 text-red-500" />
-              </div>
-              <h3 className="text-lg font-black text-spc-grey dark:text-white uppercase tracking-widest mb-2">
-                Connection Lost
-              </h3>
-              <p className="text-xs font-bold text-neutral-400 dark:text-neutral-500 mb-6 text-center max-w-sm">
-                We couldn&apos;t load the products from the server. Please check
-                your connection and try again.
-              </p>
-              <button
-                onClick={() => refetch()}
-                className="bg-black dark:bg-neutral-800 hover:bg-btn-green dark:hover:bg-btn-green text-white px-8 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-md flex items-center gap-2"
-              >
-                <RefreshIcon className="w-4 h-4" />
-                Try Again
-              </button>
-            </div>
+            <ErrorState onRetry={() => refetch()} />
           ) : status === "pending" ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4">
-              {Array.from({ length: 12 }).map((_, n) => (
-                <div
-                  key={n}
-                  className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-4 flex flex-col h-[350px] animate-pulse"
+            <ProductGridSkeleton />
+          ) : products.length === 0 ? (
+            <EmptyState
+              title="No products found"
+              description="Try adjusting your search or filters to find what you're looking for."
+              icon={<SearchIcon className="w-8 h-8" aria-hidden />}
+              action={
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSelectedCategory("All");
+                    setPriceFilter("All Prices");
+                    setSortOption("Recommended");
+                    resetScroll();
+                  }}
+                  className="bg-black dark:bg-neutral-800 hover:bg-btn-green dark:hover:bg-btn-green text-white px-8 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-md"
                 >
-                  <div className="w-full h-40 bg-neutral-200 dark:bg-neutral-800 rounded-xl mb-4"></div>
-                  <div className="w-1/3 h-3 bg-neutral-200 dark:bg-neutral-800 mx-auto rounded mb-3"></div>
-                  <div className="w-3/4 h-5 bg-neutral-200 dark:bg-neutral-800 mx-auto rounded mb-4"></div>
-                  <div className="mt-auto w-full space-y-3">
-                    <div className="w-1/4 h-6 bg-neutral-200 dark:bg-neutral-800 mx-auto rounded"></div>
-                    <div className="w-full h-10 bg-neutral-200 dark:bg-neutral-800 rounded-xl"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  Clear filters
+                </button>
+              }
+            />
           ) : (
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -795,6 +789,7 @@ export default function Home() {
                               Math.max(1, currentStep - 1),
                             )
                           }
+                          aria-label="Decrease quantity"
                           className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
                         >
                           <MinusIcon className="w-4 h-4" />
@@ -813,6 +808,7 @@ export default function Home() {
                           onClick={() =>
                             handleShopSelect(product.id, currentStep + 1)
                           }
+                          aria-label="Increase quantity"
                           className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-700 text-neutral-500 hover:text-spc-grey dark:hover:text-white transition-all shadow-sm active:scale-95"
                         >
                           <PlusIcon className="w-4 h-4" />
@@ -885,10 +881,8 @@ export default function Home() {
                         href={`/product/${item.id}`}
                         className="hover:text-btn-green transition-colors"
                       >
-                        <h3 className="text-sm font-semibold text-spc-grey dark:text-neutral-200 mb-2 text-center">
-                          {item.name.length > 24
-                            ? item.name.substring(0, 24) + "..."
-                            : item.name}{" "}
+                        <h3 className="text-sm font-semibold text-spc-grey dark:text-neutral-200 mb-2 text-center line-clamp-2">
+                          {item.name}{" "}
                           <span className="text-neutral-400 dark:text-neutral-500 font-normal ml-1">
                             x{item.quantity}
                           </span>
@@ -1009,6 +1003,7 @@ export default function Home() {
               </span>
               <button
                 onClick={() => setIsMenuOpen(false)}
+                aria-label="Close menu"
                 className="p-2 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-full text-spc-grey dark:text-neutral-200 transition-all duration-300 hover:rotate-90 hover:scale-110 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 active:scale-95"
               >
                 <CloseIcon className="w-5 h-5" />

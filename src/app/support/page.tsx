@@ -1,6 +1,7 @@
 "use client";
-import React, { useState } from "react";
-import Link from "next/link";
+import React, { FormEvent, useState } from "react";
+import toast from "react-hot-toast";
+import Navbar from "@/components/Navbar";
 
 const faqs = [
   {
@@ -19,32 +20,30 @@ const faqs = [
 
 export default function SupportPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !email.includes("@")) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    if (message.trim().length < 10) {
+      toast.error("Please write a message of at least 10 characters.");
+      return;
+    }
+    toast.success("Thanks — this is a demo inbox. We'll pretend we received it.");
+    setEmail("");
+    setMessage("");
+  };
 
   return (
     <div className="min-h-screen bg-white dark:bg-neutral-950 transition-colors duration-300">
-      {/* Header - Genişletildi (max-w-6xl) */}
+      <Navbar />
+
       <div className="border-b border-neutral-100 dark:border-neutral-800">
         <div className="max-w-6xl mx-auto px-6 py-12">
-          <Link
-            href="/"
-            className="text-btn-green font-black uppercase text-xs tracking-widest hover:opacity-70 transition-opacity flex items-center gap-2 mb-6 w-fit"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="3"
-              stroke="currentColor"
-              className="w-3 h-3"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-              />
-            </svg>
-            Back to Shop
-          </Link>
           <h1 className="text-5xl font-black text-spc-grey dark:text-white tracking-tighter">
             Customer Support
           </h1>
@@ -54,11 +53,9 @@ export default function SupportPage() {
         </div>
       </div>
 
-      {/* Main Content - Genişletildi ve 12 Sütunlu Izgaraya Geçildi */}
       <div className="max-w-6xl mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-        {/* Left Side (FAQ & Returns) - 7 Sütun Kaplar */}
         <div className="lg:col-span-7 space-y-12">
-          <section id="faq">
+          <section id="faq" className="scroll-mt-8">
             <h2 className="text-2xl font-black text-spc-grey dark:text-white mb-8 tracking-tight uppercase">
               Frequently Asked Questions
             </h2>
@@ -69,6 +66,8 @@ export default function SupportPage() {
                   className="border border-neutral-100 dark:border-neutral-800 rounded-2xl overflow-hidden transition-colors"
                 >
                   <button
+                    type="button"
+                    aria-expanded={openFaq === index}
                     onClick={() => setOpenFaq(openFaq === index ? null : index)}
                     className="w-full flex items-center justify-between p-6 text-left hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
                   >
@@ -82,6 +81,7 @@ export default function SupportPage() {
                       strokeWidth="3"
                       stroke="currentColor"
                       className={`w-4 h-4 text-btn-green transition-transform duration-300 ${openFaq === index ? "rotate-180" : ""}`}
+                      aria-hidden
                     >
                       <path
                         strokeLinecap="round"
@@ -100,7 +100,7 @@ export default function SupportPage() {
             </div>
           </section>
 
-          <section id="returns">
+          <section id="returns" className="scroll-mt-8">
             <h2 className="text-2xl font-black text-spc-grey dark:text-white mb-6 tracking-tight uppercase">
               Returns & Refunds
             </h2>
@@ -122,38 +122,49 @@ export default function SupportPage() {
           </section>
         </div>
 
-        {/* Right Side (Contact Form) - 5 Sütun Kaplar (Eskisine göre çok daha geniş) */}
-        <div id="contact" className="lg:col-span-5">
+        <div id="contact" className="lg:col-span-5 scroll-mt-8">
           <div className="sticky top-12 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 p-8 sm:p-10 rounded-3xl shadow-xl shadow-neutral-100/50 dark:shadow-none transition-colors">
             <h3 className="text-xl font-black text-spc-grey dark:text-white mb-2 uppercase">
               Contact Us
             </h3>
-            <p className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-8">
+            <p className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-2">
+              Demo form — not sent to a real inbox
+            </p>
+            <p className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-8">
               Response within 24h
             </p>
 
-            <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-5" onSubmit={handleSubmit}>
               <div>
-                <label className="text-[10px] font-black uppercase text-neutral-400 dark:text-neutral-500 tracking-widest ml-1 transition-colors">
+                <label className="text-xs font-black uppercase text-neutral-400 dark:text-neutral-500 tracking-widest ml-1 transition-colors">
                   Email
                 </label>
                 <input
                   type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full mt-1.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-5 py-4 text-sm text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-btn-green focus:ring-1 focus:ring-btn-green transition-all"
                   placeholder="your@email.com"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-black uppercase text-neutral-400 dark:text-neutral-500 tracking-widest ml-1 transition-colors">
+                <label className="text-xs font-black uppercase text-neutral-400 dark:text-neutral-500 tracking-widest ml-1 transition-colors">
                   Message
                 </label>
                 <textarea
                   rows={5}
+                  required
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
                   className="w-full mt-1.5 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-5 py-4 text-sm text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-btn-green focus:ring-1 focus:ring-btn-green transition-all resize-none"
                   placeholder="How can we help?"
                 />
               </div>
-              <button className="w-full bg-black dark:bg-neutral-800 text-white font-black uppercase text-xs tracking-widest py-4 rounded-xl hover:bg-btn-green dark:hover:bg-btn-green transition-all shadow-lg active:scale-95 mt-2">
+              <button
+                type="submit"
+                className="w-full bg-black dark:bg-neutral-800 text-white font-black uppercase text-xs tracking-widest py-4 rounded-xl hover:bg-btn-green dark:hover:bg-btn-green transition-all shadow-lg active:scale-95 mt-2"
+              >
                 Send Message
               </button>
             </form>

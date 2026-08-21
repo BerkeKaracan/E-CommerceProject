@@ -2,6 +2,7 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -47,7 +48,7 @@ export default function AdminPanel() {
       if (!user) {
         router.push("/");
       } else if (user.role !== "admin") {
-        alert(
+        toast.error(
           "Access Denied: Only administrators can access this command center!",
         );
         router.push("/");
@@ -78,6 +79,7 @@ export default function AdminPanel() {
           setProducts(data);
         } catch (err) {
           console.error(err);
+          toast.error("Failed to load admin products.");
         } finally {
           setIsLoading(false);
         }
@@ -126,9 +128,14 @@ export default function AdminPanel() {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
-      if (res.ok) setProducts(products.filter((p) => p.id !== id));
+      if (res.ok) {
+        setProducts(products.filter((p) => p.id !== id));
+        toast.success("Product deleted.");
+      } else {
+        toast.error("Failed to delete product.");
+      }
     } catch (error) {
-      console.error(error);
+      toast.error("Failed to delete product.");
     }
   };
 

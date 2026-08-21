@@ -4,21 +4,11 @@ import { AuthContext } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-
-interface ApiProduct {
-  id: number;
-  name: string;
-  category: string;
-  price: number;
-  image: string;
-}
-
-interface CartItemResponse {
-  id: number;
-  product_id: number;
-  quantity: number;
-  product: ApiProduct;
-}
+import toast from "react-hot-toast";
+import Navbar from "@/components/Navbar";
+import EmptyState from "@/components/EmptyState";
+import { getPublicApiUrl, parseApiDetail } from "@/lib/api";
+import type { ApiProduct, CartItemResponse } from "@/types/product";
 
 interface CartItem extends ApiProduct {
   quantity: number;
@@ -26,15 +16,11 @@ interface CartItem extends ApiProduct {
 
 export default function CheckoutPage() {
   const authContext = useContext(AuthContext);
-  const user = authContext?.user;
   const token = authContext?.token;
   const router = useRouter();
 
-  const [isUpdating, setIsUpdating] = useState(false);
-
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [promoInput, setPromoInput] = useState("");
   const [appliedPromos, setAppliedPromos] = useState<
@@ -56,7 +42,7 @@ export default function CheckoutPage() {
     setPromoError(null);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/promo/validate`,
+        `${getPublicApiUrl()}/api/promo/validate`,
         {
           method: "POST",
           headers: {
@@ -74,10 +60,9 @@ export default function CheckoutPage() {
           { code: promoInput.toUpperCase(), amount: data.discount_amount },
         ]);
         setPromoInput("");
-        setToastMessage(` $${data.discount_amount} discount added!`);
-        setTimeout(() => setToastMessage(null), 2200);
+        toast.success(`$${data.discount_amount} discount added!`);
       } else {
-        setPromoError(data.detail || "Invalid code.");
+        setPromoError(parseApiDetail(data) || "Invalid code.");
       }
     } catch (err) {
       setPromoError("Server error.");
@@ -104,7 +89,7 @@ export default function CheckoutPage() {
 
   const fetchCart = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+      const res = await fetch(`${getPublicApiUrl()}/api/cart`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -135,7 +120,7 @@ export default function CheckoutPage() {
     );
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+      const res = await fetch(`${getPublicApiUrl()}/api/cart`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -146,8 +131,7 @@ export default function CheckoutPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setToastMessage(data.detail || "Cannot add more items.");
-        setTimeout(() => setToastMessage(null), 3000);
+        toast.error(parseApiDetail(data) || "Cannot add more items.");
         fetchCart();
       }
     } catch (err) {
@@ -169,7 +153,7 @@ export default function CheckoutPage() {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/cart/${product.id}?quantity=1`,
+        `${getPublicApiUrl()}/api/cart/${product.id}?quantity=1`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -185,7 +169,7 @@ export default function CheckoutPage() {
     if (!token) return;
     setCart(cart.filter((item) => item.id !== productId));
     await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/cart/${productId}?quantity=${quantity}`,
+      `${getPublicApiUrl()}/api/cart/${productId}?quantity=${quantity}`,
       {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
@@ -205,7 +189,7 @@ export default function CheckoutPage() {
     setIsProcessing(true);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/checkout`,
+        `${getPublicApiUrl()}/api/checkout`,
         {
           method: "POST",
           headers: {
@@ -220,15 +204,13 @@ export default function CheckoutPage() {
 
       const data = await res.json();
       if (res.ok) {
-        setToastMessage(data.message);
+        toast.success(data.message || "Order placed!");
         setTimeout(() => router.push("/profile"), 2000);
       } else {
-        setToastMessage(data.detail || "Checkout failed");
-        setTimeout(() => setToastMessage(null), 2200);
+        toast.error(parseApiDetail(data) || "Checkout failed");
       }
     } catch (err) {
-      setToastMessage("Server Error!");
-      setTimeout(() => setToastMessage(null), 2200);
+      toast.error("Server Error!");
     } finally {
       setIsProcessing(false);
     }
@@ -243,45 +225,32 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 p-4 md:p-8 font-sans select-none text-spc-grey dark:text-neutral-200 transition-colors duration-300">
-      <div className="max-w-[1000px] mx-auto">
-        <Link
-          href="/"
-          className="flex items-center gap-2 mb-6 w-fit text-neutral-400 dark:text-neutral-500 hover:text-spc-grey dark:hover:text-neutral-300 transition-colors group"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="3"
-            stroke="currentColor"
-            className="w-4 h-4 group-hover:-translate-x-1 transition-transform"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
-            />
-          </svg>
-          <span className="text-xs font-black uppercase tracking-widest">
-            Back to Store
-          </span>
-        </Link>
-
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-spc-grey dark:text-neutral-200 transition-colors duration-300">
+      <Navbar />
+      <div className="max-w-[1000px] mx-auto p-4 md:p-8">
         <h1 className="text-3xl md:text-4xl font-black tracking-tighter mb-8 text-spc-grey dark:text-white">
           Secure Checkout
         </h1>
 
         <div className="flex flex-col md:flex-row gap-8">
-          <div className="flex-2 bg-white dark:bg-neutral-900 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm transition-colors">
+          <div className="flex-[2] bg-white dark:bg-neutral-900 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm transition-colors">
             <h2 className="text-lg font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-6">
               Order Summary
             </h2>
 
             {cart.length === 0 ? (
-              <p className="text-center text-neutral-400 dark:text-neutral-500 font-bold py-10">
-                Your cart is completely empty.
-              </p>
+              <EmptyState
+                title="Your cart is empty"
+                description="Add a few products from the shop, then come back to check out."
+                action={
+                  <Link
+                    href="/"
+                    className="bg-btn-green text-white px-8 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest"
+                  >
+                    Continue shopping
+                  </Link>
+                }
+              />
             ) : (
               <div className="space-y-6">
                 {cart.map((item, idx) => (
@@ -564,27 +533,6 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
-      {toastMessage && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-neutral-900 dark:bg-neutral-800 text-white px-6 py-4 rounded-xl shadow-2xl font-bold text-sm animate-in fade-in slide-in-from-bottom-8 flex items-center gap-3 whitespace-nowrap">
-          <div className="bg-btn-green rounded-full p-1 shrink-0 text-white">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="3"
-              stroke="currentColor"
-              className="w-4 h-4"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="m4.5 12.75 6 6 9-13.5"
-              />
-            </svg>
-          </div>
-          {toastMessage}
-        </div>
-      )}
     </div>
   );
 }

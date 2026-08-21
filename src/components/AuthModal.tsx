@@ -1,8 +1,9 @@
 "use client";
-import { useRouter } from "next/navigation";
 import React, { useState, useEffect, useContext } from "react";
 import Image from "next/image";
 import { AuthContext } from "@/context/AuthContext";
+import { parseApiDetail } from "@/lib/api";
+import toast from "react-hot-toast";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -11,7 +12,6 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [isLogin, setIsLogin] = useState(true);
-  const router = useRouter();
   const authContext = useContext(AuthContext);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -21,24 +21,27 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [tempUserId, setTempUserId] = useState<number | null>(null);
   const [twoFaCode, setTwoFaCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // FORGOT PASSWORD STATES
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [resetMessage, setResetMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setRequires2FA(false);
-      setIsForgotPassword(false);
-      setError(null);
-    }
+    if (!isOpen) return;
+
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+
     return () => {
       document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKeyDown);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,6 +66,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       return;
     }
 
+    setIsSubmitting(true);
+    try {
     if (!isLogin) {
       try {
         const response = await fetch(
@@ -77,16 +82,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         const data = await response.json();
 
         if (!response.ok) {
-          setError(data.detail || "Registration failed. Please try again.");
+          setError(parseApiDetail(data) || "Registration failed. Please try again.");
           return;
         }
 
         if (data.access_token && authContext) {
           authContext.login(data.access_token, data.user);
+          toast.success("Account created. Welcome!");
           handleClose();
-          setTimeout(() => {
-            router.push("/profile");
-          }, 150);
           return;
         }
 
@@ -114,7 +117,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         const data = await response.json();
 
         if (!response.ok) {
-          setError(data.detail || "Invalid email or password.");
+          setError(parseApiDetail(data) || "Invalid email or password.");
           return;
         }
 
@@ -128,16 +131,17 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           authContext.login(data.access_token, data.user);
         }
 
+        toast.success("Signed in successfully!");
         setPassword("");
         setConfirmPassword("");
         onClose();
-        setTimeout(() => {
-          router.push("/profile");
-        }, 300);
       } catch (err) {
         console.error("Server Connection Error:", err);
         setError("Cannot connect to the server. Is backend running?");
       }
+    }
+    } finally {
+      setIsSubmitting(false);
     }
   };
   const handle2FASubmit = async (e: React.FormEvent) => {
@@ -157,20 +161,15 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.detail || "Invalid 2FA code.");
+        setError(parseApiDetail(data) || "Invalid 2FA code.");
         return;
       }
 
       if (authContext) {
         authContext.login(data.access_token, data.user);
       }
+      toast.success("Signed in successfully!");
       handleClose();
-      setPassword("");
-      setConfirmPassword("");
-      onClose();
-      setTimeout(() => {
-        router.push("/profile");
-      }, 150);
     } catch (err) {
       setError("Cannot connect to the server.");
     }
@@ -199,7 +198,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.detail || "Failed to process request.");
+        setError(parseApiDetail(data) || "Failed to process request.");
         return;
       }
 
@@ -490,9 +489,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
               <button
                 type="submit"
-                className="w-full bg-spc-grey dark:bg-neutral-800 hover:bg-btn-green dark:hover:bg-btn-green text-white font-black uppercase tracking-wide text-sm rounded-xl py-3.5 mt-2 transition-all duration-300 shadow-md hover:shadow-lg active:scale-[0.98]"
+                disabled={isSubmitting}
+                className="w-full bg-spc-grey dark:bg-neutral-800 hover:bg-btn-green dark:hover:bg-btn-green text-white font-black uppercase tracking-wide text-sm rounded-xl py-3.5 mt-2 transition-all duration-300 shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-50"
               >
-                {isLogin ? "Sign In" : "Sign Up"}
+                {isSubmitting
+                  ? "Please wait..."
+                  : isLogin
+                    ? "Sign In"
+                    : "Sign Up"}
               </button>
             </form>
           )}

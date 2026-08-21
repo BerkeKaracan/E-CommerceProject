@@ -1,6 +1,17 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { ReactElement } from "react";
 import ProductClient from "@/app/product/[id]/ProductClient";
+import { AuthProvider } from "@/context/AuthContext";
+import { ThemeProvider } from "next-themes";
+
+function renderProduct(ui: ReactElement) {
+  return render(
+    <ThemeProvider attribute="class" defaultTheme="light">
+      <AuthProvider>{ui}</AuthProvider>
+    </ThemeProvider>,
+  );
+}
 
 jest.mock("next/navigation", () => ({
   useRouter() {
@@ -10,6 +21,9 @@ jest.mock("next/navigation", () => ({
       back: jest.fn(),
       prefetch: jest.fn(),
     };
+  },
+  usePathname() {
+    return "/product/1";
   },
   useParams() {
     return {
@@ -25,6 +39,7 @@ const mockProduct = {
   price: 299.99,
   image: "/watch.jpg",
   description: "A high-end smartwatch for tech lovers.",
+  stock: 50,
 };
 
 describe("ProductClient Component", () => {
@@ -42,7 +57,7 @@ describe("ProductClient Component", () => {
   });
 
   it("renders product information correctly", () => {
-    render(<ProductClient initialProduct={mockProduct} />);
+    renderProduct(<ProductClient initialProduct={mockProduct} />);
 
     const productName = screen.getByText(/Premium AI Watch/i);
     expect(productName).toBeInTheDocument();
@@ -53,7 +68,7 @@ describe("ProductClient Component", () => {
 
   it("updates the quantity when increment and decrement buttons are clicked", async () => {
     const user = userEvent.setup();
-    render(<ProductClient initialProduct={mockProduct} />);
+    renderProduct(<ProductClient initialProduct={mockProduct} />);
 
     const quantityDisplay = screen.getByText("1");
     expect(quantityDisplay).toBeInTheDocument();
