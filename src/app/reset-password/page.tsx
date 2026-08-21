@@ -71,7 +71,7 @@ function ResetPasswordForm() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+    <div className="bg-background flex items-center justify-center p-6 py-16">
       <div className="absolute top-6 right-6">
         <ThemeToggle />
       </div>

@@ -274,7 +274,7 @@ export default function ProductClient({
   if (!product) return null;
 
   return (
-    <main className="min-h-screen bg-background flex flex-col pb-20">
+    <main className="bg-background flex flex-col pb-20">
       <Navbar />
 
       <div className="flex-1 max-w-[1200px] mx-auto w-full px-4 lg:px-8 py-8 lg:py-16">

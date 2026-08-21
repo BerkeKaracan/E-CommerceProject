@@ -37,7 +37,7 @@ export default function TrendsPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-background flex flex-col">
+    <main className="bg-background flex flex-col">
       <Navbar />
 
       <div className="flex-1 max-w-[1440px] mx-auto w-full px-4 lg:px-8 py-10 flex flex-col">
